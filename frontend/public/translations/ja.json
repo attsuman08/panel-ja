@@ -190,6 +190,7 @@
         "move": "移動",
         "transfer": "移行",
         "reattach": "再アタッチ",
+        "reassign": "再割り当て",
         "detach": "デタッチ",
         "send": "送信",
         "reset": "リセット",
@@ -382,6 +383,7 @@
         "lines": "行数",
         "databaseHost": "データベースホスト",
         "databaseAgentHost": "データベースエージェントホスト",
+        "databaseInstance": "データベースインスタンス",
         "timezone": "タイムゾーン",
         "timezoneSystem": "システム",
         "protocol": "プロトコル",
@@ -550,7 +552,11 @@
           "started": "起動しました",
           "stopped": "停止しました",
           "restarted": "再起動しました",
-          "killed": "強制終了しました"
+          "killed": "強制終了しました",
+          "suspended": "一時停止しました",
+          "unsuspended": "一時停止を解除しました",
+          "clearedState": "状態をクリアしました",
+          "deleted": "削除しました"
         },
         "compressionLevel": {
           "bestSpeed": "最高速度",
@@ -2064,6 +2070,7 @@
                 "title": "メールテンプレート設定",
                 "sidebar": {
                   "templates": "テンプレート一覧",
+                  "globalVariables": "グローバル変数",
                   "loading": "読み込み中...",
                   "availableVariables": "利用可能な変数"
                 },
@@ -2073,9 +2080,44 @@
                   "syntaxMiddle": "テンプレート構文を使用しています。変数は",
                   "syntaxAnd": "で参照され、",
                   "syntaxOr": "や",
-                  "syntaxAfter": "などの制御構造がサポートされています。"
+                  "syntaxAfter": "などの制御構造がサポートされています。",
+                  "variablesBefore": "テキストフラグメントは",
+                  "variablesAfter": "で参照され、「変数」セクションで言語ごとに翻訳されるため、テンプレートはユーザーが選択できる言語ごとに1つのレイアウトを用意するだけで済みます。"
                 },
-                "empty": "サイドバーからテンプレートを選択して編集してください。",
+                "variables": {
+                  "title": "変数",
+                  "description": "このテンプレートが",
+                  "globalDescription": "すべてのテンプレートが",
+                  "descriptionAfter": "として参照するテキストフラグメントです。フラグメントはテンプレートと同じ変数にアクセスできるMiniJinjaスニペットです。空のフィールドには表示されているデフォルト値が使用されます。値が設定されていない言語は英語の値にフォールバックし、さらに組み込みの翻訳にフォールバックします。",
+                  "custom": "カスタム",
+                  "add": "変数を追加",
+                  "loading": "読み込み中...",
+                  "empty": "変数が定義されていません。",
+                  "error": {
+                    "valueRequired": "カスタム変数には英語の値が必要です。"
+                  },
+                  "toast": {
+                    "saved": "メール変数を保存しました。",
+                    "created": "メール変数を作成しました。",
+                    "reset": "メール変数をデフォルトにリセットしました。",
+                    "deleted": "メール変数を削除しました。"
+                  },
+                  "modal": {
+                    "create": {
+                      "title": "変数を作成",
+                      "nameDescription": "英小文字、数字、アンダースコアを使用し、英字から始まる必要があります。",
+                      "valueDescription": "英語の値です。変数の作成後に翻訳を追加できます。"
+                    },
+                    "reset": {
+                      "title": "デフォルトに戻す",
+                      "content": "すべての言語における **{name}** のカスタム値を破棄し、組み込みのデフォルトに戻します。この操作は元に戻せません。"
+                    },
+                    "delete": {
+                      "title": "変数の削除確認",
+                      "content": "すべての言語からカスタム変数 **{name}** を削除します。この変数を参照しているテンプレートでは、該当箇所に何も表示されなくなります。この操作は元に戻せません。"
+                    }
+                  }
+                },
                 "loadingTemplate": "テンプレートを読み込み中...",
                 "form": {
                   "subject": "件名"
@@ -2927,6 +2969,7 @@
                   "downloadStarted": "ダウンロードを開始しました。",
                   "detached": "バックアップをデタッチしました。",
                   "reattached": "バックアップを {name} に再アタッチしました。",
+                  "reassigned": "バックアップを再割り当てしました。",
                   "restoring": "{name} にバックアップを復元中...",
                   "exporting": "バックアップを {name} のファイルにエクスポート中...",
                   "deletionStarted": "ノードバックアップの削除を開始しました。"
@@ -2938,6 +2981,13 @@
                   "detach": {
                     "title": "バックアップのデタッチ確認",
                     "content": "このバックアップをサーバーからデタッチしてもよろしいですか？バックアップは削除されず、後で再アタッチできます。"
+                  },
+                  "reassign": {
+                    "title": "データベースバックアップの再割り当て",
+                    "description": "このバックアップを別の {type} データベースインスタンスに移動します。バックアップがそのサーバーからアクセス可能であれば、インスタンスは別のサーバーに属していても構いません。バックアップは同じデータベースタイプのインスタンスにのみ割り当てることができます。",
+                    "instancePlaceholder": "データベースインスタンスを選択",
+                    "serverFirst": "先にサーバーを選択してください",
+                    "noInstances": "このサーバーに一致するデータベースインスタンスがありません"
                   },
                   "reattach": {
                     "title": "ノードバックアップの再アタッチ",
@@ -3150,6 +3200,21 @@
             "unsuspend": "サーバーの一時停止を解除",
             "clearState": "サーバーの状態をクリア",
             "delete": "サーバーを削除"
+          },
+          "bulkActions": {
+            "verb": {
+              "suspend": "一時停止",
+              "unsuspend": "一時停止の解除",
+              "clearState": "状態のクリア",
+              "delete": "削除"
+            },
+            "modal": {
+              "title": "一括操作の確認",
+              "content": "**{servers}** に対して「{action}」を実行してもよろしいですか？",
+              "deleteContent": "**{servers}** とそのすべてのデータを完全に削除してもよろしいですか？この操作は元に戻せません。"
+            },
+            "successWithSkipped": "{servers} に対して正常に「{action}」を実行しました。{skippedServers} をスキップしました。",
+            "nothingToDo": "選択されたサーバーはすべてすでにその状態です。"
           },
           "externalIdLookup": {
             "button": "外部IDで検索",
@@ -3945,6 +4010,15 @@
                 }
               }
             },
+            "backups": {
+              "title": "バックアップ",
+              "page": {
+                "title": "データベースエージェントホストのバックアップ",
+                "toast": {
+                  "downloadStarted": "ダウンロードを開始しました。"
+                }
+              }
+            },
             "configuration": {
               "title": "設定",
               "page": {
@@ -4463,6 +4537,9 @@
           },
           "form": {
             "backupConfigurationPlaceholder": "サーバーから継承",
+            "kind": "バックアップ種別",
+            "kindDescription": "サーバーバックアップはサーバーファイルをアーカイブします。データベースバックアップはサーバーデータベースインスタンスのデータベースをダンプします。これは後から変更できません。",
+            "kindLockedDescription": "バックアップ種別はポリシーの作成時に選択され、後から変更することはできません。",
             "cron": "スケジュール",
             "cronDescription": "バックアップを取得するタイミングを決定するCron式（秒単位を含む、UTC）です。",
             "parallelism": "並列度",
@@ -4540,6 +4617,25 @@
                   },
                   "remove": {
                     "title": "ノードの削除確認",
+                    "content": "**{policy}** から **{name}** を削除してもよろしいですか？"
+                  }
+                }
+              }
+            },
+            "databaseAgentHosts": {
+              "title": "データベースエージェントホスト",
+              "page": {
+                "title": "システムバックアップポリシーのデータベースエージェントホスト",
+                "toast": {
+                  "added": "データベースエージェントホストを追加しました。",
+                  "removed": "データベースエージェントホストを削除しました。"
+                },
+                "modal": {
+                  "add": {
+                    "title": "データベースエージェントホストを追加"
+                  },
+                  "remove": {
+                    "title": "データベースエージェントホストの削除確認",
                     "content": "**{policy}** から **{name}** を削除してもよろしいですか？"
                   }
                 }
