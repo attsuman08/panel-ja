@@ -132,6 +132,8 @@ export function translationsPlugin(): Plugin {
 
       if (languages.length === 0) return;
 
+      fs.mkdirSync(outDir, { recursive: true });
+
       let totalSource = 0;
       let totalMinified = 0;
 
@@ -139,6 +141,12 @@ export function translationsPlugin(): Plugin {
         try {
           const merged = mergeAllTranslations(dirs, language);
           if (!merged) continue;
+
+          if (!merged['']) {
+            console.warn(
+              `[translations] "${language}" has no root namespace, only: ${Object.keys(merged).join(', ') || 'none'}`,
+            );
+          }
 
           const minified = JSON.stringify(merged);
 

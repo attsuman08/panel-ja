@@ -27,6 +27,47 @@ interface MarkdownOptions {
   html?: boolean;
 }
 
+const isLanguageData = (value: unknown): value is LanguageData =>
+  typeof value === 'object' && value !== null && ('items' in value || 'translations' in value);
+
+/**
+ * Flattens a translation payload into a single namespace-prefixed record. Accepts both the
+ * namespaced map the build emits (`{ '': root, 'some.extension': ... }`) and a bare root
+ * namespace, which is the shape the translation files are authored in. Returns null for
+ * anything else, most notably the index.html the backend serves for unknown asset paths.
+ */
+const parseLanguageData = (data: unknown): LanguageData | null => {
+  if (typeof data !== 'object' || data === null) {
+    return null;
+  }
+
+  const namespaces: Record<string, unknown> =
+    '' in data ? (data as Record<string, unknown>) : isLanguageData(data) ? { '': data } : {};
+
+  const root = namespaces[''];
+  if (!isLanguageData(root)) {
+    return null;
+  }
+
+  const result: LanguageData = {
+    items: { ...root.items },
+    translations: { ...root.translations },
+  };
+
+  for (const [namespace, value] of Object.entries(namespaces)) {
+    if (namespace === '' || !isLanguageData(value)) continue;
+
+    for (const item in value.items) {
+      result.items[`${namespace}.${item}`] = value.items[item];
+    }
+    for (const translation in value.translations) {
+      result.translations[`${namespace}.${translation}`] = value.translations[translation];
+    }
+  }
+
+  return result;
+};
+
 declare global {
   interface String {
     md(options?: MarkdownOptions): ReactNode;
@@ -161,20 +202,12 @@ const TranslationProvider = ({ children }: { children: ReactNode }) => {
           .get(`/translations/${language}.json`)
           .then(({ data }) => {
             if (cancelled) return;
-            const result: LanguageData = {
-              items: data[''].items,
-              translations: data[''].translations,
-            };
 
-            for (const key in data) {
-              if (key === '') continue;
-
-              for (const item in data[key].items) {
-                result.items[`${key}.${item}`] = data[key].items[item];
-              }
-              for (const translation in data[key].translations) {
-                result.translations[`${key}.${translation}`] = data[key].translations[translation];
-              }
+            const result = parseLanguageData(data);
+            if (!result) {
+              console.error(`Language ${language} returned unusable translation data, falling back to en.`);
+              setLanguage('en');
+              return;
             }
 
             result.translations = getTranslationMapping(result.translations);
