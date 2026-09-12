@@ -1,0 +1,296 @@
+name: Release Nightly
+
+on:
+  push:
+    branches:
+      - main
+      - 1.1.x
+
+env:
+  BIN_NAME: panel-rs
+  PROJECT_NAME: panel-rs
+  GHCR_IMAGE: ghcr.io/${{ github.repository }}
+  IMAGE_PREFIX: ${{ github.ref_name == 'main' && 'nightly' || 'next' }}
+
+jobs:
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11
+          run_install: false
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          pnpm install
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          pnpm build:ci
+
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-build
+          path: frontend/dist/
+
+  dist:
+    name: Dist
+    needs: [build-frontend]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        build:
+          - x86_64-linux
+          - aarch64-linux
+          - riscv64-linux
+          - ppc64le-linux
+          #- x86_64-windows
+        include:
+          - build: x86_64-linux
+            os: ubuntu-24.04
+            target: x86_64-unknown-linux-musl
+            binary_suffix: ""
+          - build: aarch64-linux
+            os: ubuntu-24.04
+            target: aarch64-unknown-linux-musl
+            binary_suffix: ""
+          - build: riscv64-linux
+            os: ubuntu-24.04
+            target: riscv64gc-unknown-linux-gnu
+            binary_suffix: ""
+          - build: ppc64le-linux
+            os: ubuntu-24.04
+            target: powerpc64le-unknown-linux-gnu
+            binary_suffix: ""
+          #- build: x86_64-windows
+          #  os: windows-latest
+          #  target: x86_64-pc-windows-msvc
+          #  binary_suffix: ".exe"
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v7
+
+      - name: Download frontend build
+        uses: actions/download-artifact@v8
+        with:
+          name: frontend-build
+          path: frontend/dist/
+
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          cache-key: ${{ matrix.target }}
+
+      - name: Install cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Build release binaries
+        run: |
+          RUSTFLAGS="-C target-feature=+crt-static" \
+          cross build --release --target ${{ matrix.target }} -p $BIN_NAME
+
+      - name: Prepare binaries
+        run: |
+          mkdir -p dist
+          cp "target/${{ matrix.target }}/release/$BIN_NAME" "dist/$BIN_NAME-${{ matrix.build }}"
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.PROJECT_NAME }}-${{ matrix.build }}
+          path: dist/${{ env.BIN_NAME }}-${{ matrix.build }}
+
+  generate-sbom:
+    name: Generate SBOM
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v7
+
+      - name: Generate source SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: sbom-source.cyclonedx.json
+          artifact-name: sbom-source.cyclonedx.json
+          upload-artifact: true
+
+  create-multiarch-images:
+    name: Create multi-arch Docker image
+    needs: [dist, generate-sbom]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Download source SBOM
+        uses: actions/download-artifact@v8
+        with:
+          name: sbom-source.cyclonedx.json
+          path: sbom
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: dist
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare binaries
+        run: |
+          mkdir -p .docker/amd64 .docker/arm64 .docker/riscv64 .docker/ppc64le
+          cp dist/${{ env.PROJECT_NAME }}-x86_64-linux/${{ env.BIN_NAME }}-x86_64-linux .docker/amd64/panel-rs
+          cp dist/${{ env.PROJECT_NAME }}-aarch64-linux/${{ env.BIN_NAME }}-aarch64-linux .docker/arm64/panel-rs
+          cp dist/${{ env.PROJECT_NAME }}-riscv64-linux/${{ env.BIN_NAME }}-riscv64-linux .docker/riscv64/panel-rs
+          cp dist/${{ env.PROJECT_NAME }}-ppc64le-linux/${{ env.BIN_NAME }}-ppc64le-linux .docker/ppc64le/panel-rs
+
+          chmod +x .docker/*/panel-rs
+
+      - name: Build & push multi-arch image
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./docker/Dockerfile
+          platforms: linux/amd64,linux/arm64,linux/riscv64,linux/ppc64le
+          push: true
+          tags: ${{ env.GHCR_IMAGE }}:${{ env.IMAGE_PREFIX }}
+          sbom: true
+          provenance: true
+          cache-from: type=gha,scope=main
+          cache-to: type=gha,mode=max,scope=main
+
+      - name: Attach source SBOM attestation to image (GHCR)
+        uses: actions/attest-sbom@v4
+        with:
+          subject-name: ${{ env.GHCR_IMAGE }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          sbom-path: sbom/sbom-source.cyclonedx.json
+          push-to-registry: true
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v4.1.2
+
+      - name: Sign image with cosign
+        run: |
+          cosign sign --yes ${{ env.GHCR_IMAGE }}@${{ steps.build.outputs.digest }}
+
+  build-heavy-images:
+    name: Build heavy Docker image (${{ matrix.platform }})
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+            tag_suffix: amd64
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            tag_suffix: arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push platform image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./docker/Dockerfile.heavy
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: ${{ env.GHCR_IMAGE }}:${{ env.IMAGE_PREFIX }}-heavy-${{ matrix.tag_suffix }}
+          sbom: scan-stages=true
+          provenance: true
+          cache-from: type=gha,scope=heavy-${{ matrix.tag_suffix }}
+          cache-to: type=gha,mode=max,scope=heavy-${{ matrix.tag_suffix }}
+
+  merge-heavy-images:
+    name: Merge Heavy Docker manifest
+    needs: [build-heavy-images]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and push multi-arch manifest (GHCR)
+        run: |
+          docker buildx imagetools create -t ${{ env.GHCR_IMAGE }}:${{ env.IMAGE_PREFIX }}-heavy \
+            ${{ env.GHCR_IMAGE }}:${{ env.IMAGE_PREFIX }}-heavy-amd64 \
+            ${{ env.GHCR_IMAGE }}:${{ env.IMAGE_PREFIX }}-heavy-arm64
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v4.1.2
+
+      - name: Sign image with cosign
+        run: |
+          cosign sign --yes ${{ env.GHCR_IMAGE }}:${{ env.IMAGE_PREFIX }}-heavy
