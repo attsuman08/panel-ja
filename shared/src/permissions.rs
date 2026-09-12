@@ -256,10 +256,10 @@ pub(crate) static BASE_ADMIN_PERMISSIONS: LazyLock<IndexMap<&'static str, Permis
             (
                 "email-templates",
                 PermissionGroup {
-                    description: "Permissions that control the ability to manage email templates for the panel.",
+                    description: "Permissions that control the ability to manage email templates and variables for the panel.",
                     permissions: IndexMap::from([
-                        ("read", "Allows viewing email templates."),
-                        ("update", "Allows modifying email templates."),
+                        ("read", "Allows viewing email templates and variables."),
+                        ("update", "Allows modifying email templates and variables."),
                     ]),
                 },
             ),
@@ -388,7 +388,7 @@ pub(crate) static BASE_ADMIN_PERMISSIONS: LazyLock<IndexMap<&'static str, Permis
                         ("read", "Allows viewing system backup policies."),
                         (
                             "update",
-                            "Allows modifying system backup policies and their attached nodes, locations and servers.",
+                            "Allows modifying system backup policies and their attached nodes, database agent hosts, locations and servers.",
                         ),
                         ("delete", "Allows deleting system backup policies."),
                         (
@@ -544,6 +544,10 @@ pub(crate) static BASE_ADMIN_PERMISSIONS: LazyLock<IndexMap<&'static str, Permis
                             "Allows resetting database agent host tokens.",
                         ),
                         ("test", "Allows testing database agent host connections."),
+                        (
+                            "backups",
+                            "Allows viewing backups associated with a database agent host.",
+                        ),
                     ]),
                 },
             ),

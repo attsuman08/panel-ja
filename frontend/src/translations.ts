@@ -66,6 +66,7 @@ const baseTranslations = defineTranslations({
         move: 'Move',
         transfer: 'Transfer',
         reattach: 'Reattach',
+        reassign: 'Reassign',
         detach: 'Detach',
         send: 'Send',
         reset: 'Reset',
@@ -266,6 +267,7 @@ const baseTranslations = defineTranslations({
         lines: 'Lines',
         databaseHost: 'Database Host',
         databaseAgentHost: 'Database Agent Host',
+        databaseInstance: 'Database Instance',
         timezone: 'Timezone',
         timezoneSystem: 'System',
         protocol: 'Protocol',
@@ -1999,6 +2001,7 @@ const baseTranslations = defineTranslations({
                 title: 'Email Template Settings',
                 sidebar: {
                   templates: 'Templates',
+                  globalVariables: 'Global Variables',
                   loading: 'Loading...',
                   availableVariables: 'Available Variables',
                 },
@@ -2009,8 +2012,47 @@ const baseTranslations = defineTranslations({
                   syntaxAnd: 'and control structures like',
                   syntaxOr: 'and',
                   syntaxAfter: 'are supported.',
+                  variablesBefore: 'Text fragments are referenced with',
+                  variablesAfter:
+                    'and are translated per language in the Variables section, so a template only needs one layout for every language a user can pick.',
                 },
-                empty: 'Select a template from the sidebar to edit it.',
+                variables: {
+                  title: 'Variables',
+                  description: 'Text fragments this template references as',
+                  globalDescription: 'Text fragments every template can reference as',
+                  descriptionAfter:
+                    'Fragments are MiniJinja snippets with access to the same variables as the template. An empty field uses the default shown in it; languages without a value fall back to the English value, then to the built-in translation.',
+                  custom: 'Custom',
+                  add: 'Add Variable',
+                  loading: 'Loading...',
+                  empty: 'No variables defined.',
+                  error: {
+                    valueRequired: 'Custom variables need an English value.',
+                  },
+                  toast: {
+                    saved: 'Email variable saved.',
+                    created: 'Email variable created.',
+                    reset: 'Email variable reset to default.',
+                    deleted: 'Email variable deleted.',
+                  },
+                  modal: {
+                    create: {
+                      title: 'Create Variable',
+                      nameDescription: 'Lowercase letters, digits and underscores, starting with a letter.',
+                      valueDescription: 'The English value. Translations can be added after creating the variable.',
+                    },
+                    reset: {
+                      title: 'Reset to default',
+                      content:
+                        'This will discard your custom values for **{name}** in every language and restore the built-in defaults. This cannot be undone.',
+                    },
+                    delete: {
+                      title: 'Delete Variable',
+                      content:
+                        'This will delete the custom variable **{name}** in every language. Templates referencing it will render nothing in its place. This cannot be undone.',
+                    },
+                  },
+                },
                 loadingTemplate: 'Loading template...',
                 form: {
                   subject: 'Subject',
@@ -2891,6 +2933,7 @@ const baseTranslations = defineTranslations({
                   downloadStarted: 'Download started.',
                   detached: 'Backup detached successfully.',
                   reattached: 'Reattached backup to {name} successfully.',
+                  reassigned: 'Backup reassigned successfully.',
                   restoring: 'Restoring backup to {name}...',
                   exporting: 'Exporting backup to files of {name}...',
                   deletionStarted: 'Node backup deletion started.',
@@ -2903,6 +2946,14 @@ const baseTranslations = defineTranslations({
                     title: 'Confirm Backup Detachment',
                     content:
                       'Are you sure you want to detach this backup from its server? It will not be deleted and can be reattached later.',
+                  },
+                  reassign: {
+                    title: 'Reassign Database Backup',
+                    description:
+                      'Move this backup to another {type} database instance. The instance can belong to a different server, as long as the backup is reachable from that server. Backups can only be assigned to an instance of the same database type.',
+                    instancePlaceholder: 'Select a database instance',
+                    serverFirst: 'Select a server first',
+                    noInstances: 'No matching database instances on this server',
                   },
                   reattach: {
                     title: 'Reattach Node Backup',
@@ -3949,6 +4000,15 @@ const baseTranslations = defineTranslations({
                 },
               },
             },
+            backups: {
+              title: 'Backups',
+              page: {
+                title: 'Database Agent Host Backups',
+                toast: {
+                  downloadStarted: 'Download started.',
+                },
+              },
+            },
             configuration: {
               title: 'Configuration',
               page: {
@@ -4489,6 +4549,10 @@ const baseTranslations = defineTranslations({
           },
           form: {
             backupConfigurationPlaceholder: 'Inherit from Server',
+            kind: 'Backup Kind',
+            kindDescription:
+              'Server backups archive the server files. Database backups dump the databases of a server database instance. This cannot be changed later.',
+            kindLockedDescription: 'The backup kind is chosen when the policy is created and cannot be changed.',
             cron: 'Schedule',
             cronDescription: 'Cron expression (with seconds) that determines when backups are taken, in UTC.',
             parallelism: 'Parallelism',
@@ -4569,6 +4633,25 @@ const baseTranslations = defineTranslations({
                   },
                   remove: {
                     title: 'Confirm Node Removal',
+                    content: 'Are you sure you want to remove **{name}** from **{policy}**?',
+                  },
+                },
+              },
+            },
+            databaseAgentHosts: {
+              title: 'Database Agent Hosts',
+              page: {
+                title: 'System Backup Policy Database Agent Hosts',
+                toast: {
+                  added: 'Database agent host added.',
+                  removed: 'Database agent host removed.',
+                },
+                modal: {
+                  add: {
+                    title: 'Add Database Agent Host',
+                  },
+                  remove: {
+                    title: 'Confirm Database Agent Host Removal',
                     content: 'Are you sure you want to remove **{name}** from **{policy}**?',
                   },
                 },
