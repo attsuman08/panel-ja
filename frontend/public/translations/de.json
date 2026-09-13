@@ -1830,7 +1830,17 @@
                   "cacheCalls": "Cache-Aufrufe",
                   "cacheHits": "Cache-Treffer ({percent}%)",
                   "cacheMisses": "Cache-Fehlversuche ({percent}%)",
-                  "avgCachedCallLatency": "Durchschnittliche Cache-Aufruflatenz"
+                  "cacheAverageLatency": "\u00d8 {latency}",
+                  "slowestCachedCall": "Langsamster Cache-Aufruf",
+                  "cacheBreakdown": {
+                    "title": "Aufrufaufschl\u00fcsselung",
+                    "calls": "Aufrufe",
+                    "averageLatency": "\u00d8 Latenz",
+                    "localHits": "Treffer im Arbeitsspeicher",
+                    "remoteHits": "Treffer in Redis",
+                    "coalescedWaits": "Auf anderen Aufruf gewartet",
+                    "misses": "Berechnet"
+                  }
                 },
                 "containerType": {
                   "none": "Keine erkannt",
@@ -1983,6 +1993,37 @@
                   "telemetryPreview": {
                     "title": "Telemetrie-Vorschau"
                   }
+                }
+              }
+            },
+            "metadata": {
+              "title": "Metadaten",
+              "page": {
+                "title": "Metadaten-Einstellungen",
+                "form": {
+                  "description": "Beschreibung",
+                  "descriptionDescription": "Wird in Suchergebnissen und Link-Vorschauen unter dem Titel angezeigt.",
+                  "ogImage": "Vorschaubild",
+                  "ogImageDescription": "Wird in Link-Vorschauen angezeigt. Muss ein PNG oder JPEG sein, kein SVG.",
+                  "themeColor": "Themenfarbe",
+                  "themeColorDescription": "Färbt die Browser-Oberfläche auf Mobilgeräten und Link-Vorschauen.",
+                  "indexable": "Indexierung durch Suchmaschinen erlauben",
+                  "twitterCard": "Twitter-Card-Typ"
+                },
+                "enum": {
+                  "twitterCard": {
+                    "summary": "Zusammenfassung",
+                    "summaryLargeImage": "Zusammenfassung mit großem Bild"
+                  }
+                },
+                "placeholder": {
+                  "description": "Verwalte deine Gameserver und Dienste mit {name}."
+                },
+                "button": {
+                  "autofill": "Automatisch ausfüllen"
+                },
+                "toast": {
+                  "updated": "Metadaten-Einstellungen aktualisiert."
                 }
               }
             },
@@ -6685,6 +6726,10 @@
         "firewall": {
           "title": "Firewall",
           "subtitle": "Regeln werden von oben nach unten geprüft, die erste zutreffende Regel entscheidet.",
+          "dropzone": {
+            "title": "Dateien hier ablegen, um sie als Firewall-Regeln zu importieren",
+            "subtitle": "Loslassen, um den Import zu starten"
+          },
           "empty": {
             "title": "Keine Firewall-Regeln",
             "description": "Jede Verbindung zu den Allocations dieses Servers ist erlaubt. Füge eine Regel hinzu, um den Zugriff einzuschränken.",
@@ -6743,12 +6788,20 @@
             "tooManyPorts": "Eine Regel kann höchstens {max} Ports abdecken."
           },
           "toast": {
-            "saved": "Firewall-Regeln gespeichert."
+            "saved": "Firewall-Regeln gespeichert.",
+            "exported": "Firewall-Regeln exportiert.",
+            "imported": "Firewall-Regeln importiert. Prüfe sie und speichere, um sie anzuwenden.",
+            "importCancelled": "Import abgebrochen, deine ungespeicherten Regeln wurden beibehalten.",
+            "parseFailed": "Fehler beim Parsen dieser Firewall-Regeldatei: {error}"
           },
           "modal": {
             "unsavedChanges": {
               "title": "Ungespeicherte Änderungen",
               "content": "Du hast ungespeicherte Firewall-Regeln. Wenn du die Seite jetzt verlässt, gehen sie verloren."
+            },
+            "importReplace": {
+              "title": "Ungespeicherte Regeln ersetzen",
+              "content": "Du hast ungespeicherte Firewall-Regeln. Beim Import wird jede Regel durch die aus der Datei ersetzt und deine ungespeicherten Änderungen gehen verloren."
             },
             "createRule": {
               "title": "Firewall-Regel erstellen"
