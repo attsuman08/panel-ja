@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - 1.1.x
 
 env:
   BIN_NAME: panel-rs

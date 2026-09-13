@@ -1834,7 +1834,17 @@
                   "cacheCalls": "キャッシュ呼び出し数",
                   "cacheHits": "キャッシュヒット数 ({percent}%)",
                   "cacheMisses": "キャッシュミス数 ({percent}%)",
-                  "avgCachedCallLatency": "平均キャッシュ呼び出しレイテンシ"
+                  "cacheAverageLatency": "平均 {latency}",
+                  "slowestCachedCall": "最も遅いキャッシュ呼び出し",
+                  "cacheBreakdown": {
+                    "title": "呼び出しの内訳",
+                    "calls": "呼び出し数",
+                    "averageLatency": "平均レイテンシ",
+                    "localHits": "メモリヒット",
+                    "remoteHits": "Redisヒット",
+                    "coalescedWaits": "他の呼び出しを待機",
+                    "misses": "計算"
+                  }
                 },
                 "containerType": {
                   "none": "未検出",
@@ -1987,6 +1997,37 @@
                   "telemetryPreview": {
                     "title": "テレメトリのプレビュー"
                   }
+                }
+              }
+            },
+            "metadata": {
+              "title": "メタデータ",
+              "page": {
+                "title": "メタデータ設定",
+                "form": {
+                  "description": "説明",
+                  "descriptionDescription": "検索結果やリンクプレビューでタイトルの下に表示されます。",
+                  "ogImage": "プレビュー画像",
+                  "ogImageDescription": "リンクプレビューに表示されます。SVGではなく、PNGまたはJPEGである必要があります。",
+                  "themeColor": "テーマカラー",
+                  "themeColorDescription": "モバイル端末のブラウザUIやリンクプレビューに色を付けます。",
+                  "indexable": "検索エンジンによるインデックス登録を許可",
+                  "twitterCard": "Twitterカードタイプ"
+                },
+                "enum": {
+                  "twitterCard": {
+                    "summary": "サマリー",
+                    "summaryLargeImage": "大きな画像付きサマリー"
+                  }
+                },
+                "placeholder": {
+                  "description": "{name} でゲームサーバーやサービスを管理します。"
+                },
+                "button": {
+                  "autofill": "自動入力"
+                },
+                "toast": {
+                  "updated": "メタデータ設定を更新しました。"
                 }
               }
             },
@@ -6704,6 +6745,10 @@
         "firewall": {
           "title": "ファイアウォール",
           "subtitle": "ルールは上から下へ順番にチェックされ、最初に一致したルールによって処理が決定されます。",
+          "dropzone": {
+            "title": "ファイルをここにドロップしてファイアウォールルールとしてインポート",
+            "subtitle": "離すとインポートが開始されます"
+          },
           "empty": {
             "title": "ファイアウォールルールがありません",
             "description": "このサーバーの割り当てへのすべての接続が許可されています。アクセスできる対象を制限するにはルールを追加してください。",
@@ -6762,12 +6807,20 @@
             "tooManyPorts": "1つのルールが対象にできるポートは最大 {max} 個です。"
           },
           "toast": {
-            "saved": "ファイアウォールルールを保存しました。"
+            "saved": "ファイアウォールルールを保存しました。",
+            "exported": "ファイアウォールルールをエクスポートしました。",
+            "imported": "ファイアウォールルールをインポートしました。内容を確認し、保存して適用してください。",
+            "importCancelled": "インポートをキャンセルしました。未保存のルールは保持されました。",
+            "parseFailed": "ファイアウォールルールファイルの解析に失敗しました: {error}"
           },
           "modal": {
             "unsavedChanges": {
               "title": "未保存の変更",
               "content": "未保存のファイアウォールルールがあります。今このページを離れると破棄されます。"
+            },
+            "importReplace": {
+              "title": "未保存のルールを置き換え",
+              "content": "未保存のファイアウォールルールがあります。インポートすると、すべてのルールがファイルの内容で置き換えられ、未保存の変更は失われます。"
             },
             "createRule": {
               "title": "ファイアウォールルールを作成"

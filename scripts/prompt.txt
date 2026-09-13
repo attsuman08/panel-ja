@@ -1,0 +1,3 @@
+Run `scripts/find_missing_ja_keys.py`.
+Please perform the translation for `ja.json` based on the retrieved data.
+Ensure the translation is accurate and natural by referring to the existing translations in `ja.json`.
