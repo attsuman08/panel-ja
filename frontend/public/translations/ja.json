@@ -492,6 +492,18 @@
         "ignored": "除外済み",
         "showingFirstEntries": "先頭 {count} 件のエントリを表示中"
       },
+      "node": {
+        "deployment": {
+          "available": "デプロイ有効",
+          "nearlyFull": "空き容量わずか",
+          "full": "空き容量なし",
+          "disabled": "デプロイ無効",
+          "memoryUsage": "メモリ: {used} / {limit}",
+          "memoryUsageUnlimited": "メモリ: {used} 使用中 (ノード制限なし)",
+          "diskUsage": "ディスク: {used} / {limit}",
+          "diskUsageUnlimited": "ディスク: {used} 使用中 (ノード制限なし)"
+        }
+      },
       "server": {
         "noAllocation": "割り当てなし",
         "state": {
@@ -2729,8 +2741,6 @@
             "general": {
               "page": {
                 "tooltip": {
-                  "deploymentEnabled": "デプロイ有効",
-                  "deploymentDisabled": "デプロイ無効",
                   "allInOneNode": "All-in-One ノード",
                   "errorWhileFetchingVersion": "バージョン取得エラー",
                   "updateAvailable": "{version} (アップデート利用可能)",
