@@ -784,8 +784,10 @@ const baseTranslations = defineTranslations({
         reselect: 'Re-select file to resume',
         badge: {
           uploading: 'Uploading',
+          uploadingPercent: 'Uploading {percent}%',
           waiting: 'Waiting',
           paused: 'Paused',
+          incomplete: 'Incomplete',
         },
         rateLimited: 'Your upload has been rate limited. Waiting...',
         cancelAllUploads: 'Cancel All Uploads',
@@ -4337,6 +4339,12 @@ const baseTranslations = defineTranslations({
                   nameLastPath: 'Last Name Path',
                   nameLastPathDescription:
                     'The path used to extract the last name from the Info URL response (https://serdejsonpath.live).',
+                  avatarUrlTemplate: 'Avatar URL Template',
+                  avatarUrlTemplateDescription:
+                    'The URL to import the avatar from, with {placeholder} placeholders filled in from the Info URL response (https://serdejsonpath.live). Leave empty to never import avatars. Providers that return a whole avatar URL only need the placeholder on its own, such as {example}.',
+                  avatarOverwrite: 'Overwrite Existing Avatars',
+                  avatarOverwriteDescription:
+                    'Re-imports the avatar on every login, replacing one the user set themselves. Off, the avatar is only imported for users that do not have one.',
                   loginOnly: 'Only allow Login',
                   loginBypassTwoFactor: 'Bypass 2FA on Login',
                   loginBypassTwoFactorDescription:
@@ -5094,6 +5102,7 @@ const baseTranslations = defineTranslations({
             uploadDirectory: 'Upload Directory',
             search: 'Search Files',
             largestDirectories: 'Analyze Directory Sizes',
+            incompleteUploads: 'Review Incomplete Uploads',
             parentDirectory: 'Go to Parent Directory',
             copyPath: 'Copy Current Path',
             exitBackup: 'Exit Backup Browsing',
@@ -5130,6 +5139,14 @@ const baseTranslations = defineTranslations({
             oversizedIncluded: 'Files above {size} are listed without being searched',
             size: 'Size:',
             edit: 'Edit Search',
+          },
+          upload: {
+            by: 'by {user}',
+            banner: {
+              title: 'Incomplete Uploads',
+              content: 'Some uploads to this server never finished and their partial files are still on disk.',
+              review: 'Review Uploads',
+            },
           },
           operations: {
             compressing: 'Compressing {files} from {path}',
@@ -5440,6 +5457,13 @@ const baseTranslations = defineTranslations({
             sftpDetails: {
               title: 'SFTP Details',
               launch: 'Launch',
+            },
+            incompleteUploads: {
+              title: 'Incomplete Uploads',
+              content:
+                'The following {files} never finished uploading. A partial upload stays on disk but is not usable until it completes.',
+              hint: 'Resume it from the uploads panel if you started it, or delete the partial file if you no longer need it.',
+              empty: 'Every upload to this server has finished.',
             },
           },
         },

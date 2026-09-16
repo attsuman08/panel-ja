@@ -34,6 +34,7 @@ lettre = { version = "0.11.17", default-features = false, features = [
 	"sendmail-transport",
 	"file-transport",
 ] }
+image = "0.25.5"
 zip = { version = "8.0.0", default-features = false, features = ["deflate"] }
 toml = "1.0.1"
 serde = { workspace = true }
@@ -64,6 +65,7 @@ indexmap = { workspace = true }
 regex = { workspace = true }
 sentry = { workspace = true }
 sentry-anyhow = { workspace = true }
+sentry-tracing = { workspace = true }
 russh = { workspace = true }
 rand = { workspace = true }
 constant_time_eq = "0.6.0"
@@ -79,6 +81,7 @@ gix = { version = "0.87.1", features = [
 	"blocking-http-transport-reqwest-rust-tls",
 ] }
 tempfile = { workspace = true }
+totp-rs = { workspace = true }
 compact_str = { workspace = true }
 nestify = { workspace = true }
 sysinfo = { workspace = true }

@@ -153,6 +153,22 @@ pub fn validate_json_path(path: &str, _context: &()) -> Result<(), garde::Error>
     Ok(())
 }
 
+pub fn validate_avatar_url_template(template: &str, _context: &()) -> Result<(), garde::Error> {
+    let mut rest = template;
+
+    while let Some(start) = rest.find('{') {
+        let Some(end) = rest[start..].find('}').map(|end| start + end) else {
+            return Err(garde::Error::new("has an unterminated { placeholder"));
+        };
+
+        validate_json_path(&rest[start + 1..end], &())?;
+
+        rest = &rest[end + 1..];
+    }
+
+    Ok(())
+}
+
 pub fn validate_ignored_files(
     patterns: &[compact_str::CompactString],
     _context: &(),
@@ -268,6 +284,29 @@ pub fn is_single_component_file_name(name: &str) -> bool {
         (Some(std::path::Component::Normal(component)), None) => component.to_str() == Some(name),
         _ => false,
     }
+}
+
+#[cfg(target_os = "linux")]
+pub fn process_memory_usage() -> Option<u64> {
+    let status = std::fs::read_to_string("/proc/self/status").ok()?;
+
+    status
+        .lines()
+        .find_map(|line| line.strip_prefix("RssAnon:"))
+        .and_then(|value| {
+            value
+                .trim()
+                .trim_end_matches("kB")
+                .trim()
+                .parse::<u64>()
+                .ok()
+        })
+        .map(|kib| kib * 1024)
+}
+
+#[cfg(not(target_os = "linux"))]
+pub fn process_memory_usage() -> Option<u64> {
+    None
 }
 
 #[cfg(test)]
