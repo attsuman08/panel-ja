@@ -890,8 +890,10 @@
         "reselect": "ファイルを再選択して再開",
         "badge": {
           "uploading": "アップロード中",
+          "uploadingPercent": "アップロード中 {percent}%",
           "waiting": "待機中",
-          "paused": "一時停止中"
+          "paused": "一時停止中",
+          "incomplete": "未完了"
         },
         "rateLimited": "アップロードのレート制限がかかりました。待機中...",
         "cancelAllUploads": "すべてのアップロードをキャンセル",
@@ -5050,6 +5052,7 @@
             "uploadDirectory": "ディレクトリをアップロード",
             "search": "ファイルを検索",
             "largestDirectories": "ディレクトリサイズを分析",
+            "incompleteUploads": "未完了のアップロードを確認",
             "parentDirectory": "上のディレクトリへ",
             "copyPath": "現在のパスをコピー",
             "exitBackup": "バックアップ閲覧を終了",
@@ -5086,6 +5089,14 @@
             "oversizedIncluded": "{size} を超えるファイルは内容を検索せずにリスト表示されます",
             "size": "サイズ:",
             "edit": "検索条件を編集"
+          },
+          "upload": {
+            "by": "{user} による",
+            "banner": {
+              "title": "未完了のアップロード",
+              "content": "このサーバーへの一部のアップロードが完了しておらず、未完了のファイルがディスク上に残っています。",
+              "review": "アップロードを確認"
+            }
           },
           "operations": {
             "compressing": "{path} から {files} を圧縮中",
@@ -5392,6 +5403,12 @@
             "sftpDetails": {
               "title": "SFTP接続の詳細",
               "launch": "起動"
+            },
+            "incompleteUploads": {
+              "title": "未完了のアップロード",
+              "content": "以下の {files} はアップロードが完了していません。未完了のファイルはディスク上に残りますが、完了するまで使用できません。",
+              "hint": "ご自身が開始したアップロードであれば、アップロードパネルから再開してください。不要な場合は、未完了のファイルを削除してください。",
+              "empty": "このサーバーへのアップロードはすべて完了しています。"
             }
           }
         },
