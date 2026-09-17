@@ -1097,6 +1097,24 @@ impl WingsClient {
         .await
     }
 
+    pub async fn post_servers_server_files_stat(
+        &self,
+        server: uuid::Uuid,
+        data: &super::servers_server_files_stat::post::RequestBody,
+    ) -> Result<super::servers_server_files_stat::post::Response, ApiHttpError> {
+        request_impl(
+            self,
+            Method::POST,
+            format!("/api/servers/{server}/files/stat"),
+            Some(&ServersServerFilesStatPostBody {
+                inner: data,
+                ignored: &self.ignored,
+            }),
+            None,
+        )
+        .await
+    }
+
     pub async fn post_servers_server_files_write(
         &self,
         server: uuid::Uuid,
@@ -1708,5 +1726,12 @@ struct ServersServerFilesSearchPostBody<'a> {
 struct ServersServerFilesSqliteQueryPostBody<'a> {
     #[serde(flatten)]
     inner: &'a super::servers_server_files_sqlite_query::post::RequestBody,
+    ignored: &'a Vec<compact_str::CompactString>,
+}
+
+#[derive(Serialize)]
+struct ServersServerFilesStatPostBody<'a> {
+    #[serde(flatten)]
+    inner: &'a super::servers_server_files_stat::post::RequestBody,
     ignored: &'a Vec<compact_str::CompactString>,
 }

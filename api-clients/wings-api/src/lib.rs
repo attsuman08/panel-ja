@@ -2217,6 +2217,33 @@ pub mod servers_server_files_sqlite_query {
         pub type Response = Response200;
     }
 }
+pub mod servers_server_files_stat {
+    use super::*;
+
+    pub mod post {
+        use super::*;
+
+        nestify::nest! {
+            #[derive(Debug, ToSchema, Deserialize, Serialize, Clone)] pub struct RequestBody {
+                #[schema(inline)]
+                pub root: compact_str::CompactString,
+                #[schema(inline)]
+                pub files: Vec<compact_str::CompactString>,
+            }
+        }
+
+        nestify::nest! {
+            #[derive(Debug, ToSchema, Deserialize, Serialize, Clone)] pub struct Response200 {
+                #[schema(inline)]
+                pub entries: Vec<DirectoryEntry>,
+            }
+        }
+
+        pub type Response404 = ApiError;
+
+        pub type Response = Response200;
+    }
+}
 pub mod servers_server_files_write {
     use super::*;
 

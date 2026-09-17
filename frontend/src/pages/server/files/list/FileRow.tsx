@@ -166,7 +166,12 @@ const FileRow = forwardRef<HTMLTableRowElement, FileRowProps>(function FileRow(
   };
 
   return (
-    <FileRowContextMenu file={file} openMode={openMode} upload={upload}>
+    <FileRowContextMenu
+      file={file}
+      openMode={openMode}
+      directory={searchInfo?.root ?? browsingDirectory}
+      upload={upload}
+    >
       {({ items, openMenu }) => (
         <TableRow
           ref={ref}
