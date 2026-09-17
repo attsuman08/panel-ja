@@ -901,10 +901,27 @@
         "modal": {
           "cancelAllUploads": {
             "content": "Are you sure you want to cancel all active uploads? Partially uploaded files will be discarded."
+          },
+          "uploadConflict": {
+            "title": "Resolve Upload Conflicts",
+            "description": "The following {items} already exist in `{directory}`.",
+            "alsoUploading": "{files} without conflicts will be uploaded either way.",
+            "source": "Selected",
+            "selectedFolder": "Contains {files}.",
+            "destination": "Existing",
+            "skip": "Skip",
+            "overwrite": "Overwrite",
+            "merge": "Merge",
+            "mergeHint": "Existing files with the same name as one of the {files} will be overwritten.",
+            "rename": "Rename",
+            "skipAll": "Skip all",
+            "overwriteAll": "Overwrite all",
+            "confirm": "Upload {files}"
           }
         },
         "toast": {
           "uploading": "Started uploading {files}...",
+          "conflictCheckFailed": "Could not check for existing files; uploading anyway.",
           "failed": "Upload failed: {error}",
           "cancelledFile": "Successfully cancelled upload of `{file}`.",
           "cancelledFolder": "Successfully cancelled upload of `{folder}` ({files}).",

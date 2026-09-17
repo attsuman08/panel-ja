@@ -897,10 +897,27 @@
         "modal": {
           "cancelAllUploads": {
             "content": "Bist du sicher, dass du alle aktiven Uploads abbrechen möchtest? Teilweise hochgeladene Dateien werden verworfen."
+          },
+          "uploadConflict": {
+            "title": "Upload-Konflikte auflösen",
+            "description": "Die folgenden {items} existieren bereits in `{directory}`.",
+            "alsoUploading": "{files} ohne Konflikte werden ohnehin hochgeladen.",
+            "source": "Ausgewählt",
+            "selectedFolder": "Enthält {files}.",
+            "destination": "Vorhanden",
+            "skip": "Überspringen",
+            "overwrite": "Überschreiben",
+            "merge": "Zusammenführen",
+            "mergeHint": "Vorhandene Dateien mit demselben Namen wie eine der {files} werden überschrieben.",
+            "rename": "Umbenennen",
+            "skipAll": "Alle überspringen",
+            "overwriteAll": "Alle überschreiben",
+            "confirm": "{files} hochladen"
           }
         },
         "toast": {
           "uploading": "Hochladen von {files} gestartet...",
+          "conflictCheckFailed": "Vorhandene Dateien konnten nicht geprüft werden; wird trotzdem hochgeladen.",
           "failed": "Upload fehlgeschlagen: {error}",
           "cancelledFile": "Upload von `{file}` erfolgreich abgebrochen.",
           "cancelledFolder": "Upload von `{folder}` ({files}) erfolgreich abgebrochen.",
