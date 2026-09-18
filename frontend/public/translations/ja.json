@@ -687,6 +687,7 @@
           "themeAuto": "自動",
           "themeDark": "ダーク",
           "themeLight": "ライト",
+          "redactAddresses": "アドレスを非表示",
           "resetDeviceOverrides": "デバイスの上書きをリセット ({count})"
         },
         "modal": {
@@ -1469,7 +1470,8 @@
               "title": "環境設定",
               "form": {
                 "toastPosition": "トースト通知の位置",
-                "startOnGroupedServers": "グループ化されたサーバーページから開始"
+                "startOnGroupedServers": "グループ化されたサーバーページから開始",
+                "redactAddresses": "サーバーアドレスを非表示（可能な範囲で、画面共有向け）"
               }
             },
             "avatar": {
@@ -2302,7 +2304,16 @@
                   "serverLogAdminActivity": "サーバーの管理者アクティビティを記録",
                   "serverLogAdminActivityDescription": "管理者が所有者またはサブユーザーではないサーバーでの、管理者アクティビティのログ記録を有効化または無効化します。",
                   "serverLogScheduleActivity": "サーバースケジュールのアクティビティを記録",
-                  "serverLogScheduleActivityDescription": "サーバースケジュールによって実行されたアクティビティのログ記録を有効化または無効化します。"
+                  "serverLogScheduleActivityDescription": "サーバースケジュールによって実行されたアクティビティのログ記録を有効化または無効化します。",
+                  "serverHideActivityIps": "サーバーアクティビティのIPアドレスを非表示",
+                  "serverHideActivityIpsDescription": "サーバーアクティビティログ内のIPアドレスを、サーバー所有者に対しても非表示にします。ユーザーは常に自身のアクティビティのIPアドレスを確認できます。"
+                },
+                "enum": {
+                  "serverHideActivityIps": {
+                    "admins": "管理者",
+                    "allUsers": "すべてのユーザー",
+                    "none": "なし"
+                  }
                 },
                 "toast": {
                   "updated": "アクティビティ設定を更新しました。"
@@ -4317,6 +4328,10 @@
                   "nameFirstPathDescription": "情報取得URLのレスポンスから名を抽出するために使用されるパスです (https://serdejsonpath.live)。",
                   "nameLastPath": "姓（ラストネーム）パス",
                   "nameLastPathDescription": "情報取得URLのレスポンスから姓を抽出するために使用されるパスです (https://serdejsonpath.live)。",
+                  "avatarUrlTemplate": "アバターURLテンプレート",
+                  "avatarUrlTemplateDescription": "アバターのインポート元となるURLです。{placeholder} のプレースホルダーは情報取得URLのレスポンスから埋められます (https://serdejsonpath.live)。空欄にするとアバターはインポートされません。アバターURL全体を返すプロバイダーでは、{example} のようにプレースホルダーのみを指定してください。",
+                  "avatarOverwrite": "既存のアバターを上書き",
+                  "avatarOverwriteDescription": "有効にすると、ログインのたびにアバターを再インポートし、ユーザー自身が設定したものも置き換えます。無効にすると、アバターは未設定のユーザーに対してのみインポートされます。",
                   "loginOnly": "ログインのみを許可",
                   "loginBypassTwoFactor": "ログイン時の2要素認証をバイパス",
                   "loginBypassTwoFactorDescription": "このプロバイダーでログインするユーザーに対して、パネルの2要素認証のバイパスを許可します。",
@@ -5415,6 +5430,12 @@
         "databases": {
           "title": "データベース",
           "subtitle": "最大 {max} 個中 {current} 個のデータベースが作成されています。",
+          "empty": {
+            "title": "データベースがありません",
+            "description": "このサーバーにはデータを保存するデータベースがありません。作成すると、接続用のアドレス、ユーザー、パスワードを取得できます。",
+            "descriptionReadOnly": "このサーバーにはデータを保存するデータベースがありません。",
+            "descriptionUnavailable": "このサーバーにはデータを保存するデータベースがありません。利用可能なデータベースホストがないため、まだ作成できません。"
+          },
           "tooltip": {
             "limitReached": "このサーバーは最大 {max} 個のデータベースに制限されています。"
           },
@@ -5424,7 +5445,8 @@
             }
           },
           "button": {
-            "rotatePassword": "パスワードを再生成"
+            "rotatePassword": "パスワードを再生成",
+            "createFirstDatabase": "データベースを作成"
           },
           "form": {
             "databaseName": "データベース名"
@@ -5591,8 +5613,15 @@
           "instance": {
             "title": "マネージドデータベース",
             "updateAvailable": "アップデート利用可能",
+            "empty": {
+              "title": "マネージドデータベースがありません",
+              "description": "このサーバーは独自のデータベースを稼働していません。マネージドデータベースを作成すると、専用のリソース、ユーザー、バックアップを利用できます。",
+              "descriptionReadOnly": "このサーバーは独自のデータベースを稼働していません。",
+              "descriptionUnavailable": "このサーバーは独自のデータベースを稼働していません。利用可能なテンプレートがないため、まだ作成できません。"
+            },
             "button": {
-              "applyUpdate": "アップデートを適用"
+              "applyUpdate": "アップデートを適用",
+              "createFirstInstance": "マネージドデータベースを作成"
             },
             "tooltip": {
               "limitReached": "このサーバーは最大 {max} 個のマネージドデータベースに制限されています。"
@@ -5889,6 +5918,11 @@
             "title": "ファイルをここにドロップしてスケジュールとしてインポート",
             "subtitle": "離すとインポートが開始されます"
           },
+          "empty": {
+            "title": "スケジュールがありません",
+            "description": "このサーバーでは何も自動実行されていません。スケジュールを追加すると、タイマーやイベントに応じてコマンドやバックアップなどを実行できます。",
+            "descriptionReadOnly": "このサーバーでは何も自動実行されていません。"
+          },
           "tooltip": {
             "limitReached": "このサーバーは最大 {max} 個のスケジュールに制限されています。"
           },
@@ -5911,7 +5945,8 @@
             "addOutput": "出力を追加",
             "addFile": "ファイルを追加",
             "addHeader": "ヘッダーを追加",
-            "viewCalendar": "カレンダーを表示"
+            "viewCalendar": "カレンダーを表示",
+            "createFirstSchedule": "スケジュールを作成"
           },
           "toast": {
             "imported": "スケジュールをインポートしました。",
@@ -6599,6 +6634,14 @@
         "subusers": {
           "title": "サブユーザー",
           "subtitle": "最大 {max} 人中 {current} 人のサブユーザーが作成されています。",
+          "empty": {
+            "title": "サブユーザーがいません",
+            "description": "このサーバーへのアクセスは他の誰にも付与されていません。サブユーザーを追加すると、指定した権限のみで共有できます。",
+            "descriptionReadOnly": "このサーバーへのアクセスは他の誰にも付与されていません。"
+          },
+          "button": {
+            "createFirstSubuser": "サブユーザーを作成"
+          },
           "tooltip": {
             "limitReached": "このサーバーは最大 {max} 人のサブユーザーに制限されています。"
           },
@@ -6641,6 +6684,11 @@
           "title": "バックアップ",
           "subtitle": "最大 {max} 個中 {current} 個のバックアップが作成されています。",
           "subtitleWithDatabase": "最大 {max} 個中 {current} 個のバックアップが作成されています（サーバー: {server} 件、データベース: {database} 件）。",
+          "empty": {
+            "title": "バックアップがありません",
+            "description": "問題が発生しても、このサーバー上のものを復元することはできません。後で戻れるコピーを残すには、バックアップを作成してください。",
+            "descriptionReadOnly": "問題が発生しても、このサーバー上のものを復元することはできません。"
+          },
           "tooltip": {
             "limitReached": "このサーバーは最大 {max} 個のバックアップに制限されています。"
           },
