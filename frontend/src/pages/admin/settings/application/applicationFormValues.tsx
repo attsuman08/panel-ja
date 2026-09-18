@@ -21,6 +21,7 @@ export const applicationEmptyFormValues: ApplicationFormValues = {
   sessionDurationSeconds: 3600,
   telemetryEnabled: true,
   registrationEnabled: true,
+  passwordLoginEnabled: true,
 };
 
 export const applicationToFormValues = (app: ApplicationFormValues): Partial<ApplicationFormValues> => ({ ...app });
@@ -30,6 +31,7 @@ interface ApplicationFormFieldsOptions {
   assetUrls: string[];
   onTelemetryToggle: (checked: boolean) => void;
   onRegistrationToggle: (checked: boolean) => void;
+  onPasswordLoginToggle: (checked: boolean) => void;
 }
 
 export function useApplicationFormFields({
@@ -37,6 +39,7 @@ export function useApplicationFormFields({
   assetUrls,
   onTelemetryToggle,
   onRegistrationToggle,
+  onPasswordLoginToggle,
 }: ApplicationFormFieldsOptions): FieldDef<ApplicationFormValues>[] {
   const { t } = useTranslations();
 
@@ -154,6 +157,16 @@ export function useApplicationFormFields({
       props: {
         name: 'registrationEnabled',
         onChange: (e: React.ChangeEvent<HTMLInputElement>) => onRegistrationToggle(e.target.checked),
+      },
+    },
+    {
+      type: 'switch',
+      name: 'passwordLoginEnabled',
+      label: t('pages.admin.settings.tabs.application.page.form.passwordLoginEnabled', {}),
+      description: t('pages.admin.settings.tabs.application.page.form.passwordLoginEnabledDescription', {}),
+      props: {
+        name: 'passwordLoginEnabled',
+        onChange: (e: React.ChangeEvent<HTMLInputElement>) => onPasswordLoginToggle(e.target.checked),
       },
     },
   ];

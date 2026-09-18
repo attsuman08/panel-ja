@@ -102,6 +102,7 @@ export default function OobeConfiguration({ onNext }: OobeComponentProps) {
       sessionDurationSeconds: 7 * 24 * 3600,
       telemetryEnabled: true,
       registrationEnabled: form.values.applicationRegistration,
+      passwordLoginEnabled: true,
     })
       .then(() =>
         updateWebauthnSettings({

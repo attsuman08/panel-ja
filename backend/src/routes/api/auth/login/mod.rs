@@ -78,6 +78,16 @@ mod post {
             )
             .await?;
 
+        if !state
+            .settings
+            .get_as(|s| s.app.password_login_enabled)
+            .await?
+        {
+            return ApiResponse::error("password login is disabled")
+                .with_status(StatusCode::BAD_REQUEST)
+                .ok();
+        }
+
         if let Err(error) = state.captcha.verify(ip, data.captcha).await {
             return ApiResponse::error(&error)
                 .with_status(StatusCode::BAD_REQUEST)

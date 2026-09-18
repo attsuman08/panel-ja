@@ -152,6 +152,25 @@ impl UserOAuthLink {
         row.try_map(|row| Self::map(None, &row))
     }
 
+    pub async fn exists_usable_by_user_uuid(
+        database: &crate::database::Database,
+        user_uuid: uuid::Uuid,
+    ) -> Result<bool, sqlx::Error> {
+        sqlx::query_scalar!(
+            r#"
+            SELECT EXISTS (
+                SELECT 1
+                FROM user_oauth_links
+                JOIN oauth_providers ON oauth_providers.uuid = user_oauth_links.oauth_provider_uuid
+                WHERE user_oauth_links.user_uuid = $1 AND oauth_providers.enabled = true
+            ) AS "exists!"
+            "#,
+            user_uuid
+        )
+        .fetch_one(database.read())
+        .await
+    }
+
     pub async fn by_user_uuid_with_pagination(
         database: &crate::database::Database,
         user_uuid: uuid::Uuid,

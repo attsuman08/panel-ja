@@ -38,8 +38,11 @@ mod put {
     use shared::{
         ApiError, GetState,
         models::{
-            admin_activity::GetAdminActivityLogger, user::GetPermissionManager,
+            admin_activity::GetAdminActivityLogger,
+            oauth_provider::OAuthProvider,
+            user::{GetPermissionManager, GetUser},
             user_api_key::UserApiKey,
+            user_oauth_link::UserOAuthLink,
         },
         response::{ApiResponse, ApiResponseResult},
     };
@@ -83,6 +86,8 @@ mod put {
         telemetry_enabled: Option<bool>,
         #[garde(skip)]
         registration_enabled: Option<bool>,
+        #[garde(skip)]
+        password_login_enabled: Option<bool>,
     }
 
     #[derive(ToSchema, Validate, Deserialize)]
@@ -306,6 +311,7 @@ mod put {
     pub async fn route(
         state: GetState,
         permissions: GetPermissionManager,
+        user: GetUser,
         activity_logger: GetAdminActivityLogger,
         shared::Payload(data): shared::Payload<Payload>,
     ) -> ApiResponseResult {
@@ -384,6 +390,9 @@ mod put {
             }
             if let Some(registration_enabled) = app.registration_enabled {
                 settings.app.registration_enabled = registration_enabled;
+            }
+            if let Some(password_login_enabled) = app.password_login_enabled {
+                settings.app.password_login_enabled = password_login_enabled;
             }
         }
         if let Some(metadata) = data.metadata {
@@ -620,6 +629,25 @@ mod put {
             }
         }
 
+        if !settings.app.password_login_enabled {
+            if !OAuthProvider::exists_usable_except(&state.database, None).await? {
+                return ApiResponse::error(
+                    "an enabled oauth provider is required before password login can be disabled",
+                )
+                .with_status(StatusCode::BAD_REQUEST)
+                .ok();
+            }
+
+            if !(user.has_security_key && settings.webauthn.enabled)
+                && !UserOAuthLink::exists_usable_by_user_uuid(&state.database, user.uuid).await?
+            {
+                return ApiResponse::error(
+                    "a link to an enabled oauth provider or a security key is required before password login can be disabled",
+                )
+                .with_status(StatusCode::BAD_REQUEST)
+                .ok();
+            }
+        }
         if settings.app.two_factor_accepted_methods.is_empty()
             && !matches!(
                 settings.app.two_factor_requirement,

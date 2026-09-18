@@ -838,6 +838,10 @@ impl User {
             .any(|method| self.has_two_factor_method(*method, settings))
     }
 
+    pub fn can_login_with_password(&self, settings: &crate::settings::AppSettings) -> bool {
+        settings.app.password_login_enabled && !self.password_login_disabled
+    }
+
     pub fn require_email_verification(&self, settings: &crate::settings::AppSettings) -> bool {
         settings.app.email_verification_required
             && !matches!(settings.mail_mode, crate::settings::MailMode::None)
