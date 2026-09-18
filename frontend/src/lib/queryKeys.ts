@@ -267,6 +267,8 @@ const server = (serverUuid: string) => ({
     fileRevisions: (path: string) => ['server', serverUuid, 'files', 'revisions', path] as const,
     ignoreMatches: (pattern: string) => ['server', serverUuid, 'files', 'ignore-matches', pattern] as const,
     pathSuggestions: (directory: string) => ['server', serverUuid, 'files', 'path-suggestions', directory] as const,
+    pathStat: (directory: string, names: string[]) =>
+      ['server', serverUuid, 'files', 'path-stat', directory, names] as const,
   },
   firewall: {
     all: () => ['server', serverUuid, 'firewall'] as const,

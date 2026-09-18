@@ -47,8 +47,6 @@ export function precompressAssets(): Plugin {
       resolvedOutDir = path.resolve(config.root, config.build.outDir);
     },
 
-    // Compresses in closeBundle so assets generated after writeBundle - such as the merged
-    // translations that replace the raw files copied out of public/ - are the ones gzipped.
     async closeBundle() {
       const filePaths = await getCompressibleFiles(resolvedOutDir).catch(() => []);
       if (filePaths.length === 0) return;

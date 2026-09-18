@@ -80,12 +80,12 @@ jobs:
             wings_platform: linux/arm64
           - build: riscv64-linux
             os: ubuntu-24.04
-            target: riscv64gc-unknown-linux-gnu
+            target: riscv64gc-unknown-linux-musl
             binary_suffix: ""
             wings_platform: linux/riscv64
           - build: ppc64le-linux
             os: ubuntu-24.04
-            target: powerpc64le-unknown-linux-gnu
+            target: powerpc64le-unknown-linux-musl
             binary_suffix: ""
             wings_platform: linux/ppc64le
           #- build: x86_64-windows
@@ -104,7 +104,7 @@ jobs:
           path: frontend/dist/
 
       - name: Install Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: stable
           target: ${{ matrix.target }}
@@ -126,8 +126,11 @@ jobs:
         env:
           WINGS_RELEASE: nightly
           WINGS_BINARY_PATH: bins/wings-nightly-bin
+          # riscv64gc musl is not crt-static by default
+          # opt-level=z enables LLVM's MachineOutliner on aarch64/riscv64; its whole-module
+          # suffix tree under fat LTO + codegen-units=1 OOMs the 16GB runner.
+          RUSTFLAGS: "-C target-feature=+crt-static -C llvm-args=-enable-machine-outliner=never"
         run: |
-          RUSTFLAGS="-C target-feature=+crt-static" \
           cross build --release --target ${{ matrix.target }} -p $BIN_NAME
           cross build --release --target ${{ matrix.target }} -p $AIO_BIN_NAME
 

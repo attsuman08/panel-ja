@@ -143,9 +143,9 @@ export function isOpenableFile(
     : { openable: false };
 }
 
-export function permissionStringToNumber(mode: string) {
+export function permissionStringToNumber(mode: string): number | null {
   if (mode.length !== 10) {
-    throw new Error('Invalid permission string length.');
+    return null;
   }
 
   const perms = mode.slice(1);
