@@ -89,6 +89,8 @@ const baseTranslations = defineTranslations({
         success: 'Success',
         clockOffset:
           'Your system clock is out of sync with the server by more than 5 seconds. This may cause issues with passkey authentication and two-factor authentication. Please sync your clock if issues arise. Current offset: {offset} second(s).',
+        passwordAuthUnavailable:
+          'Your password will not work for this connection. Use an SSH key instead, you can add one on the SSH Keys page of your account.',
       },
       divider: {
         or: 'OR',
@@ -796,9 +798,26 @@ const baseTranslations = defineTranslations({
           cancelAllUploads: {
             content: 'Are you sure you want to cancel all active uploads? Partially uploaded files will be discarded.',
           },
+          uploadConflict: {
+            title: 'Resolve Upload Conflicts',
+            description: 'The following {items} already exist in `{directory}`.',
+            alsoUploading: '{files} without conflicts will be uploaded either way.',
+            source: 'Selected',
+            selectedFolder: 'Contains {files}.',
+            destination: 'Existing',
+            skip: 'Skip',
+            overwrite: 'Overwrite',
+            merge: 'Merge',
+            mergeHint: 'Existing files with the same name as one of the {files} will be overwritten.',
+            rename: 'Rename',
+            skipAll: 'Skip all',
+            overwriteAll: 'Overwrite all',
+            confirm: 'Upload {files}',
+          },
         },
         toast: {
           uploading: 'Started uploading {files}...',
+          conflictCheckFailed: 'Could not check for existing files; uploading anyway.',
           failed: 'Upload failed: {error}',
           cancelledFile: 'Successfully cancelled upload of `{file}`.',
           cancelledFolder: 'Successfully cancelled upload of `{folder}` ({files}).',
@@ -1002,6 +1021,8 @@ const baseTranslations = defineTranslations({
             userAlreadyExists: 'An account with this username or email already exists.',
             securityKeyRequired:
               'This account requires two-factor authentication, sign in with a security key instead.',
+            passwordLoginDisabled:
+              'Password sign-in is turned off on this panel, use one of the options below instead.',
           },
           passkey: {
             error: {
@@ -1023,6 +1044,7 @@ const baseTranslations = defineTranslations({
             username: {
               title: 'Login',
               subtitle: 'Enter your username or email address to continue',
+              subtitleProviderOnly: 'Choose a provider to continue',
               form: {
                 usernameOrEmailPlaceholder: 'Your username or email address',
               },
@@ -1912,6 +1934,9 @@ const baseTranslations = defineTranslations({
                   telemetryEnabledDescription:
                     'Allow Calagopus to collect limited and anonymous usage data to help improve the application.',
                   registrationEnabled: 'Enable Registration',
+                  passwordLoginEnabled: 'Enable Password Login',
+                  passwordLoginEnabledDescription:
+                    'Let users sign in with a username and password. Turning this off leaves OAuth providers and security keys as the only way in, and also stops local registration, password resets and SFTP password authentication.',
                 },
                 enum: {
                   twoFactorMethod: {
@@ -1941,6 +1966,11 @@ const baseTranslations = defineTranslations({
                     title: 'Confirm Enabling Registration',
                     content:
                       'Are you sure you want to enable registration? Enabling registration allows anyone to create an account on this panel. If you do not have a captcha configured, this may be a mistake.',
+                  },
+                  disablePasswordLogin: {
+                    title: 'Confirm Disabling Password Login',
+                    content:
+                      'Are you sure you want to disable password login? Everyone will need an OAuth provider or a security key to sign in, and local registration, password resets and SFTP password authentication will stop working. Make sure you can still sign in yourself before continuing.',
                   },
                   telemetryPreview: {
                     title: 'Telemetry Preview',

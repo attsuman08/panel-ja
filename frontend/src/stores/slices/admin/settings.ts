@@ -40,6 +40,7 @@ export const createSettingsSlice: StateCreator<AdminStore, [], [], SettingsSlice
     sessionDurationSeconds: 3600,
     telemetryEnabled: true,
     registrationEnabled: true,
+    passwordLoginEnabled: true,
   },
   metadata: {
     description: null,

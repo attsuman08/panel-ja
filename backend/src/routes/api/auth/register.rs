@@ -67,6 +67,11 @@ mod post {
                 .with_status(StatusCode::BAD_REQUEST)
                 .ok();
         }
+        if !settings.app.password_login_enabled {
+            return ApiResponse::error("password login is disabled")
+                .with_status(StatusCode::BAD_REQUEST)
+                .ok();
+        }
         let ratelimit = settings.ratelimits.auth_register;
         drop(settings);
 

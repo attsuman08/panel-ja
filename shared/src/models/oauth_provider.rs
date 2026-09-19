@@ -246,6 +246,25 @@ impl OAuthProvider {
         })
     }
 
+    pub async fn exists_usable_except(
+        database: &crate::database::Database,
+        except: Option<uuid::Uuid>,
+    ) -> Result<bool, sqlx::Error> {
+        sqlx::query_scalar!(
+            r#"
+            SELECT EXISTS (
+                SELECT 1
+                FROM oauth_providers
+                WHERE oauth_providers.enabled = true
+                    AND ($1::uuid IS NULL OR oauth_providers.uuid != $1)
+            ) AS "exists!"
+            "#,
+            except
+        )
+        .fetch_one(database.read())
+        .await
+    }
+
     pub async fn all_by_usable(
         database: &crate::database::Database,
     ) -> Result<Vec<Self>, crate::database::DatabaseError> {

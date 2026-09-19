@@ -211,7 +211,8 @@
         "error": "Fehler",
         "warning": "Warnung",
         "success": "Erfolg",
-        "clockOffset": "Deine Systemuhr weicht um mehr als 5 Sekunden vom Server ab. Dies kann Probleme mit der Passkey-Authentifizierung und der Zwei-Faktor-Authentifizierung verursachen. Bitte synchronisiere deine Uhr, falls Probleme auftreten. Aktuelle Abweichung: {offset} Sekunde(n)."
+        "clockOffset": "Deine Systemuhr weicht um mehr als 5 Sekunden vom Server ab. Dies kann Probleme mit der Passkey-Authentifizierung und der Zwei-Faktor-Authentifizierung verursachen. Bitte synchronisiere deine Uhr, falls Probleme auftreten. Aktuelle Abweichung: {offset} Sekunde(n).",
+        "passwordAuthUnavailable": "Dein Passwort funktioniert für diese Verbindung nicht. Nutze stattdessen einen SSH-Schlüssel, du kannst einen auf der Seite SSH-Schlüssel in deinem Account hinzufügen."
       },
       "divider": {
         "or": "ODER"
@@ -897,10 +898,27 @@
         "modal": {
           "cancelAllUploads": {
             "content": "Bist du sicher, dass du alle aktiven Uploads abbrechen möchtest? Teilweise hochgeladene Dateien werden verworfen."
+          },
+          "uploadConflict": {
+            "title": "Upload-Konflikte auflösen",
+            "description": "Die folgenden {items} existieren bereits in `{directory}`.",
+            "alsoUploading": "{files} ohne Konflikte werden ohnehin hochgeladen.",
+            "source": "Ausgewählt",
+            "selectedFolder": "Enthält {files}.",
+            "destination": "Vorhanden",
+            "skip": "Überspringen",
+            "overwrite": "Überschreiben",
+            "merge": "Zusammenführen",
+            "mergeHint": "Vorhandene Dateien mit demselben Namen wie eine der {files} werden überschrieben.",
+            "rename": "Umbenennen",
+            "skipAll": "Alle überspringen",
+            "overwriteAll": "Alle überschreiben",
+            "confirm": "{files} hochladen"
           }
         },
         "toast": {
           "uploading": "Hochladen von {files} gestartet...",
+          "conflictCheckFailed": "Vorhandene Dateien konnten nicht geprüft werden; wird trotzdem hochgeladen.",
           "failed": "Upload fehlgeschlagen: {error}",
           "cancelledFile": "Upload von `{file}` erfolgreich abgebrochen.",
           "cancelledFolder": "Upload von `{folder}` ({files}) erfolgreich abgebrochen.",
@@ -1095,7 +1113,8 @@
             "usernameRequired": "Bitte gib einen Benutzernamen ein",
             "registrationDisabled": "Es konnte kein passender Account gefunden werden und die Registrierung ist derzeit deaktiviert.",
             "userAlreadyExists": "Ein Account mit diesem Benutzernamen oder dieser E-Mail existiert bereits.",
-            "securityKeyRequired": "Dieser Account erfordert eine Zwei-Faktor-Authentifizierung, melde dich stattdessen mit einem Sicherheitsschlüssel an."
+            "securityKeyRequired": "Dieser Account erfordert eine Zwei-Faktor-Authentifizierung, melde dich stattdessen mit einem Sicherheitsschlüssel an.",
+            "passwordLoginDisabled": "Die Anmeldung mit Passwort ist in diesem Panel deaktiviert, nutze stattdessen eine der Optionen unten."
           },
           "passkey": {
             "error": {
@@ -1115,6 +1134,7 @@
             "username": {
               "title": "Anmelden",
               "subtitle": "Gib deinen Benutzernamen oder deine E-Mail-Adresse ein, um fortzufahren",
+              "subtitleProviderOnly": "Wähle einen Anbieter, um fortzufahren",
               "form": {
                 "usernameOrEmailPlaceholder": "Dein Benutzername oder deine E-Mail-Adresse"
               },
@@ -1977,7 +1997,9 @@
                   "emailVerificationRequiredDescription": "Neue Benutzer müssen ihre E-Mail-Adresse bestätigen, bevor sie das Panel nutzen können. Erfordert einen konfigurierten Mail-Transport.",
                   "telemetryEnabled": "Telemetrie aktivieren",
                   "telemetryEnabledDescription": "Erlaube Calagopus, begrenzte und anonyme Nutzungsdaten zu sammeln, um die Anwendung zu verbessern.",
-                  "registrationEnabled": "Registrierung aktivieren"
+                  "registrationEnabled": "Registrierung aktivieren",
+                  "passwordLoginEnabled": "Passwort-Anmeldung aktivieren",
+                  "passwordLoginEnabledDescription": "Erlaube Benutzern, sich mit Benutzername und Passwort anzumelden. Wenn du dies deaktivierst, bleiben nur OAuth-Anbieter und Sicherheitsschlüssel als Zugang, und die lokale Registrierung, das Zurücksetzen von Passwörtern sowie die SFTP-Anmeldung mit Passwort werden ebenfalls gestoppt."
                 },
                 "enum": {
                   "twoFactorMethod": {
@@ -2005,6 +2027,10 @@
                   "enableRegistration": {
                     "title": "Registrierungs-Aktivierung bestätigen",
                     "content": "Bist du sicher, dass du die Registrierung aktivieren möchtest? Das Aktivieren der Registrierung erlaubt es jedem, ein Konto in diesem Panel zu erstellen. Wenn du keine Captcha konfiguriert hast, könnte dies ein Fehler sein."
+                  },
+                  "disablePasswordLogin": {
+                    "title": "Deaktivierung der Passwort-Anmeldung bestätigen",
+                    "content": "Bist du sicher, dass du die Passwort-Anmeldung deaktivieren möchtest? Alle benötigen dann einen OAuth-Anbieter oder einen Sicherheitsschlüssel, um sich anzumelden, und die lokale Registrierung, das Zurücksetzen von Passwörtern sowie die SFTP-Anmeldung mit Passwort funktionieren nicht mehr. Stelle sicher, dass du dich selbst noch anmelden kannst, bevor du fortfährst."
                   },
                   "telemetryPreview": {
                     "title": "Telemetrie-Vorschau"

@@ -20,6 +20,7 @@ export const adminSettingsApplicationSchema = z.object({
   sessionDurationSeconds: z.number().min(60).max(31536000),
   telemetryEnabled: z.boolean(),
   registrationEnabled: z.boolean(),
+  passwordLoginEnabled: z.boolean(),
 });
 
 export const adminSettingsCaptchaProviderNoneSchema = z.object({

@@ -50,6 +50,7 @@ export const publicSettingsSchema = z.object({
     name: z.string(),
     language: z.string(),
     registrationEnabled: z.boolean(),
+    passwordLoginEnabled: z.boolean(),
     emailTwoFactorEnabled: z.boolean(),
     emailVerificationRequired: z.boolean(),
     twoFactorAcceptedMethods: z.array(twoFactorMethod),
