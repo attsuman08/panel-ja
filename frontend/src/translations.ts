@@ -3291,6 +3291,13 @@ const baseTranslations = defineTranslations({
               content: 'Are you sure you want to {action} **{servers}**?',
               deleteContent:
                 'Are you sure you want to permanently delete **{servers}** and everything on them? This cannot be undone.',
+              form: {
+                deleteBackups: 'Do you want to delete backups of these servers?',
+              },
+              alert: {
+                forceWarning:
+                  'Force deletion removes these servers from the panel even if their nodes cannot be reached. Their files and databases may not be fully cleaned up, leaving orphaned data behind.',
+              },
             },
             successWithSkipped: 'Successfully {action} {servers}. {skippedServers} skipped.',
             nothingToDo: 'Every selected server is already in that state.',
