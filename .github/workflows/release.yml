@@ -209,6 +209,9 @@ jobs:
 
       - name: Build release binary (Windows)
         if: runner.os == 'Windows'
+        env:
+          # vendored openssl ships no ossl_static.pdb, so link.exe floods LNK4099
+          RUSTFLAGS: "-A linker_messages"
         run: cargo build --release --target ${{ matrix.target }} -p $env:BIN_NAME
 
       - name: Prepare binaries (Linux)
