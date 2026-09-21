@@ -275,11 +275,12 @@ impl Node {
             SELECT {}, COUNT(*) OVER() AS total_count
             FROM nodes
             JOIN locations ON locations.uuid = nodes.location_uuid
-            WHERE nodes.location_uuid = $1 AND ($2 IS NULL OR nodes.name ILIKE '%' || $2 || '%')
+            WHERE nodes.location_uuid = $1 AND {search}
             ORDER BY nodes.created
             LIMIT $3 OFFSET $4
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(2, &["nodes.name"], &["nodes.uuid"])
         )))
         .bind(location_uuid)
         .bind(search)
@@ -315,11 +316,12 @@ impl Node {
             SELECT {}, COUNT(*) OVER() AS total_count
             FROM nodes
             JOIN locations ON locations.uuid = nodes.location_uuid
-            WHERE nodes.backup_configuration_uuid = $1 AND ($2 IS NULL OR nodes.name ILIKE '%' || $2 || '%')
+            WHERE nodes.backup_configuration_uuid = $1 AND {search}
             ORDER BY nodes.created
             LIMIT $3 OFFSET $4
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(2, &["nodes.name"], &["nodes.uuid"])
         )))
         .bind(backup_configuration_uuid)
         .bind(search)
@@ -354,11 +356,12 @@ impl Node {
             SELECT {}, COUNT(*) OVER() AS total_count
             FROM nodes
             JOIN locations ON locations.uuid = nodes.location_uuid
-            WHERE $1 IS NULL OR nodes.name ILIKE '%' || $1 || '%'
+            WHERE {search}
             ORDER BY nodes.created
             LIMIT $2 OFFSET $3
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(1, &["nodes.name"], &["nodes.uuid"])
         )))
         .bind(search)
         .bind(per_page)

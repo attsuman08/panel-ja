@@ -529,11 +529,12 @@ impl ServerBackup {
             WHERE
                 server_backups.server_uuid = $1
                 AND server_backups.deleted IS NULL
-                AND ($2 IS NULL OR server_backups.name ILIKE '%' || $2 || '%')
+                AND {search}
             ORDER BY server_backups.created
             LIMIT $3 OFFSET $4
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(2, &["server_backups.name"], &["server_backups.uuid"])
         )))
         .bind(server_uuid)
         .bind(search)
@@ -575,14 +576,15 @@ impl ServerBackup {
                 AND server_backups.node_uuid = $2
                 AND server_backups.system_backup_policy_uuid IS NULL
                 AND server_backups.deleted IS NULL
-                AND ($3 IS NULL OR server_backups.name ILIKE '%' || $3 || '%')
+                AND {search}
                 AND ($4::server_backup_kind IS NULL OR server_backups.kind = $4)
                 AND ($5::uuid IS NULL OR server_backups.database_instance_uuid = $5)
                 AND ($6::database_agent_type IS NULL OR server_backups.database_type = $6)
             ORDER BY server_backups.created
             LIMIT $7 OFFSET $8
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(3, &["server_backups.name"], &["server_backups.uuid"])
         )))
         .bind(server_uuid)
         .bind(node_uuid)
@@ -628,11 +630,12 @@ impl ServerBackup {
                 AND server_backups.node_uuid = $2
                 AND server_backups.backup_group_uuid = $3
                 AND server_backups.deleted IS NULL
-                AND ($4 IS NULL OR server_backups.name ILIKE '%' || $4 || '%')
+                AND {search}
             ORDER BY server_backups.created
             LIMIT $5 OFFSET $6
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(4, &["server_backups.name"], &["server_backups.uuid"])
         )))
         .bind(server_uuid)
         .bind(node_uuid)
@@ -677,14 +680,15 @@ impl ServerBackup {
                 AND server_backups.backup_group_uuid IS NULL
                 AND server_backups.system_backup_policy_uuid IS NULL
                 AND server_backups.deleted IS NULL
-                AND ($3 IS NULL OR server_backups.name ILIKE '%' || $3 || '%')
+                AND {search}
                 AND ($4::server_backup_kind IS NULL OR server_backups.kind = $4)
                 AND ($5::uuid IS NULL OR server_backups.database_instance_uuid = $5)
                 AND ($6::database_agent_type IS NULL OR server_backups.database_type = $6)
             ORDER BY server_backups.created
             LIMIT $7 OFFSET $8
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(3, &["server_backups.name"], &["server_backups.uuid"])
         )))
         .bind(server_uuid)
         .bind(node_uuid)
@@ -755,11 +759,12 @@ impl ServerBackup {
                 AND server_backups.node_uuid = $2
                 AND server_backups.system_backup_policy_uuid IS NOT NULL
                 AND server_backups.deleted IS NULL
-                AND ($3 IS NULL OR server_backups.name ILIKE '%' || $3 || '%')
+                AND {search}
             ORDER BY server_backups.created
             LIMIT $4 OFFSET $5
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(3, &["server_backups.name"], &["server_backups.uuid"])
         )))
         .bind(server_uuid)
         .bind(node_uuid)
@@ -798,11 +803,12 @@ impl ServerBackup {
             WHERE
                 server_backups.system_backup_policy_uuid = $1
                 AND server_backups.deleted IS NULL
-                AND ($2 IS NULL OR server_backups.name ILIKE '%' || $2 || '%')
+                AND {search}
             ORDER BY server_backups.created
             LIMIT $3 OFFSET $4
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(2, &["server_backups.name"], &["server_backups.uuid"])
         )))
         .bind(system_backup_policy_uuid)
         .bind(search)
@@ -865,11 +871,12 @@ impl ServerBackup {
                 server_backups.server_uuid = $1
                 AND server_backups.node_uuid != $2
                 AND server_backups.deleted IS NULL
-                AND ($3 IS NULL OR server_backups.name ILIKE '%' || $3 || '%')
+                AND {search}
             ORDER BY server_backups.created
             LIMIT $4 OFFSET $5
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(3, &["server_backups.name"], &["server_backups.uuid"])
         )))
         .bind(server_uuid)
         .bind(node_uuid)
@@ -908,11 +915,12 @@ impl ServerBackup {
             WHERE
                 server_backups.node_uuid = $1
                 AND server_backups.deleted IS NULL
-                AND ($2 IS NULL OR server_backups.name ILIKE '%' || $2 || '%')
+                AND {search}
             ORDER BY server_backups.created
             LIMIT $3 OFFSET $4
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(2, &["server_backups.name"], &["server_backups.uuid"])
         )))
         .bind(node_uuid)
         .bind(search)
@@ -951,11 +959,12 @@ impl ServerBackup {
             WHERE
                 server_database_instances.database_agent_host_uuid = $1
                 AND server_backups.deleted IS NULL
-                AND ($2 IS NULL OR server_backups.name ILIKE '%' || $2 || '%')
+                AND {search}
             ORDER BY server_backups.created
             LIMIT $3 OFFSET $4
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(2, &["server_backups.name"], &["server_backups.uuid"])
         )))
         .bind(database_agent_host_uuid)
         .bind(search)
@@ -993,11 +1002,12 @@ impl ServerBackup {
             WHERE
                 server_backups.backup_configuration_uuid = $1
                 AND server_backups.deleted IS NULL
-                AND ($2 IS NULL OR server_backups.name ILIKE '%' || $2 || '%')
+                AND {search}
             ORDER BY server_backups.created
             LIMIT $3 OFFSET $4
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(2, &["server_backups.name"], &["server_backups.uuid"])
         )))
         .bind(backup_configuration_uuid)
         .bind(search)
@@ -1036,11 +1046,12 @@ impl ServerBackup {
                 server_backups.node_uuid = $1
                 AND server_backups.server_uuid IS NULL
                 AND server_backups.deleted IS NULL
-                AND ($2 IS NULL OR server_backups.name ILIKE '%' || $2 || '%')
+                AND {search}
             ORDER BY server_backups.created
             LIMIT $3 OFFSET $4
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(2, &["server_backups.name"], &["server_backups.uuid"])
         )))
         .bind(node_uuid)
         .bind(search)

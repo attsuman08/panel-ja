@@ -677,11 +677,12 @@ impl Server {
             LEFT JOIN roles ON roles.uuid = users.role_uuid
             JOIN nest_eggs ON nest_eggs.uuid = servers.egg_uuid
             JOIN nests ON nests.uuid = nest_eggs.nest_uuid
-            WHERE servers.owner_uuid = $1 AND ($2 IS NULL OR servers.name ILIKE '%' || $2 || '%')
+            WHERE servers.owner_uuid = $1 AND {search}
             ORDER BY servers.created
             LIMIT $3 OFFSET $4
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(2, &["servers.name"], &["servers.uuid"])
         )))
         .bind(owner_uuid)
         .bind(search)
@@ -726,11 +727,12 @@ impl Server {
             LEFT JOIN server_subusers ON server_subusers.server_uuid = servers.uuid AND server_subusers.user_uuid = $1
             WHERE servers.uuid = ANY($2)
                 AND (servers.owner_uuid = $1 OR server_subusers.user_uuid = $1 OR $6)
-                AND ($3 IS NULL OR servers.name ILIKE '%' || $3 || '%' OR users.username ILIKE '%' || $3 || '%' OR users.email ILIKE '%' || $3 || '%')
+                AND {search}
             ORDER BY array_position($2, servers.uuid), servers.created
             LIMIT $4 OFFSET $5
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(3, &["servers.name", "users.username", "users.email"], &["servers.uuid"])
         )))
         .bind(user.uuid)
         .bind(server_order)
@@ -780,11 +782,12 @@ impl Server {
             LEFT JOIN server_subusers ON server_subusers.server_uuid = servers.uuid AND server_subusers.user_uuid = $1
             WHERE
                 (servers.owner_uuid = $1 OR server_subusers.user_uuid = $1)
-                AND ($2 IS NULL OR servers.name ILIKE '%' || $2 || '%' OR users.username ILIKE '%' || $2 || '%' OR users.email ILIKE '%' || $2 || '%')
+                AND {search}
             ORDER BY servers.created
             LIMIT $3 OFFSET $4
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(2, &["servers.name", "users.username", "users.email"], &["servers.uuid"])
         )))
         .bind(user_uuid)
         .bind(search)
@@ -853,11 +856,12 @@ impl Server {
             LEFT JOIN server_subusers ON server_subusers.server_uuid = servers.uuid AND server_subusers.user_uuid = $1
             WHERE
                 servers.owner_uuid != $1 AND (server_subusers.user_uuid IS NULL OR server_subusers.user_uuid != $1)
-                AND ($2 IS NULL OR servers.name ILIKE '%' || $2 || '%' OR users.username ILIKE '%' || $2 || '%' OR users.email ILIKE '%' || $2 || '%')
+                AND {search}
             ORDER BY servers.created
             LIMIT $3 OFFSET $4
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(2, &["servers.name", "users.username", "users.email"], &["servers.uuid"])
         )))
         .bind(user_uuid)
         .bind(search)
@@ -909,11 +913,12 @@ impl Server {
                 AND NOT servers.suspended
                 AND servers.destination_node_uuid IS NULL
                 AND servers.status IS NULL
-                AND ($3 IS NULL OR servers.name ILIKE '%' || $3 || '%' OR users.username ILIKE '%' || $3 || '%' OR users.email ILIKE '%' || $3 || '%')
+                AND {search}
             ORDER BY servers.created
             LIMIT $4 OFFSET $5
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(3, &["servers.name", "users.username", "users.email"], &["servers.uuid"])
         )))
         .bind(user_uuid)
         .bind(server_uuid)
@@ -964,11 +969,12 @@ impl Server {
                 AND NOT servers.suspended
                 AND servers.destination_node_uuid IS NULL
                 AND servers.status IS NULL
-                AND ($3 IS NULL OR servers.name ILIKE '%' || $3 || '%' OR users.username ILIKE '%' || $3 || '%' OR users.email ILIKE '%' || $3 || '%')
+                AND {search}
             ORDER BY servers.created
             LIMIT $4 OFFSET $5
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(3, &["servers.name", "users.username", "users.email"], &["servers.uuid"])
         )))
         .bind(user_uuid)
         .bind(server_uuid)
@@ -1010,11 +1016,12 @@ impl Server {
             LEFT JOIN roles ON roles.uuid = users.role_uuid
             JOIN nest_eggs ON nest_eggs.uuid = servers.egg_uuid
             JOIN nests ON nests.uuid = nest_eggs.nest_uuid
-            WHERE servers.node_uuid = $1 AND ($2 IS NULL OR servers.name ILIKE '%' || $2 || '%')
+            WHERE servers.node_uuid = $1 AND {search}
             ORDER BY servers.created
             LIMIT $3 OFFSET $4
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(2, &["servers.name"], &["servers.uuid"])
         )))
         .bind(node_uuid)
         .bind(search)
@@ -1056,11 +1063,12 @@ impl Server {
             JOIN nest_eggs ON nest_eggs.uuid = servers.egg_uuid
             JOIN nests ON nests.uuid = nest_eggs.nest_uuid
             WHERE servers.node_uuid = $1 AND servers.destination_node_uuid IS NOT NULL
-                AND ($2 IS NULL OR servers.name ILIKE '%' || $2 || '%')
+                AND {search}
             ORDER BY servers.created
             LIMIT $3 OFFSET $4
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(2, &["servers.name"], &["servers.uuid"])
         )))
         .bind(node_uuid)
         .bind(search)
@@ -1101,11 +1109,12 @@ impl Server {
             LEFT JOIN roles ON roles.uuid = users.role_uuid
             JOIN nest_eggs ON nest_eggs.uuid = servers.egg_uuid
             JOIN nests ON nests.uuid = nest_eggs.nest_uuid
-            WHERE servers.egg_uuid = $1 AND ($2 IS NULL OR servers.name ILIKE '%' || $2 || '%')
+            WHERE servers.egg_uuid = $1 AND {search}
             ORDER BY servers.created
             LIMIT $3 OFFSET $4
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(2, &["servers.name"], &["servers.uuid"])
         )))
         .bind(egg_uuid)
         .bind(search)
@@ -1146,11 +1155,12 @@ impl Server {
             LEFT JOIN roles ON roles.uuid = users.role_uuid
             JOIN nest_eggs ON nest_eggs.uuid = servers.egg_uuid
             JOIN nests ON nests.uuid = nest_eggs.nest_uuid
-            WHERE servers.backup_configuration_uuid = $1 AND ($2 IS NULL OR servers.name ILIKE '%' || $2 || '%')
+            WHERE servers.backup_configuration_uuid = $1 AND {search}
             ORDER BY servers.created
             LIMIT $3 OFFSET $4
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(2, &["servers.name"], &["servers.uuid"])
         )))
         .bind(backup_configuration_uuid)
         .bind(search)
@@ -1190,11 +1200,12 @@ impl Server {
             LEFT JOIN roles ON roles.uuid = users.role_uuid
             JOIN nest_eggs ON nest_eggs.uuid = servers.egg_uuid
             JOIN nests ON nests.uuid = nest_eggs.nest_uuid
-            WHERE $1 IS NULL OR servers.name ILIKE '%' || $1 || '%'
+            WHERE {search}
             ORDER BY servers.created
             LIMIT $2 OFFSET $3
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(1, &["servers.name"], &["servers.uuid"])
         )))
         .bind(search)
         .bind(per_page)
