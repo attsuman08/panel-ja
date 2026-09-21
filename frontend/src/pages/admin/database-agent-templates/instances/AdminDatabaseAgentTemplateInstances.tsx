@@ -16,7 +16,7 @@ import { queryKeys } from '@/lib/queryKeys.ts';
 import { adminDatabaseAgentTemplateSchema } from '@/lib/schemas/admin/databaseAgentTemplates.ts';
 import { databaseAgentTemplateInstanceTableColumns } from '@/lib/tableColumns.ts';
 import { useSearchablePaginatedTable } from '@/plugins/resource/useSearchablePaginatedTable.ts';
-import { useObjectSetSelection } from '@/plugins/selection/useObjectSetSelection.ts';
+import { useTableSelection } from '@/plugins/selection/useTableSelection.ts';
 import { useToast } from '@/providers/ToastProvider.tsx';
 import { useTranslations } from '@/providers/TranslationProvider.tsx';
 import DatabaseAgentTemplateInstanceRow from './DatabaseAgentTemplateInstanceRow.tsx';
@@ -47,7 +47,7 @@ export default function AdminDatabaseAgentTemplateInstances({
     fetcher: (page, search) => getDatabaseAgentTemplateInstances(databaseAgentTemplate.uuid, page, search),
   });
 
-  const { selected, add, remove, clear, selectionAreaProps } = useObjectSetSelection(instances?.data);
+  const { selected, add, remove, clear, selectionAreaProps } = useTableSelection({ items: instances?.data });
 
   const doApplyUpdates = async () => {
     const scope = pendingScope;
@@ -137,14 +137,7 @@ export default function AdminDatabaseAgentTemplateInstances({
       </ActionBar>
 
       <SelectionArea onSelectedStart={selectionAreaProps.onSelectedStart} onSelected={selectionAreaProps.onSelected}>
-        <Table
-          columns={columns}
-          loading={loading}
-          error={error}
-          pagination={instances}
-          onPageSelect={setPage}
-          allowSelect={false}
-        >
+        <Table columns={columns} loading={loading} error={error} pagination={instances} onPageSelect={setPage}>
           {instances?.data.map((databaseAgent) => (
             <SelectionArea.Selectable key={databaseAgent.uuid} item={databaseAgent}>
               {(innerRef: Ref<HTMLElement>) => (

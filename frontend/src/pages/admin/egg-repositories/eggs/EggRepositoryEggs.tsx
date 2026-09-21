@@ -8,7 +8,7 @@ import { queryKeys } from '@/lib/queryKeys.ts';
 import { adminEggRepositoryEggSchema, adminEggRepositorySchema } from '@/lib/schemas/admin/eggRepositories.ts';
 import { eggRepositoryEggTableColumns } from '@/lib/tableColumns.ts';
 import { useSearchablePaginatedTable } from '@/plugins/resource/useSearchablePaginatedTable.ts';
-import { useObjectSetSelection } from '@/plugins/selection/useObjectSetSelection.ts';
+import { useTableSelection } from '@/plugins/selection/useTableSelection.ts';
 import { useTranslations } from '@/providers/TranslationProvider.tsx';
 import EggRepositoryEggDrawer from './drawers/EggRepositoryEggDrawer.tsx';
 import EggActionBar from './EggActionBar.tsx';
@@ -34,7 +34,7 @@ export default function EggRepositoryEggs({
     fetcher: (page, search) => getEggRepositoryEggs(contextEggRepository.uuid, page, search),
   });
 
-  const { selected, add, remove, clear, selectionAreaProps } = useObjectSetSelection(eggRepositoryEggs?.data);
+  const { selected, add, remove, clear, selectionAreaProps } = useTableSelection({ items: eggRepositoryEggs?.data });
 
   return (
     <AdminSubContentContainer
@@ -61,7 +61,6 @@ export default function EggRepositoryEggs({
           error={error}
           pagination={eggRepositoryEggs}
           onPageSelect={setPage}
-          allowSelect={false}
         >
           {eggRepositoryEggs?.data.map((eggRepositoryEgg) => (
             <SelectionArea.Selectable key={eggRepositoryEgg.uuid} item={eggRepositoryEgg}>

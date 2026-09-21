@@ -2274,7 +2274,27 @@ impl CreatableModel for ServerBackup {
     }
 }
 
-#[derive(ToSchema, Serialize, Deserialize, Validate, Default)]
+#[derive(ToSchema, Validate, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case", tag = "type")]
+#[non_exhaustive]
+pub enum ServerBackupSelector {
+    Uuids {
+        #[garde(length(min = 1, max = 100))]
+        #[schema(min_items = 1, max_items = 100)]
+        uuids: Vec<uuid::Uuid>,
+    },
+}
+
+impl ServerBackupSelector {
+    #[inline]
+    pub fn uuids(&self) -> &[uuid::Uuid] {
+        match self {
+            Self::Uuids { uuids } => uuids,
+        }
+    }
+}
+
+#[derive(ToSchema, Serialize, Deserialize, Validate, Default, Clone)]
 pub struct UpdateServerBackupOptions {
     #[garde(length(chars, min = 1, max = 255))]
     #[schema(min_length = 1, max_length = 255)]
@@ -2985,6 +3005,7 @@ impl ServerBackup {
 
     const FAILED_SWEEP_CHUNK: i64 = 250;
     const FAILED_SWEEP_CONCURRENCY: usize = 5;
+    const BULK_CONCURRENCY: usize = 5;
 
     pub async fn count_failed(
         database: &crate::database::Database,
@@ -3079,6 +3100,165 @@ impl ServerBackup {
         }
 
         true
+    }
+
+    /// Applies one update to every selected backup inside a single transaction, then prunes each
+    /// destination group once. Doing it per backup would run a full-group retention prune per
+    /// request, each locking every live backup in the group.
+    pub async fn update_by_selector(
+        state: &crate::State,
+        server_uuid: uuid::Uuid,
+        selector: &ServerBackupSelector,
+        options: UpdateServerBackupOptions,
+    ) -> Result<(Vec<Self>, usize), anyhow::Error> {
+        let mut uuids = selector.uuids().to_vec();
+        uuids.sort_unstable();
+        uuids.dedup();
+        let requested = uuids.len();
+
+        let mut transaction = state.database.write().begin().await?;
+
+        let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
+            r#"
+            SELECT {}
+            FROM server_backups
+            WHERE server_backups.server_uuid = $1
+            AND server_backups.uuid = ANY($2)
+            AND server_backups.deleted IS NULL
+            AND server_backups.deleting IS NULL
+            AND server_backups.system_backup_policy_uuid IS NULL
+            ORDER BY server_backups.uuid
+            FOR UPDATE
+            "#,
+            Self::columns_sql(None)
+        )))
+        .bind(server_uuid)
+        .bind(&uuids)
+        .fetch_all(&mut *transaction)
+        .await?;
+
+        let mut backups = rows
+            .iter()
+            .map(|row| Self::map(None, row))
+            .try_collect_vec()?;
+
+        for backup in backups.iter_mut() {
+            backup
+                .update_with_transaction(state, options.clone(), &mut transaction)
+                .await?;
+        }
+
+        transaction.commit().await?;
+
+        let mut backup_group_uuids: Vec<uuid::Uuid> = backups
+            .iter()
+            .filter_map(|backup| backup.backup_group_uuid)
+            .collect();
+        backup_group_uuids.sort_unstable();
+        backup_group_uuids.dedup();
+
+        if !backup_group_uuids.is_empty() {
+            Self::prune_retention_scopes(state, Some(server_uuid), &backup_group_uuids).await;
+        }
+
+        let skipped = requested - backups.len();
+
+        Ok((backups, skipped))
+    }
+
+    /// Claims every selected backup for deletion in one transaction. Backups the per-backup route
+    /// would refuse are left alone and counted as skipped; dispatching the claims is a separate,
+    /// detachable step because each one talks to wings or object storage.
+    pub async fn claim_deletions_by_selector(
+        state: &crate::State,
+        server_uuid: uuid::Uuid,
+        selector: &ServerBackupSelector,
+        options: &DeleteServerBackupOptions,
+    ) -> Result<(Vec<Self>, usize), anyhow::Error> {
+        let mut uuids = selector.uuids().to_vec();
+        uuids.sort_unstable();
+        uuids.dedup();
+        let requested = uuids.len();
+
+        let mut transaction = state.database.write().begin().await?;
+
+        let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
+            r#"
+            SELECT {}
+            FROM server_backups
+            WHERE server_backups.server_uuid = $1
+            AND server_backups.uuid = ANY($2)
+            AND server_backups.deleted IS NULL
+            AND server_backups.deleting IS NULL
+            AND server_backups.system_backup_policy_uuid IS NULL
+            AND server_backups.completed IS NOT NULL
+            AND NOT server_backups.locked
+            ORDER BY server_backups.uuid
+            FOR UPDATE
+            "#,
+            Self::columns_sql(None)
+        )))
+        .bind(server_uuid)
+        .bind(&uuids)
+        .fetch_all(&mut *transaction)
+        .await?;
+
+        let backups = rows
+            .iter()
+            .map(|row| Self::map(None, row))
+            .try_collect_vec()?;
+
+        let mut claimed = Vec::with_capacity(backups.len());
+        for backup in backups {
+            if backup.backup_configuration_in_maintenance(state).await? {
+                continue;
+            }
+
+            backup
+                .claim_deletion(state, options, &mut transaction)
+                .await?;
+            claimed.push(backup);
+        }
+
+        transaction.commit().await?;
+
+        let skipped = requested - claimed.len();
+
+        Ok((claimed, skipped))
+    }
+
+    /// Dispatches claims made by [`Self::claim_deletions_by_selector`], a few at a time so a large
+    /// selection cannot open one wings or object storage connection per backup, and returns the
+    /// backups whose deletion went through.
+    pub async fn dispatch_claimed_deletions(
+        state: &crate::State,
+        backups: Vec<Self>,
+        options: &DeleteServerBackupOptions,
+    ) -> Vec<Self> {
+        let mut futures = Vec::with_capacity(backups.len());
+        for backup in backups {
+            futures.push(async move {
+                match backup.dispatch_claimed_deletion(state, options).await {
+                    Ok(()) => Some(backup),
+                    Err(err) => {
+                        tracing::error!(backup = %backup.uuid, "failed to delete backup: {err:#?}");
+                        None
+                    }
+                }
+            });
+        }
+
+        let mut results_stream =
+            futures_util::stream::iter(futures).buffer_unordered(Self::BULK_CONCURRENCY);
+
+        let mut deleted = Vec::new();
+        while let Some(backup) = results_stream.next().await {
+            if let Some(backup) = backup {
+                deleted.push(backup);
+            }
+        }
+
+        deleted
     }
 
     /// Deletes every failed backup in `scope`, returning how many deletions were dispatched. Each

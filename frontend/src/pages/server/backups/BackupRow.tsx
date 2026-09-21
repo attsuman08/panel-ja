@@ -11,7 +11,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { forwardRef, useMemo, useState } from 'react';
 import { createSearchParams, useNavigate } from 'react-router';
 import { z } from 'zod';
 import { httpErrorToHuman } from '@/api/axios.ts';
@@ -20,7 +20,7 @@ import downloadBackup from '@/api/server/backups/downloadBackup.ts';
 import Button from '@/elements/buttons/Button.tsx';
 import BackupSourceLabel from '@/elements/data-display/BackupSourceLabel.tsx';
 import Badge from '@/elements/data-display/Badge.tsx';
-import { TableData, TableRow } from '@/elements/data-display/Table.tsx';
+import { TableData, TableRow, TableSelectionCell } from '@/elements/data-display/Table.tsx';
 import HljsCode from '@/elements/editors/HljsCode.tsx';
 import Progress from '@/elements/feedback/Progress.tsx';
 import ConfirmationModal from '@/elements/modals/ConfirmationModal.tsx';
@@ -47,17 +47,19 @@ import BackupRestoreModal from './modals/BackupRestoreModal.tsx';
 
 const loadJsonLanguage = () => import('highlight.js/lib/languages/json').then((mod) => mod.default);
 
-export default function BackupRow({
-  backup,
-  backupGroupName,
-  columns,
-  readOnly,
-}: {
+interface BackupRowProps {
   backup: z.infer<typeof serverBackupSchema>;
   backupGroupName?: string;
   columns: BackupColumns;
   readOnly?: boolean;
-}) {
+  isSelected?: boolean;
+  onSelectionChange?: (selected: boolean) => void;
+}
+
+const BackupRow = forwardRef<HTMLTableRowElement, BackupRowProps>(function BackupRow(
+  { backup, backupGroupName, columns, readOnly, isSelected = false, onSelectionChange },
+  ref,
+) {
   const { t, tItem } = useTranslations();
   const { addToast } = useToast();
 
@@ -266,12 +268,18 @@ export default function BackupRow({
       >
         {({ items, openMenu }) => (
           <TableRow
+            ref={ref}
             className={isDeleting ? 'opacity-50' : undefined}
+            bg={isSelected ? 'var(--mantine-color-blue-light)' : undefined}
             onContextMenu={(e) => {
               e.preventDefault();
               openMenu(e.clientX, e.clientY);
             }}
           >
+            {onSelectionChange !== undefined && (
+              <TableSelectionCell id={backup.uuid} checked={isSelected} onChange={onSelectionChange} />
+            )}
+
             <TableData>
               <div className='min-w-0'>
                 <div className='truncate'>{backup.name}</div>
@@ -372,4 +380,6 @@ export default function BackupRow({
       </ContextMenu>
     </>
   );
-}
+});
+
+export default BackupRow;

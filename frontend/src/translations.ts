@@ -28,6 +28,15 @@ const baseTranslations = defineTranslations({
     row: defineEnglishItem('Row', 'Rows'),
     change: defineEnglishItem('Change', 'Changes'),
     session: defineEnglishItem('Session', 'Sessions'),
+    serverAllocation: defineEnglishItem('Allocation', 'Allocations'),
+    database: defineEnglishItem('Database', 'Databases'),
+    databaseInstance: defineEnglishItem('Managed Database', 'Managed Databases'),
+    schedule: defineEnglishItem('Schedule', 'Schedules'),
+    subuser: defineEnglishItem('Subuser', 'Subusers'),
+    mount: defineEnglishItem('Mount', 'Mounts'),
+    apiKey: defineEnglishItem('API Key', 'API Keys'),
+    oauthLink: defineEnglishItem('Linked Account', 'Linked Accounts'),
+    commandSnippet: defineEnglishItem('Command Snippet', 'Command Snippets'),
   },
   translations: {
     common: {
@@ -305,6 +314,7 @@ const baseTranslations = defineTranslations({
           'Do you want to delete all files of this server before performing this action? This cannot be undone.',
       },
       table: {
+        selectRow: 'Select row',
         pagination: {
           results: 'Showing {start} to {end} of {total} results.',
           empty: "No items could be found, it's almost like they are hiding.",
@@ -345,6 +355,28 @@ const baseTranslations = defineTranslations({
           template: 'Template',
           version: 'Version',
           host: 'Host',
+        },
+      },
+      bulkActions: {
+        success: 'Successfully {action} {items}.',
+        partial: 'Successfully {action} {successfulItems}. {failedItems} failed.',
+        successWithSkipped: 'Successfully {action} {items}. {skippedItems} skipped.',
+        nothingToDo: 'Nothing in the selection can be changed by that action.',
+        verb: {
+          deleted: 'deleted',
+          removed: 'removed',
+          triggered: 'triggered',
+          locked: 'locked',
+          unlocked: 'unlocked',
+          moved: 'moved',
+          enabled: 'enabled',
+          disabled: 'disabled',
+          attached: 'attached',
+          detached: 'detached',
+          started: 'started',
+          stopped: 'stopped',
+          restarted: 'restarted',
+          killed: 'killed',
         },
       },
       tabs: {
@@ -1549,6 +1581,8 @@ const baseTranslations = defineTranslations({
             nextPage: 'Next page',
             firstPage: 'First page',
             lastPage: 'Last page',
+            selectAll: 'Select all rows',
+            deselectAll: 'Deselect all rows',
           },
           console: {
             title: 'Server Console',
@@ -1596,6 +1630,10 @@ const baseTranslations = defineTranslations({
                 created: '{sshKeys} created.',
               },
             },
+            deleteSshKeys: {
+              title: 'Confirm SSH Key Deletion',
+              content: 'Are you sure you want to delete **{sshKeys}** from your account?',
+            },
             deleteSshKey: {
               title: 'Confirm SSH Key Deletion',
               content: 'Are you sure you want to delete **{name}** from your account?',
@@ -1624,6 +1662,10 @@ const baseTranslations = defineTranslations({
                 updated: 'Command snippet updated.',
               },
             },
+            deleteCommandSnippets: {
+              title: 'Confirm Command Snippet Deletion',
+              content: 'Are you sure you want to delete **{commandSnippets}** from your account?',
+            },
             deleteCommandSnippet: {
               title: 'Confirm Command Snippet Deletion',
               content: 'Are you sure you want to delete **{name}** from your account?',
@@ -1651,6 +1693,10 @@ const baseTranslations = defineTranslations({
             },
           },
           modal: {
+            deleteOAuthLinks: {
+              title: 'Confirm OAuth Link Deletion',
+              content: 'Are you sure you want to delete **{oauthLinks}** from your account?',
+            },
             deleteOAuthLink: {
               title: 'Confirm OAuth Link Deletion',
               content: 'Are you sure you want to delete the **{provider}** connection from your account?',
@@ -1701,6 +1747,10 @@ const baseTranslations = defineTranslations({
               toast: {
                 recreated: 'API key recreated.',
               },
+            },
+            deleteApiKeys: {
+              title: 'Confirm API Key Deletion',
+              content: 'Are you sure you want to delete **{apiKeys}** from your account?',
             },
             deleteApiKey: {
               title: 'Confirm API Key Deletion',
@@ -5860,6 +5910,10 @@ const baseTranslations = defineTranslations({
                 kill: 'Managed database has been killed.',
               },
               modal: {
+                forceKillBulk: {
+                  title: 'Forcibly Kill Databases',
+                  content: 'Forcibly killing **{databaseInstances}** can lead to data corruption.',
+                },
                 forceKill: {
                   title: 'Forcibly Kill Database',
                   content: 'Forcibly killing a database can lead to data corruption.',
@@ -5942,6 +5996,14 @@ const baseTranslations = defineTranslations({
                   applied: 'Template update applied.',
                 },
               },
+              deleteDatabaseInstances: {
+                title: 'Confirm Managed Database Deletion',
+                content:
+                  'Deleting a managed database is a permanent action, it cannot be undone. This will permanently delete **{databaseInstances}** and all data within them.',
+                alert: {
+                  skipped: '{databaseInstances} will be skipped. Locked managed databases cannot be deleted.',
+                },
+              },
               deleteDatabaseInstance: {
                 title: 'Confirm Managed Database Deletion',
                 content:
@@ -6009,6 +6071,14 @@ const baseTranslations = defineTranslations({
                 'Recreating a database will permanently delete all data in the **{name}** database and create a new one with the same connection details.',
               toast: {
                 recreated: 'Database recreated.',
+              },
+            },
+            deleteDatabases: {
+              title: 'Confirm Database Deletion',
+              content:
+                'Deleting a database is a permanent action, it cannot be undone. This will permanently delete **{databases}** and remove all associated data.',
+              alert: {
+                skipped: '{databases} will be skipped. Locked databases cannot be deleted.',
               },
             },
             deleteDatabase: {
@@ -6114,6 +6184,10 @@ const baseTranslations = defineTranslations({
             calendar: {
               title: 'Upcoming Runs Calendar',
               truncatedWarning: 'Some upcoming runs have been left out to keep the calendar responsive.',
+            },
+            deleteSchedules: {
+              title: 'Confirm Schedule Deletion',
+              content: 'Are you sure you want to delete **{schedules}** from this server?',
             },
             deleteSchedule: {
               title: 'Confirm Schedule Deletion',
@@ -6794,6 +6868,10 @@ const baseTranslations = defineTranslations({
                 updated: 'Subuser updated.',
               },
             },
+            removeSubusers: {
+              title: 'Confirm Subuser Removal',
+              content: 'Are you sure you want to remove **{subusers}** from this server?',
+            },
             removeSubuser: {
               title: 'Confirm Subuser Removal',
               content: 'Are you sure you want to remove **{username}** from this server?',
@@ -6832,6 +6910,10 @@ const baseTranslations = defineTranslations({
             exportToFiles: 'Export to Files',
             createBackup: 'Create Backup',
             createGroup: 'Create Backup Group',
+            moveToGroup: 'Move to Group',
+            removeFromGroup: 'Remove from Group',
+            lock: 'Lock',
+            unlock: 'Unlock',
           },
           toast: {
             downloadStarted: 'Download started.',
@@ -6861,6 +6943,14 @@ const baseTranslations = defineTranslations({
             },
             exportBackup: {
               title: 'Export Backup to Files',
+            },
+            deleteBackups: {
+              title: 'Confirm Backup Deletion',
+              content: 'Are you sure you want to delete **{backups}** from this server?',
+              alert: {
+                skipped:
+                  '{backups} will be skipped. Locked backups, backups that have not finished, and backups already being deleted cannot be deleted.',
+              },
             },
             deleteBackup: {
               title: 'Confirm Backup Deletion',
@@ -6938,6 +7028,13 @@ const baseTranslations = defineTranslations({
             unsetPrimary: 'Allocation unset as primary.',
           },
           modal: {
+            removeAllocations: {
+              title: 'Confirm Allocation Removal',
+              content: 'Are you sure you want to remove **{allocations}** from this server?',
+              alert: {
+                skipped: '{allocations} will be skipped. The primary allocation cannot be removed.',
+              },
+            },
             removeAllocation: {
               title: 'Confirm Allocation Removal',
               content: 'Are you sure you want to remove **{allocation}** from this server?',
@@ -7218,6 +7315,13 @@ const baseTranslations = defineTranslations({
               content: 'Do you want to attach **{name}** to `{target}`?',
               toast: {
                 attached: '{name} has been mounted to your server.',
+              },
+            },
+            detachMounts: {
+              title: 'Detach Mounts',
+              content: 'Do you want to detach **{mounts}** from this server?',
+              alert: {
+                skipped: '{mounts} will be skipped. Mounts that are not attached cannot be detached.',
               },
             },
             detachMount: {

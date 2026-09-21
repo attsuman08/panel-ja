@@ -658,6 +658,27 @@ impl ServerBackup {
         Ok(evicted)
     }
 
+    /// Prunes several groups in one go, logging and carrying on past a group that fails, so one bad
+    /// group cannot leave the rest of a bulk update unpruned.
+    pub(super) async fn prune_retention_scopes(
+        state: &crate::State,
+        server_uuid: Option<uuid::Uuid>,
+        group_uuids: &[uuid::Uuid],
+    ) -> u64 {
+        let mut pruned = 0;
+
+        for group_uuid in group_uuids {
+            match Self::prune_retention_scope(state, server_uuid, Some(*group_uuid), None).await {
+                Ok(count) => pruned += count,
+                Err(err) => {
+                    tracing::error!(group = %group_uuid, "failed to prune backup group: {err:#?}");
+                }
+            }
+        }
+
+        pruned
+    }
+
     pub async fn prune_group_backups(state: &crate::State) -> Result<u64, anyhow::Error> {
         let scopes: Vec<(uuid::Uuid, Option<uuid::Uuid>)> = sqlx::query_as(
             r#"

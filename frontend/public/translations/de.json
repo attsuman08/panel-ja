@@ -151,6 +151,78 @@
       "few": "{count} Sitzungen",
       "many": "{count} Sitzungen",
       "other": "{count} Sitzungen"
+    },
+    "serverAllocation": {
+      "zero": "{count} Allocations",
+      "one": "{count} Allocation",
+      "two": "{count} Allocations",
+      "few": "{count} Allocations",
+      "many": "{count} Allocations",
+      "other": "{count} Allocations"
+    },
+    "database": {
+      "zero": "{count} Datenbanken",
+      "one": "{count} Datenbank",
+      "two": "{count} Datenbanken",
+      "few": "{count} Datenbanken",
+      "many": "{count} Datenbanken",
+      "other": "{count} Datenbanken"
+    },
+    "databaseInstance": {
+      "zero": "{count} verwaltete Datenbanken",
+      "one": "{count} verwaltete Datenbank",
+      "two": "{count} verwaltete Datenbanken",
+      "few": "{count} verwaltete Datenbanken",
+      "many": "{count} verwaltete Datenbanken",
+      "other": "{count} verwaltete Datenbanken"
+    },
+    "schedule": {
+      "zero": "{count} Zeitpläne",
+      "one": "{count} Zeitplan",
+      "two": "{count} Zeitpläne",
+      "few": "{count} Zeitpläne",
+      "many": "{count} Zeitpläne",
+      "other": "{count} Zeitpläne"
+    },
+    "subuser": {
+      "zero": "{count} Subuser",
+      "one": "{count} Subuser",
+      "two": "{count} Subuser",
+      "few": "{count} Subuser",
+      "many": "{count} Subuser",
+      "other": "{count} Subuser"
+    },
+    "mount": {
+      "zero": "{count} Mounts",
+      "one": "{count} Mount",
+      "two": "{count} Mounts",
+      "few": "{count} Mounts",
+      "many": "{count} Mounts",
+      "other": "{count} Mounts"
+    },
+    "apiKey": {
+      "zero": "{count} API-Schlüssel",
+      "one": "{count} API-Schlüssel",
+      "two": "{count} API-Schlüssel",
+      "few": "{count} API-Schlüssel",
+      "many": "{count} API-Schlüssel",
+      "other": "{count} API-Schlüssel"
+    },
+    "oauthLink": {
+      "zero": "{count} verknüpfte Konten",
+      "one": "{count} verknüpftes Konto",
+      "two": "{count} verknüpfte Konten",
+      "few": "{count} verknüpfte Konten",
+      "many": "{count} verknüpfte Konten",
+      "other": "{count} verknüpfte Konten"
+    },
+    "commandSnippet": {
+      "zero": "{count} Befehlskürzel",
+      "one": "{count} Befehlskürzel",
+      "two": "{count} Befehlskürzel",
+      "few": "{count} Befehlskürzel",
+      "many": "{count} Befehlskürzel",
+      "other": "{count} Befehlskürzel"
     }
   },
   "translations": {
@@ -419,6 +491,7 @@
         "truncateDirectory": "Möchtest du alle Dateien dieses Servers löschen, bevor diese Aktion ausgeführt wird? Dies kann nicht rückgängig gemacht werden."
       },
       "table": {
+        "selectRow": "Zeile auswählen",
         "pagination": {
           "results": "Zeige {start} bis {end} von {total} Ergebnissen.",
           "empty": "Es konnten keine Elemente gefunden werden, fast so, als würden sie sich verstecken."
@@ -459,6 +532,28 @@
           "template": "Vorlage",
           "version": "Version",
           "host": "Host"
+        }
+      },
+      "bulkActions": {
+        "success": "Erfolgreich {items} {action}.",
+        "partial": "Erfolgreich {successfulItems} {action}. {failedItems} fehlgeschlagen.",
+        "successWithSkipped": "Erfolgreich {items} {action}. {skippedItems} übersprungen.",
+        "nothingToDo": "Diese Aktion ändert nichts an der aktuellen Auswahl.",
+        "verb": {
+          "deleted": "gelöscht",
+          "removed": "entfernt",
+          "triggered": "ausgelöst",
+          "locked": "gesperrt",
+          "unlocked": "entsperrt",
+          "moved": "verschoben",
+          "enabled": "aktiviert",
+          "disabled": "deaktiviert",
+          "attached": "eingehängt",
+          "detached": "ausgehängt",
+          "started": "gestartet",
+          "stopped": "gestoppt",
+          "restarted": "neu gestartet",
+          "killed": "gekillt"
         }
       },
       "tabs": {
@@ -1626,7 +1721,9 @@
             "previousPage": "Vorherige Seite",
             "nextPage": "Nächste Seite",
             "firstPage": "Erste Seite",
-            "lastPage": "Letzte Seite"
+            "lastPage": "Letzte Seite",
+            "selectAll": "Alle Zeilen auswählen",
+            "deselectAll": "Alle Zeilen abwählen"
           },
           "console": {
             "title": "Server Konsole",
@@ -1674,6 +1771,10 @@
                 "created": "{sshKeys} erstellt."
               }
             },
+            "deleteSshKeys": {
+              "title": "Löschen der SSH-Schlüssel bestätigen",
+              "content": "Bist du sicher, dass du **{sshKeys}** aus deinem Konto löschen möchtest?"
+            },
             "deleteSshKey": {
               "title": "Löschen des SSH-Schlüssels bestätigen",
               "content": "Bist du sicher, dass du **{name}** von deinem Account löschen möchtest?",
@@ -1702,6 +1803,10 @@
                 "updated": "Befehlskürzel aktualisiert."
               }
             },
+            "deleteCommandSnippets": {
+              "title": "Löschen der Befehlskürzel bestätigen",
+              "content": "Bist du sicher, dass du **{commandSnippets}** aus deinem Konto löschen möchtest?"
+            },
             "deleteCommandSnippet": {
               "title": "Löschen des Befehlskürzels bestätigen",
               "content": "Bist du sicher, dass du **{name}** von deinem Account löschen möchtest?",
@@ -1729,6 +1834,10 @@
             }
           },
           "modal": {
+            "deleteOAuthLinks": {
+              "title": "Löschen der OAuth-Verknüpfungen bestätigen",
+              "content": "Bist du sicher, dass du **{oauthLinks}** aus deinem Konto löschen möchtest?"
+            },
             "deleteOAuthLink": {
               "title": "Löschen der OAuth-Verknüpfung bestätigen",
               "content": "Bist du sicher, dass du die Verbindung zu **{provider}** von deinem Account löschen möchtest?",
@@ -1778,6 +1887,10 @@
               "toast": {
                 "recreated": "API-Schlüssel neu erstellt."
               }
+            },
+            "deleteApiKeys": {
+              "title": "Löschen der API-Schlüssel bestätigen",
+              "content": "Bist du sicher, dass du **{apiKeys}** aus deinem Konto löschen möchtest?"
             },
             "deleteApiKey": {
               "title": "Löschen des API-Schlüssels bestätigen",
@@ -5765,6 +5878,10 @@
                 "kill": "Verwaltete Datenbank wurde beendet."
               },
               "modal": {
+                "forceKillBulk": {
+                  "title": "Datenbanken zwangsweise beenden",
+                  "content": "Wenn du **{databaseInstances}** zwangsweise beendest, kann dies zu Datenverlust führen."
+                },
                 "forceKill": {
                   "title": "Datenbank zwangsweise beenden",
                   "content": "Das zwangsweise Beenden einer Datenbank kann zu Datenverlust führen."
@@ -5845,6 +5962,13 @@
                   "applied": "Template-Update angewendet."
                 }
               },
+              "deleteDatabaseInstances": {
+                "title": "Löschen der verwalteten Datenbanken bestätigen",
+                "content": "Das Löschen einer verwalteten Datenbank ist dauerhaft und kann nicht rückgängig gemacht werden. Dies löscht **{databaseInstances}** und alle darin enthaltenen Daten endgültig.",
+                "alert": {
+                  "skipped": "Übersprungen: {databaseInstances}. Gesperrte verwaltete Datenbanken können nicht gelöscht werden."
+                }
+              },
               "deleteDatabaseInstance": {
                 "title": "Löschen der verwalteten Datenbank bestätigen",
                 "content": "Das Löschen einer verwalteten Datenbank ist dauerhaft und kann nicht rückgängig gemacht werden. Dies löscht die Datenbank **{name}** und alle zugehörigen Daten unwiderruflich.",
@@ -5907,6 +6031,13 @@
               "content": "Die Neuerstellung einer Datenbank löscht dauerhaft alle Daten in der Datenbank **{name}** und erstellt eine neue mit denselben Verbindungsdetails.",
               "toast": {
                 "recreated": "Datenbank neu erstellt."
+              }
+            },
+            "deleteDatabases": {
+              "title": "Löschen der Datenbanken bestätigen",
+              "content": "Das Löschen einer Datenbank ist dauerhaft und kann nicht rückgängig gemacht werden. Dies löscht **{databases}** endgültig und entfernt alle zugehörigen Daten.",
+              "alert": {
+                "skipped": "Übersprungen: {databases}. Gesperrte Datenbanken können nicht gelöscht werden."
               }
             },
             "deleteDatabase": {
@@ -6010,6 +6141,10 @@
             "calendar": {
               "title": "Kalender der anstehenden Ausführungen",
               "truncatedWarning": "Einige anstehende Ausführungen wurden weggelassen, damit der Kalender reaktionsfähig bleibt."
+            },
+            "deleteSchedules": {
+              "title": "Löschen der Zeitpläne bestätigen",
+              "content": "Bist du sicher, dass du **{schedules}** von diesem Server löschen möchtest?"
             },
             "deleteSchedule": {
               "title": "Löschen des Zeitplans bestätigen",
@@ -6678,6 +6813,10 @@
                 "updated": "Subuser aktualisiert."
               }
             },
+            "removeSubusers": {
+              "title": "Entfernen der Subuser bestätigen",
+              "content": "Bist du sicher, dass du **{subusers}** von diesem Server entfernen möchtest?"
+            },
             "removeSubuser": {
               "title": "Entfernen des Subusers bestätigen",
               "content": "Bist du sicher, dass du **{username}** von diesem Server entfernen möchtest?",
@@ -6714,7 +6853,11 @@
             "browse": "Durchsuchen",
             "exportToFiles": "In Dateien exportieren",
             "createBackup": "Backup erstellen",
-            "createGroup": "Backup-Gruppe erstellen"
+            "createGroup": "Backup-Gruppe erstellen",
+            "moveToGroup": "In Gruppe verschieben",
+            "removeFromGroup": "Aus Gruppe entfernen",
+            "lock": "Sperren",
+            "unlock": "Entsperren"
           },
           "toast": {
             "downloadStarted": "Download gestartet.",
@@ -6744,6 +6887,13 @@
             },
             "exportBackup": {
               "title": "Backup in Dateien exportieren"
+            },
+            "deleteBackups": {
+              "title": "Löschen der Backups bestätigen",
+              "content": "Bist du sicher, dass du **{backups}** von diesem Server löschen möchtest?",
+              "alert": {
+                "skipped": "Übersprungen: {backups}. Gesperrte Backups, nicht abgeschlossene Backups und Backups, die bereits gelöscht werden, können nicht gelöscht werden."
+              }
             },
             "deleteBackup": {
               "title": "Löschen des Backups bestätigen",
@@ -6818,6 +6968,13 @@
             "unsetPrimary": "Allocation nicht mehr primär."
           },
           "modal": {
+            "removeAllocations": {
+              "title": "Entfernen der Allocations bestätigen",
+              "content": "Bist du sicher, dass du **{allocations}** von diesem Server entfernen möchtest?",
+              "alert": {
+                "skipped": "Übersprungen: {allocations}. Die primäre Allocation kann nicht entfernt werden."
+              }
+            },
             "removeAllocation": {
               "title": "Entfernen der Allocation bestätigen",
               "content": "Bist du sicher, dass du **{allocation}** von diesem Server entfernen möchtest?"
@@ -7075,6 +7232,13 @@
               "content": "Möchtest du **{name}** in `{target}` einbinden?",
               "toast": {
                 "attached": "{name} wurde in deinen Server eingebunden."
+              }
+            },
+            "detachMounts": {
+              "title": "Mounts trennen",
+              "content": "Möchtest du **{mounts}** von diesem Server trennen?",
+              "alert": {
+                "skipped": "Übersprungen: {mounts}. Nicht eingebundene Mounts können nicht getrennt werden."
               }
             },
             "detachMount": {

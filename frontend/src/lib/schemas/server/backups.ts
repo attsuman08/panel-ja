@@ -36,6 +36,11 @@ export const serverBackupFilterSchema = z.object({
   databaseType: databaseAgentType.optional(),
 });
 
+export const serverBackupSelectorSchema = z.object({
+  type: z.literal('uuids'),
+  uuids: z.array(z.uuid()),
+});
+
 export const serverBackupCreateSchema = z.object({
   name: z.string().min(1).max(255),
   backupGroupUuid: z.uuid().nullable().optional(),

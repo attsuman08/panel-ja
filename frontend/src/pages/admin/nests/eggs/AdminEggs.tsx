@@ -20,7 +20,7 @@ import { eggTableColumns } from '@/lib/tableColumns.ts';
 import EggView from '@/pages/admin/nests/eggs/EggView.tsx';
 import { useImportDragAndDrop } from '@/plugins/import/useImportDragAndDrop.ts';
 import { useSearchablePaginatedTable } from '@/plugins/resource/useSearchablePaginatedTable.ts';
-import { useObjectSetSelection } from '@/plugins/selection/useObjectSetSelection.ts';
+import { useTableSelection } from '@/plugins/selection/useTableSelection.ts';
 import { useAdminCan } from '@/plugins/usePermissions.ts';
 import { useToast } from '@/providers/ToastProvider.tsx';
 import { useTranslations } from '@/providers/TranslationProvider.tsx';
@@ -59,7 +59,7 @@ function EggsContainer({ contextNest }: { contextNest: z.infer<typeof adminNestS
     remove: removeSelectedEgg,
     clear: clearSelectedEggs,
     selectionAreaProps,
-  } = useObjectSetSelection(eggs?.data);
+  } = useTableSelection({ items: eggs?.data });
 
   const handleImport = async (file: File) => {
     let data: object;
@@ -176,14 +176,7 @@ function EggsContainer({ contextNest }: { contextNest: z.infer<typeof adminNestS
       />
 
       <SelectionArea {...selectionAreaProps}>
-        <Table
-          columns={columns}
-          loading={loading}
-          pagination={eggs}
-          onPageSelect={setPage}
-          allowSelect={false}
-          error={error}
-        >
+        <Table columns={columns} loading={loading} pagination={eggs} onPageSelect={setPage} error={error}>
           {eggs?.data.map((egg) => (
             <SelectionArea.Selectable key={egg.uuid} item={egg}>
               {(innerRef: Ref<HTMLElement>) => (
@@ -191,7 +184,6 @@ function EggsContainer({ contextNest }: { contextNest: z.infer<typeof adminNestS
                   key={egg.uuid}
                   nest={contextNest}
                   egg={egg}
-                  showSelection
                   isSelected={selectedEggs.has(egg.uuid)}
                   onSelectionChange={(selected) => (selected ? addSelectedEgg(egg) : removeSelectedEgg(egg))}
                   ref={innerRef as Ref<HTMLTableRowElement>}
