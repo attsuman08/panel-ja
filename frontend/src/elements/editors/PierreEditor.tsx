@@ -366,9 +366,11 @@ export const PierreDiffEditor = memo(
     const baseOptions = useBaseOptions(colorScheme, wordWrap);
 
     const modifiedRef = useRef(modifiedValue);
+    const onMountRef = useRef(onMount);
 
     useEffect(() => {
       modifiedRef.current = modifiedValue;
+      onMountRef.current = onMount;
     });
 
     const handle = useMemo<PierreEditorHandle>(
@@ -389,10 +391,9 @@ export const PierreDiffEditor = memo(
       for (const handler of window.extensionContext.extensionRegistry.elements.pierreEditor.diffOnMountHandlers) {
         handler(handle);
       }
+
+      onMountRef.current?.(handle);
     }, [handle]);
-    useEffect(() => {
-      onMount?.(handle);
-    }, [onMount, handle]);
 
     const oldFile = useMemo(
       () => toFile(originalPath, originalValue, `old:${originalPath}:${originalValue.length}`),
