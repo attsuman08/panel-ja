@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { backupRetentionSchema } from '@/lib/schemas/backupRetention.ts';
+import { backupRetentionSchema, serverBackupRetentionStatusSchema } from '@/lib/schemas/backupRetention.ts';
 import { databaseAgentType } from '@/lib/schemas/generic.ts';
 
 export const serverBackupKind = z.enum(['server', 'database_instance']);
@@ -21,6 +21,7 @@ export const serverBackupSchema = z.looseObject({
   files: z.number(),
   metadata: z.record(z.string(), z.unknown()),
   deletionStatus: z.enum(['deleting', 'failed']).nullable(),
+  retentionStatus: serverBackupRetentionStatusSchema.nullable(),
   completed: z.coerce.date().nullable(),
   created: z.coerce.date(),
 });

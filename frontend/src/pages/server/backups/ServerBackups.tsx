@@ -112,7 +112,11 @@ export default function ServerBackups({
   const showGroups = variant === 'page';
   const showGroupLabels = variant === 'section';
   const columns = useMemo(
-    () => getBackupColumns({ kind: showKind, source: showSource, files: showFiles, locked: true }),
+    () => getBackupColumns({ kind: showKind, source: showSource, files: showFiles, retention: false, locked: true }),
+    [showKind, showSource, showFiles],
+  );
+  const groupColumns = useMemo(
+    () => getBackupColumns({ kind: showKind, source: showSource, files: showFiles, retention: true, locked: true }),
     [showKind, showSource, showFiles],
   );
 
@@ -384,7 +388,7 @@ export default function ServerBackups({
                   <div style={{ cursor: 'grabbing' }} className='shadow-xl rounded-xl'>
                     <MemoizedBackupGroupItem
                       group={activeGroup}
-                      columns={columns}
+                      columns={groupColumns}
                       dragHandleProps={{ style: { cursor: 'grabbing' } }}
                     />
                   </div>
@@ -400,7 +404,7 @@ export default function ServerBackups({
                       <MemoizedBackupGroupItem
                         group={group}
                         groups={sortedGroups}
-                        columns={columns}
+                        columns={groupColumns}
                         activeScope={activeScope}
                         setActiveScope={setRequestedScope}
                         dragHandleProps={dragHandleProps as unknown as ComponentProps<'button'>}
@@ -416,7 +420,7 @@ export default function ServerBackups({
                 key={group.uuid}
                 group={group}
                 groups={sortedGroups}
-                columns={columns}
+                columns={groupColumns}
                 activeScope={activeScope}
                 setActiveScope={setRequestedScope}
               />

@@ -167,6 +167,28 @@ const baseTranslations = defineTranslations({
           monthly: 'Keep monthly',
           yearly: 'Keep yearly',
           ruleSummary: '{rule}: {count}',
+          status: {
+            rule: {
+              count: 'Latest',
+              days: 'Recent',
+              daily: 'Daily',
+              weekly: 'Weekly',
+              monthly: 'Monthly',
+              yearly: 'Yearly',
+            },
+            locked: 'Locked',
+            indefinite: 'Kept indefinitely',
+            expired: 'Pending removal',
+            failed: 'Cleanup',
+            keptBy: 'Kept by: {rules}.',
+            forecastDescription: 'Deletion time is an estimate based on the backup schedule.',
+            lockedDescription: 'Locked backups are never removed by retention.',
+            indefiniteDescription: 'No retention rules apply.',
+            expiredDescription: 'No rule keeps this backup any more. It goes on the next retention run.',
+            failedDescription: 'Failed backups are removed after 24 hours.',
+            expires: 'Deleted {timestamp}',
+            expiresUnknown: 'No deletion forecast',
+          },
         },
       },
       modal: {
@@ -6923,6 +6945,7 @@ const baseTranslations = defineTranslations({
           table: {
             columns: {
               kind: 'Kind',
+              retention: 'Retention',
               locked: 'Locked?',
             },
           },

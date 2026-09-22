@@ -8,6 +8,7 @@ import { adminMountSchema } from '@/lib/schemas/admin/mounts.ts';
 import { adminNestSchema } from '@/lib/schemas/admin/nests.ts';
 import { adminNodeSchema } from '@/lib/schemas/admin/nodes.ts';
 import { adminFullUserSchema } from '@/lib/schemas/admin/users.ts';
+import { serverBackupRetentionStatusSchema } from '@/lib/schemas/backupRetention.ts';
 import { databaseAgentType, databaseType } from '@/lib/schemas/generic.ts';
 import { serverAllocationSchema } from '@/lib/schemas/server/allocations.ts';
 import { serverBackupKind } from '@/lib/schemas/server/backups.ts';
@@ -126,6 +127,7 @@ export const adminServerBackupSchema = z.looseObject({
   files: z.number(),
   metadata: z.record(z.string(), z.unknown()),
   deletionStatus: z.enum(['deleting', 'failed']).nullable(),
+  retentionStatus: serverBackupRetentionStatusSchema.nullable(),
   completed: z.coerce.date().nullable(),
   created: z.coerce.date(),
 });

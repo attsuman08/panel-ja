@@ -18,6 +18,7 @@ import { httpErrorToHuman } from '@/api/axios.ts';
 import deleteBackup from '@/api/server/backups/deleteBackup.ts';
 import downloadBackup from '@/api/server/backups/downloadBackup.ts';
 import Button from '@/elements/buttons/Button.tsx';
+import BackupRetentionStatusBadge from '@/elements/data-display/BackupRetentionStatusBadge.tsx';
 import BackupSourceLabel from '@/elements/data-display/BackupSourceLabel.tsx';
 import Badge from '@/elements/data-display/Badge.tsx';
 import { TableData, TableRow, TableSelectionCell } from '@/elements/data-display/Table.tsx';
@@ -357,6 +358,12 @@ const BackupRow = forwardRef<HTMLTableRowElement, BackupRowProps>(function Backu
                 <Badge className='w-max!' color='red'>
                   {t('common.badge.failed', {})}
                 </Badge>
+              </TableData>
+            )}
+
+            {columns.retention && (
+              <TableData>
+                <BackupRetentionStatusBadge status={backup.retentionStatus} />
               </TableData>
             )}
 

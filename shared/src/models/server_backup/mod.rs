@@ -1884,6 +1884,7 @@ impl ServerBackup {
         self,
         state: &crate::State,
         storage_url_retriever: &StorageUrlRetriever<'_>,
+        retention_status: Option<retention::ServerBackupRetentionStatus>,
     ) -> Result<AdminApiNodeServerBackup, crate::database::DatabaseError> {
         let deletion_status = self.deletion_status();
 
@@ -1921,6 +1922,7 @@ impl ServerBackup {
             bytes: self.bytes,
             files: self.files,
             deletion_status,
+            retention_status,
             metadata: self.metadata,
             completed: self.completed.map(|dt| dt.and_utc()),
             created: self.created.and_utc(),
@@ -1931,12 +1933,15 @@ impl ServerBackup {
 #[async_trait::async_trait]
 impl IntoAdminApiObject for ServerBackup {
     type AdminApiObject = AdminApiServerBackup;
-    type ExtraArgs<'a> = &'a crate::storage::StorageUrlRetriever<'a>;
+    type ExtraArgs<'a> = (
+        &'a crate::storage::StorageUrlRetriever<'a>,
+        Option<retention::ServerBackupRetentionStatus>,
+    );
 
     async fn into_admin_api_object<'a>(
         self,
         state: &crate::State,
-        storage_url_retriever: Self::ExtraArgs<'a>,
+        (storage_url_retriever, retention_status): Self::ExtraArgs<'a>,
     ) -> Result<Self::AdminApiObject, crate::database::DatabaseError> {
         let deletion_status = self.deletion_status();
         let api_object = AdminApiServerBackup::init_hooks(&self, state).await?;
@@ -1970,6 +1975,7 @@ impl IntoAdminApiObject for ServerBackup {
                 bytes: self.bytes,
                 files: self.files,
                 deletion_status,
+                retention_status,
                 metadata: self.metadata,
                 completed: self.completed.map(|dt| dt.and_utc()),
                 created: self.created.and_utc(),
@@ -1985,12 +1991,12 @@ impl IntoAdminApiObject for ServerBackup {
 #[async_trait::async_trait]
 impl IntoApiObject for ServerBackup {
     type ApiObject = ApiServerBackup;
-    type ExtraArgs<'a> = ();
+    type ExtraArgs<'a> = Option<retention::ServerBackupRetentionStatus>;
 
     async fn into_api_object<'a>(
         self,
         state: &crate::State,
-        _args: Self::ExtraArgs<'a>,
+        retention_status: Self::ExtraArgs<'a>,
     ) -> Result<Self::ApiObject, crate::database::DatabaseError> {
         let deletion_status = self.deletion_status();
         let api_object = ApiServerBackup::init_hooks(&self, state).await?;
@@ -2012,6 +2018,7 @@ impl IntoApiObject for ServerBackup {
                 bytes: self.bytes,
                 files: self.files,
                 deletion_status,
+                retention_status,
                 metadata: self.metadata,
                 completed: self.completed.map(|dt| dt.and_utc()),
                 created: self.created.and_utc(),
@@ -3328,6 +3335,7 @@ pub struct AdminApiNodeServerBackup {
 
     pub metadata: serde_json::Value,
     pub deletion_status: Option<ServerBackupDeletionStatus>,
+    pub retention_status: Option<retention::ServerBackupRetentionStatus>,
 
     pub completed: Option<chrono::DateTime<chrono::Utc>>,
     pub created: chrono::DateTime<chrono::Utc>,
@@ -3362,6 +3370,7 @@ pub struct AdminApiServerBackup {
 
     pub metadata: serde_json::Value,
     pub deletion_status: Option<ServerBackupDeletionStatus>,
+    pub retention_status: Option<retention::ServerBackupRetentionStatus>,
 
     pub completed: Option<chrono::DateTime<chrono::Utc>>,
     pub created: chrono::DateTime<chrono::Utc>,
@@ -3400,6 +3409,7 @@ pub struct ApiServerBackup {
 
     pub metadata: serde_json::Value,
     pub deletion_status: Option<ServerBackupDeletionStatus>,
+    pub retention_status: Option<retention::ServerBackupRetentionStatus>,
 
     pub completed: Option<chrono::DateTime<chrono::Utc>>,
     pub created: chrono::DateTime<chrono::Utc>,

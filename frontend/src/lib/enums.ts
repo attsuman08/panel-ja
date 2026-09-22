@@ -63,6 +63,7 @@ import { adminEggConfigurationDeploymentSchema } from '@/lib/schemas/admin/eggCo
 import { processConfigurationConfigParser } from '@/lib/schemas/admin/eggs.ts';
 import { AdminOAuthProviderMappingMatcher } from '@/lib/schemas/admin/oauthProviders.ts';
 import { adminSettingsEmailSchema, adminSettingsStorageSchema } from '@/lib/schemas/admin/settings.ts';
+import { backupRetentionRule } from '@/lib/schemas/backupRetention.ts';
 import {
   compressionType,
   databaseAgentType,
@@ -449,6 +450,15 @@ export const serverBackupStatusLabelMapping: Record<z.infer<typeof serverBackupS
   starting: () => getTranslations().t('common.enum.serverBackupStatus.starting', {}),
   finished: () => getTranslations().t('common.enum.serverBackupStatus.finished', {}),
   failed: () => getTranslations().t('common.enum.serverBackupStatus.failed', {}),
+};
+
+export const backupRetentionRuleLabelMapping: Record<z.infer<typeof backupRetentionRule>, () => string> = {
+  count: () => getTranslations().t('common.elements.backupRetention.status.rule.count', {}),
+  days: () => getTranslations().t('common.elements.backupRetention.status.rule.days', {}),
+  daily: () => getTranslations().t('common.elements.backupRetention.status.rule.daily', {}),
+  weekly: () => getTranslations().t('common.elements.backupRetention.status.rule.weekly', {}),
+  monthly: () => getTranslations().t('common.elements.backupRetention.status.rule.monthly', {}),
+  yearly: () => getTranslations().t('common.elements.backupRetention.status.rule.yearly', {}),
 };
 
 export const serverBackupKindLabelMapping: Record<z.infer<typeof serverBackupKind>, () => string> = {

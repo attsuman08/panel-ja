@@ -123,9 +123,15 @@ mod get {
             .await
         }?;
 
+        let retention_statuses =
+            ServerBackup::retention_statuses(&state.database, &backups.data).await?;
+
         ApiResponse::new_serialized(Response {
             backups: backups
-                .try_async_map(|backup| backup.into_api_object(&state, ()))
+                .try_async_map(|backup| {
+                    let retention_status = retention_statuses.get(&backup.uuid).cloned();
+                    backup.into_api_object(&state, retention_status)
+                })
                 .await?,
         })
         .ok()
@@ -427,7 +433,7 @@ mod post {
         }
 
         ApiResponse::new_serialized(Response {
-            backup: backup.into_api_object(&state, ()).await?,
+            backup: backup.into_api_object(&state, None).await?,
         })
         .ok()
     }

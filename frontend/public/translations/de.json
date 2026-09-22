@@ -348,7 +348,29 @@
           "weekly": "Wöchentliche Backups behalten",
           "monthly": "Monatliche Backups behalten",
           "yearly": "Jährliche Backups behalten",
-          "ruleSummary": "{rule}: {count}"
+          "ruleSummary": "{rule}: {count}",
+          "status": {
+            "rule": {
+              "count": "Neueste",
+              "days": "Kürzlich",
+              "daily": "Täglich",
+              "weekly": "Wöchentlich",
+              "monthly": "Monatlich",
+              "yearly": "Jährlich"
+            },
+            "locked": "Gesperrt",
+            "indefinite": "Unbegrenzt behalten",
+            "expired": "Wird entfernt",
+            "failed": "Bereinigung",
+            "keptBy": "Behalten durch: {rules}.",
+            "forecastDescription": "Der Löschzeitpunkt ist eine Schätzung anhand des Backup-Zeitplans.",
+            "lockedDescription": "Gesperrte Backups werden von der Aufbewahrung nie entfernt.",
+            "indefiniteDescription": "Es gelten keine Aufbewahrungsregeln.",
+            "expiredDescription": "Keine Regel behält dieses Backup mehr. Es wird beim nächsten Aufbewahrungslauf entfernt.",
+            "failedDescription": "Fehlgeschlagene Backups werden nach 24 Stunden entfernt.",
+            "expires": "Gelöscht {timestamp}",
+            "expiresUnknown": "Keine Löschprognose"
+          }
         }
       },
       "modal": {
@@ -6866,6 +6888,7 @@
           "table": {
             "columns": {
               "kind": "Art",
+              "retention": "Aufbewahrung",
               "locked": "Gesperrt?"
             }
           },
