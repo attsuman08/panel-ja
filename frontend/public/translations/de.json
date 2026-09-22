@@ -2612,6 +2612,10 @@
             "pendingRestart": {
               "title": "Einige Erweiterungen wurden aktiviert oder deaktiviert",
               "content": "Das Panel übernimmt die Änderung beim nächsten Start."
+            },
+            "versionMismatch": {
+              "title": "Das Panel führt einen Build für eine andere Version aus",
+              "content": "Das laufende Panel hat Version {runningVersion}, Erweiterungs-Builds zielen aber auf Version {targetVersion}. Installierte Erweiterungen müssen mit {targetVersion} kompatibel sein."
             }
           },
           "button": {

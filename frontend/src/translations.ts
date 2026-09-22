@@ -2516,6 +2516,11 @@ const baseTranslations = defineTranslations({
               title: 'Some extensions were enabled or disabled',
               content: 'The panel picks up the change the next time it starts.',
             },
+            versionMismatch: {
+              title: 'The panel is serving a build for a different version',
+              content:
+                'The running panel is version {runningVersion}, but extension builds target version {targetVersion}. Extensions you install need to be compatible with {targetVersion}.',
+            },
           },
           button: {
             viewBuildLogs: 'View build logs',
