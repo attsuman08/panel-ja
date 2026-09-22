@@ -431,6 +431,7 @@ const baseTranslations = defineTranslations({
         page: 'Page {page}',
         emptyDirectory: 'This directory is empty',
         ignored: 'Ignored',
+        partiallyIgnored: 'Partially ignored',
         showingFirstEntries: 'Showing the first {count} entries',
       },
       databaseAgentHost: {

@@ -26,21 +26,29 @@ pub type GetServerActivityLogger = crate::extract::ConsumingExtension<ServerActi
 /// The path is resolved before matching so that alternative spellings of the same file
 /// (`/./x`, `//x`, `/a/../x`) cannot slip past an anchored pattern, since wings collapses
 /// those components before touching the filesystem.
+fn ignore_match_path(path: &std::path::Path) -> std::path::PathBuf {
+    let path = crate::cap::CapFilesystem::resolve_path(path);
+
+    match path.strip_prefix("/") {
+        Ok(relative) => relative.to_path_buf(),
+        Err(_) => path,
+    }
+}
+
 fn is_path_ignored(
-    overrides: &ignore::overrides::Override,
+    list: &crate::ignore_list::IgnoreList,
     path: impl AsRef<std::path::Path>,
     is_dir: bool,
 ) -> bool {
-    let path = crate::cap::CapFilesystem::resolve_path(path.as_ref());
+    list.is_ignored(&ignore_match_path(path.as_ref()), is_dir)
+}
 
-    if path == std::path::Path::new("/")
-        || path == std::path::Path::new("")
-        || path == std::path::Path::new(".")
-    {
-        return false;
-    }
-
-    overrides.matched(path, is_dir).is_whitelist()
+fn is_path_ignored_subtree(
+    list: &crate::ignore_list::IgnoreList,
+    path: impl AsRef<std::path::Path>,
+    is_dir: bool,
+) -> bool {
+    list.is_ignored_subtree(&ignore_match_path(path.as_ref()), is_dir)
 }
 
 #[derive(Clone)]
@@ -187,7 +195,7 @@ pub struct Server {
     pub subuser_permissions: Option<Arc<Vec<compact_str::CompactString>>>,
     pub subuser_ignored_files: Option<Vec<compact_str::CompactString>>,
     #[serde(skip_serializing, skip_deserializing)]
-    subuser_ignored_files_overrides: Option<Box<ignore::overrides::Override>>,
+    subuser_ignored_files_list: Option<Box<crate::ignore_list::IgnoreList>>,
 
     pub created: chrono::NaiveDateTime,
 
@@ -422,7 +430,7 @@ impl BaseModel for Server {
             subuser_ignored_files: row
                 .try_get::<Vec<compact_str::CompactString>, _>("ignored_files")
                 .ok(),
-            subuser_ignored_files_overrides: None,
+            subuser_ignored_files_list: None,
             created: row.try_get(compact_str::format_compact!("{prefix}created").as_str())?,
             extension_data: Self::map_extensions(prefix, row)?,
         })
@@ -1849,25 +1857,15 @@ impl Server {
         None
     }
 
-    pub fn is_ignored(&mut self, path: impl AsRef<std::path::Path>, is_dir: bool) -> bool {
-        if let Some(ignored_files) = &self.subuser_ignored_files {
-            if let Some(overrides) = &self.subuser_ignored_files_overrides {
-                return is_path_ignored(overrides, path, is_dir);
-            }
+    /// The compiled subuser list, or `None` for a caller without one. A list that
+    /// does not compile is `Some(None)`: it denies everything rather than hiding
+    /// less than it says.
+    fn subuser_ignored_files_list(&mut self) -> Option<Option<&crate::ignore_list::IgnoreList>> {
+        let ignored_files = self.subuser_ignored_files.as_ref()?;
 
-            let mut override_builder = ignore::overrides::OverrideBuilder::new("/");
-
-            for file in ignored_files {
-                override_builder.add(file).ok();
-            }
-
-            match override_builder.build() {
-                Ok(overrides) => {
-                    let ignored = is_path_ignored(&overrides, path, is_dir);
-                    self.subuser_ignored_files_overrides = Some(Box::new(overrides));
-
-                    return ignored;
-                }
+        if self.subuser_ignored_files_list.is_none() {
+            match crate::ignore_list::IgnoreList::try_from_lines(ignored_files) {
+                Ok(list) => self.subuser_ignored_files_list = Some(Box::new(list)),
                 Err(err) => {
                     tracing::error!(
                         server = %self.uuid,
@@ -1875,12 +1873,32 @@ impl Server {
                         err
                     );
 
-                    return true;
+                    return Some(None);
                 }
             }
         }
 
-        false
+        Some(self.subuser_ignored_files_list.as_deref())
+    }
+
+    /// Whether the subuser may not touch the entry itself.
+    pub fn is_ignored(&mut self, path: impl AsRef<std::path::Path>, is_dir: bool) -> bool {
+        match self.subuser_ignored_files_list() {
+            Some(Some(list)) => is_path_ignored(list, path, is_dir),
+            Some(None) => true,
+            None => false,
+        }
+    }
+
+    /// Whether the subuser may not reach anything beneath the directory either, for
+    /// the root of a request: wings still enters an excluded directory that holds a
+    /// re-included entry, so an operation below it can succeed.
+    pub fn is_ignored_subtree(&mut self, path: impl AsRef<std::path::Path>) -> bool {
+        match self.subuser_ignored_files_list() {
+            Some(Some(list)) => is_path_ignored_subtree(list, path, true),
+            Some(None) => true,
+            None => false,
+        }
     }
 
     pub fn is_ignored_either(&mut self, path: impl AsRef<std::path::Path>) -> bool {
@@ -3222,23 +3240,19 @@ pub struct ApiServer {
 
 #[cfg(test)]
 mod tests {
-    use super::{is_path_ignored, validate_labels};
+    use super::{is_path_ignored, is_path_ignored_subtree, validate_labels};
+    use crate::ignore_list::IgnoreList;
     use compact_str::CompactString;
     use indexmap::IndexMap;
 
-    fn overrides(patterns: &[&str]) -> ignore::overrides::Override {
-        let mut builder = ignore::overrides::OverrideBuilder::new("/");
-
-        for pattern in patterns {
-            builder.add(pattern).unwrap();
-        }
-
-        builder.build().unwrap()
+    fn compile(patterns: &[&str]) -> IgnoreList {
+        IgnoreList::try_from_lines(patterns).unwrap()
     }
 
+    // is_path_ignored
     #[test]
     fn an_anchored_pattern_matches_every_spelling_of_the_path() {
-        let overrides = overrides(&["/config/secrets.yml"]);
+        let list = compile(&["/config/secrets.yml"]);
 
         for path in [
             "/config/secrets.yml",
@@ -3249,10 +3263,28 @@ mod tests {
             "/../config/secrets.yml",
             "config/secrets.yml",
         ] {
-            assert!(is_path_ignored(&overrides, path, false), "{path}");
+            assert!(is_path_ignored(&list, path, false), "{path}");
         }
 
-        assert!(!is_path_ignored(&overrides, "/config/public.yml", false));
+        assert!(!is_path_ignored(&list, "/config/public.yml", false));
+    }
+
+    #[test]
+    fn a_denied_name_hides_its_subtree_and_a_reinclude_leaves_its_parents_enterable() {
+        let list = compile(&["secrets"]);
+
+        assert!(is_path_ignored(&list, "/secrets", true));
+        assert!(is_path_ignored(&list, "/secrets/deep/token.txt", false));
+        assert!(is_path_ignored(&list, "/game/secrets/token.txt", false));
+        assert!(!is_path_ignored(&list, "/secrets.txt", false));
+
+        let list = compile(&["*", "!/game/csgo/cfg"]);
+
+        assert!(is_path_ignored(&list, "/game/csgo", true));
+        assert!(!is_path_ignored_subtree(&list, "/game/csgo", true));
+        assert!(!is_path_ignored_subtree(&list, "/game/./csgo/", true));
+        assert!(is_path_ignored_subtree(&list, "/game/hl2", true));
+        assert!(!is_path_ignored(&list, "/game/csgo/cfg/server.cfg", false));
     }
 
     #[test]
@@ -3261,9 +3293,9 @@ mod tests {
         // the grant routes require a suffix rather than a subset.
         let caller = ["!/a/b", "/a/**"];
 
-        assert!(is_path_ignored(&overrides(&caller), "/a/b", false));
+        assert!(is_path_ignored(&compile(&caller), "/a/b", false));
         assert!(!is_path_ignored(
-            &overrides(&["/a/**", "!/a/b"]),
+            &compile(&["/a/**", "!/a/b"]),
             "/a/b",
             false
         ));
@@ -3275,7 +3307,7 @@ mod tests {
         ] {
             assert!(granted.ends_with(&caller));
             assert!(
-                is_path_ignored(&overrides(&granted), "/a/b", false),
+                is_path_ignored(&compile(&granted), "/a/b", false),
                 "{granted:?}"
             );
         }
@@ -3283,10 +3315,11 @@ mod tests {
 
     #[test]
     fn the_server_root_is_never_ignored() {
-        let overrides = overrides(&["*"]);
+        let list = compile(&["*"]);
 
         for path in ["/", "", ".", "/.", "/config/.."] {
-            assert!(!is_path_ignored(&overrides, path, true), "{path}");
+            assert!(!is_path_ignored(&list, path, true), "{path}");
+            assert!(!is_path_ignored_subtree(&list, path, true), "{path}");
         }
     }
 
