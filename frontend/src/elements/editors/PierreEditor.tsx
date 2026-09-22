@@ -37,7 +37,7 @@ export interface PierreLocalSelection {
   headOffset: number;
 }
 
-type PierreFileEditor = Editor<'file', undefined, PierreCaretMetadata>;
+export type PierreFileEditor = Editor<'file', undefined, PierreCaretMetadata>;
 type PierreFileEditorOptions = EditorOptions<'file', undefined, PierreCaretMetadata>;
 
 export interface PierreEditorHandle {
@@ -47,6 +47,9 @@ export interface PierreEditorHandle {
   setCarets: (carets: PierreCaret[]) => void;
   focus: () => void;
 }
+
+export type PierreOnMount = (handle: PierreEditorHandle, editor: PierreFileEditor) => void;
+export type PierreDiffOnMount = (handle: PierreEditorHandle) => void;
 
 interface CommonPierreProps {
   wordWrap?: boolean;
@@ -294,6 +297,11 @@ export const PierreEditor = memo(
         onAttach: (editor) => {
           instanceRef.current = editor;
           replaceBuffer(editor, defaultValueRef.current);
+
+          for (const handler of window.extensionContext.extensionRegistry.elements.pierreEditor.onMountHandlers) {
+            handler(handle, editor);
+          }
+
           callbacks.current.onMount?.(handle);
         },
         onChange: (event) => {
@@ -377,6 +385,11 @@ export const PierreDiffEditor = memo(
     );
 
     useImperativeHandle(ref, () => handle, [handle]);
+    useEffect(() => {
+      for (const handler of window.extensionContext.extensionRegistry.elements.pierreEditor.diffOnMountHandlers) {
+        handler(handle);
+      }
+    }, [handle]);
     useEffect(() => {
       onMount?.(handle);
     }, [onMount, handle]);
