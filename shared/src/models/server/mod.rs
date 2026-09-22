@@ -136,6 +136,13 @@ impl From<ServerAutoStartBehavior> for wings_api::ServerAutoStartBehavior {
 
 pub const MAX_TRANSFER_MULTIPLEX_CHANNELS: u64 = 16;
 
+#[derive(Clone, Default)]
+pub struct ServerInstallOptions {
+    pub truncate_directory: bool,
+    pub installation_script: Option<wings_api::InstallationScript>,
+    pub start_on_completion: bool,
+}
+
 pub struct ServerTransferOptions {
     pub destination_node: super::node::Node,
 
@@ -1410,6 +1417,29 @@ impl Server {
         truncate_directory: bool,
         installation_script: Option<wings_api::InstallationScript>,
     ) -> Result<(), anyhow::Error> {
+        self.install_with_options(
+            state,
+            ServerInstallOptions {
+                truncate_directory,
+                installation_script,
+                ..Default::default()
+            },
+        )
+        .await
+    }
+
+    /// Same as [`install`](Self::install) but takes a [`ServerInstallOptions`].
+    pub async fn install_with_options(
+        &self,
+        state: &crate::State,
+        options: ServerInstallOptions,
+    ) -> Result<(), anyhow::Error> {
+        let ServerInstallOptions {
+            truncate_directory,
+            installation_script,
+            start_on_completion,
+        } = options;
+
         let mut transaction = state.database.write().begin().await?;
 
         if !Self::try_set_status_by_uuid(
@@ -1434,7 +1464,7 @@ impl Server {
             .await?
             .api_client(&state.database)
             .await?
-            .post_servers_server_reinstall(
+            .post_servers_server_reinstall_with(
                 self.uuid,
                 &wings_api::servers_server_reinstall::post::RequestBody {
                     truncate_directory,
@@ -1450,6 +1480,10 @@ impl Server {
                             }
                         },
                     ),
+                },
+                &wings_api::servers_server_reinstall::post::Extra {
+                    start_on_completion,
+                    ..Default::default()
                 },
             )
             .await

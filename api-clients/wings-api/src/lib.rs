@@ -2378,6 +2378,14 @@ pub mod servers_server_reinstall {
         pub type Response409 = ApiError;
 
         pub type Response = Response202;
+
+        #[derive(Debug, Clone, Default)]
+        #[allow(clippy::manual_non_exhaustive)]
+        pub struct Extra {
+            pub start_on_completion: bool,
+            #[doc(hidden)]
+            pub __priv: (),
+        }
     }
 }
 pub mod servers_server_schedules_schedule {

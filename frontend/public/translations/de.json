@@ -7352,6 +7352,7 @@
             "modal": {
               "title": "Server neu installieren",
               "button": "Neu installieren",
+              "startOnCompletion": "Server nach Abschluss der Neuinstallation starten",
               "toast": {
                 "reinstalling": "Server wird neu installiert..."
               }

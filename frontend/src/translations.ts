@@ -7439,6 +7439,7 @@ const baseTranslations = defineTranslations({
             modal: {
               title: 'Reinstall Server',
               button: 'Reinstall',
+              startOnCompletion: 'Start the server after the reinstall has finished',
               toast: {
                 reinstalling: 'Reinstalling server...',
               },
