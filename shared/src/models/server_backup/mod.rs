@@ -1751,11 +1751,9 @@ impl ServerBackup {
             Err(wings_api::client::ApiHttpError::Http(
                 status @ (StatusCode::NOT_FOUND | StatusCode::EXPECTATION_FAILED),
                 err,
-            )) => Err(crate::response::DisplayError::new(
-                crate::ApiError::new_wings_value(err).to_string(),
-            )
-            .with_status(status)
-            .into()),
+            )) => Err(crate::response::DisplayError::new(err.error.to_string())
+                .with_status(status)
+                .into()),
             Err(err) => Err(err.into()),
         }
     }
@@ -1779,11 +1777,9 @@ impl ServerBackup {
         {
             Ok(response) => Ok(response),
             Err(wings_api::client::ApiHttpError::Http(StatusCode::NOT_FOUND, err)) => {
-                Err(crate::response::DisplayError::new(
-                    crate::ApiError::new_wings_value(err).to_string(),
-                )
-                .with_status(StatusCode::NOT_FOUND)
-                .into())
+                Err(crate::response::DisplayError::new(err.error.to_string())
+                    .with_status(StatusCode::NOT_FOUND)
+                    .into())
             }
             Err(err) => Err(err.into()),
         }

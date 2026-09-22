@@ -58,7 +58,7 @@ mod put {
         {
             Ok(distr) => distr,
             Err(err) => {
-                let (err, status) = shared::response::extract_readable_error(&err)
+                let (err, status) = shared::response::extract_readable_message(&err)
                     .unwrap_or_else(|| (err.to_string(), StatusCode::BAD_REQUEST));
 
                 return ApiResponse::error(format!("failed to process extension archive: {err}"))

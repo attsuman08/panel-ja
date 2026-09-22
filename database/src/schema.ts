@@ -1037,6 +1037,7 @@ export const serversTable = pgTable(
     pinned_cpus: smallint().array().notNull(),
     startup: text().notNull(),
     image: varchar({ length: 255 }).notNull(),
+    labels: json().default({}).notNull(),
     auto_kill: jsonb().default({ enabled: false, seconds: 30 }).notNull(),
     auto_start_behavior: serverAutoStartBehaviorEnum().default('UNLESS_STOPPED').notNull(),
     timezone: varchar({ length: 255 }),

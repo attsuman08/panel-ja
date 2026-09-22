@@ -171,6 +171,7 @@ pub struct Server {
 
     pub startup: compact_str::CompactString,
     pub image: compact_str::CompactString,
+    pub labels: IndexMap<compact_str::CompactString, compact_str::CompactString>,
     pub auto_kill: wings_api::ServerConfigurationAutoKill,
     pub auto_start_behavior: ServerAutoStartBehavior,
     pub timezone: Option<compact_str::CompactString>,
@@ -276,6 +277,10 @@ impl BaseModel for Server {
             (
                 "servers.image",
                 compact_str::format_compact!("{prefix}image"),
+            ),
+            (
+                "servers.labels",
+                compact_str::format_compact!("{prefix}labels"),
             ),
             (
                 "servers.auto_kill",
@@ -387,6 +392,9 @@ impl BaseModel for Server {
                 .try_get(compact_str::format_compact!("{prefix}pinned_cpus").as_str())?,
             startup: row.try_get(compact_str::format_compact!("{prefix}startup").as_str())?,
             image: row.try_get(compact_str::format_compact!("{prefix}image").as_str())?,
+            labels: serde_json::from_value(row.try_get::<serde_json::Value, _>(
+                compact_str::format_compact!("{prefix}labels").as_str(),
+            )?)?,
             auto_kill: serde_json::from_value(row.try_get::<serde_json::Value, _>(
                 compact_str::format_compact!("{prefix}auto_kill").as_str(),
             )?)?,
@@ -1974,7 +1982,7 @@ impl Server {
                         )
                     })
                     .collect(),
-                labels: IndexMap::new(),
+                labels: self.labels,
                 backups: backups.into_iter().map(|b| b.uuid).collect(),
                 schedules: schedules
                     .into_iter()
@@ -2169,6 +2177,7 @@ impl super::IntoAdminApiObject for Server {
                 feature_limits,
                 startup: self.startup,
                 image: self.image,
+                labels: self.labels,
                 auto_kill: self.auto_kill,
                 auto_start_behavior: self.auto_start_behavior,
                 timezone: self.timezone,
@@ -2370,6 +2379,9 @@ pub struct CreateServerOptions {
     #[garde(length(chars, min = 2, max = 255))]
     #[schema(min_length = 2, max_length = 255)]
     pub image: compact_str::CompactString,
+    #[garde(custom(validate_labels))]
+    #[serde(default)]
+    pub labels: IndexMap<compact_str::CompactString, compact_str::CompactString>,
     #[garde(skip)]
     #[schema(value_type = Option<String>)]
     pub timezone: Option<chrono_tz::Tz>,
@@ -2476,6 +2488,7 @@ impl CreatableModel for Server {
                 .set("pinned_cpus", &options.pinned_cpus)
                 .set("startup", &options.startup)
                 .set("image", &options.image)
+                .set("labels", OrderedJson(&options.labels))
                 .set("timezone", options.timezone.as_ref().map(|t| t.name()))
                 .set(
                     "hugepages_passthrough_enabled",
@@ -2608,6 +2621,48 @@ fn validate_auto_kill(
     }
 }
 
+/// Wings writes `Service` and `ContainerType` onto every container it creates, after the labels
+/// coming from here, so a label under either key would be silently dropped instead of applied.
+const RESERVED_LABELS: [&str; 2] = ["Service", "ContainerType"];
+const MAX_LABELS: usize = 64;
+
+pub fn validate_labels(
+    labels: &IndexMap<compact_str::CompactString, compact_str::CompactString>,
+    _context: &(),
+) -> garde::Result {
+    if labels.len() > MAX_LABELS {
+        return Err(garde::Error::new(compact_str::format_compact!(
+            "a server cannot have more than {MAX_LABELS} labels"
+        )));
+    }
+
+    for (key, value) in labels {
+        if key.trim().is_empty() {
+            return Err(garde::Error::new("label keys cannot be empty"));
+        }
+
+        if RESERVED_LABELS.contains(&key.as_str()) {
+            return Err(garde::Error::new(compact_str::format_compact!(
+                "label {key} is reserved by wings"
+            )));
+        }
+
+        if key.chars().count() > 255 || value.chars().count() > 255 {
+            return Err(garde::Error::new(compact_str::format_compact!(
+                "label {key} and its value must each be at most 255 characters"
+            )));
+        }
+
+        if key.chars().chain(value.chars()).any(char::is_control) {
+            return Err(garde::Error::new(compact_str::format_compact!(
+                "label {key} cannot contain control characters"
+            )));
+        }
+    }
+
+    Ok(())
+}
+
 #[derive(ToSchema, Serialize, Deserialize, Validate, Clone, Default)]
 pub struct UpdateServerOptions {
     #[garde(skip)]
@@ -2656,6 +2711,8 @@ pub struct UpdateServerOptions {
     #[garde(length(chars, min = 2, max = 255))]
     #[schema(min_length = 2, max_length = 255)]
     pub image: Option<compact_str::CompactString>,
+    #[garde(inner(custom(validate_labels)))]
+    pub labels: Option<IndexMap<compact_str::CompactString, compact_str::CompactString>>,
     #[garde(custom(validate_auto_kill))]
     #[schema(inline)]
     pub auto_kill: Option<wings_api::ServerConfigurationAutoKill>,
@@ -2769,6 +2826,7 @@ impl UpdatableModel for Server {
             .set("pinned_cpus", options.pinned_cpus.as_ref())
             .set("startup", options.startup.as_ref())
             .set("image", options.image.as_ref())
+            .set("labels", options.labels.as_ref().map(OrderedJson))
             .set(
                 "auto_kill",
                 options
@@ -2850,6 +2908,9 @@ impl UpdatableModel for Server {
         }
         if let Some(image) = options.image {
             self.image = image;
+        }
+        if let Some(labels) = options.labels {
+            self.labels = labels;
         }
         if let Some(auto_kill) = options.auto_kill {
             self.auto_kill = auto_kill;
@@ -3099,6 +3160,7 @@ pub struct AdminApiServer {
 
     pub startup: compact_str::CompactString,
     pub image: compact_str::CompactString,
+    pub labels: IndexMap<compact_str::CompactString, compact_str::CompactString>,
     #[schema(inline)]
     pub auto_kill: wings_api::ServerConfigurationAutoKill,
     pub auto_start_behavior: ServerAutoStartBehavior,
@@ -3160,7 +3222,9 @@ pub struct ApiServer {
 
 #[cfg(test)]
 mod tests {
-    use super::is_path_ignored;
+    use super::{is_path_ignored, validate_labels};
+    use compact_str::CompactString;
+    use indexmap::IndexMap;
 
     fn overrides(patterns: &[&str]) -> ignore::overrides::Override {
         let mut builder = ignore::overrides::OverrideBuilder::new("/");
@@ -3223,6 +3287,92 @@ mod tests {
 
         for path in ["/", "", ".", "/.", "/config/.."] {
             assert!(!is_path_ignored(&overrides, path, true), "{path}");
+        }
+    }
+
+    // validate_labels
+    fn labels(pairs: &[(&str, &str)]) -> IndexMap<CompactString, CompactString> {
+        pairs
+            .iter()
+            .map(|(key, value)| (CompactString::from(*key), CompactString::from(*value)))
+            .collect()
+    }
+
+    #[test]
+    fn ordinary_labels_and_no_labels_at_all_are_accepted() {
+        assert!(
+            validate_labels(
+                &labels(&[("environment", "production"), ("owner", "team-a")]),
+                &()
+            )
+            .is_ok()
+        );
+        assert!(validate_labels(&labels(&[]), &()).is_ok());
+    }
+
+    #[test]
+    fn the_keys_wings_unconditionally_overwrites_are_rejected() {
+        for key in ["Service", "ContainerType"] {
+            assert!(
+                validate_labels(&labels(&[(key, "value")]), &()).is_err(),
+                "{key}"
+            );
+        }
+    }
+
+    #[test]
+    fn at_most_sixty_four_labels_are_accepted() {
+        let build = |count: usize| {
+            (0..count)
+                .map(|i| {
+                    (
+                        CompactString::from(format!("key-{i}")),
+                        CompactString::new("v"),
+                    )
+                })
+                .collect::<IndexMap<_, _>>()
+        };
+
+        assert!(validate_labels(&build(64), &()).is_ok());
+        assert!(validate_labels(&build(65), &()).is_err());
+    }
+
+    #[test]
+    fn keys_and_values_are_limited_to_255_characters_rather_than_bytes() {
+        let long = "é".repeat(255);
+        let too_long = "a".repeat(256);
+
+        assert!(validate_labels(&labels(&[(&long, "v")]), &()).is_ok());
+        assert!(validate_labels(&labels(&[("k", &long)]), &()).is_ok());
+
+        assert!(validate_labels(&labels(&[(&too_long, "v")]), &()).is_err());
+        assert!(validate_labels(&labels(&[("k", &too_long)]), &()).is_err());
+    }
+
+    #[test]
+    fn keys_that_are_empty_or_only_whitespace_are_rejected() {
+        for key in ["", " ", "   "] {
+            assert!(
+                validate_labels(&labels(&[(key, "value")]), &()).is_err(),
+                "{key:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn control_characters_are_rejected_in_keys_and_in_values() {
+        for control in ["\n", "\r", "\0", "\u{7}"] {
+            let key = format!("ke{control}y");
+            let value = format!("va{control}lue");
+
+            assert!(
+                validate_labels(&labels(&[(&key, "value")]), &()).is_err(),
+                "{key:?}"
+            );
+            assert!(
+                validate_labels(&labels(&[("key", &value)]), &()).is_err(),
+                "{value:?}"
+            );
         }
     }
 }

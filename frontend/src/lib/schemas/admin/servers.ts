@@ -50,6 +50,7 @@ export const adminServerSchema = z.looseObject({
   featureLimits: z.lazy(() => adminServerFeatureLimitsSchema),
   startup: z.string().min(1).max(8192),
   image: z.string().min(2).max(255),
+  labels: z.record(z.string(), z.string()),
   autoKill: z.object({
     enabled: z.boolean(),
     seconds: z.number(),

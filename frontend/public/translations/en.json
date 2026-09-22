@@ -3476,6 +3476,7 @@
                   "unlimited": "Unlimited",
                   "autoKillSeconds": "{seconds}s",
                   "autoKillDisabled": "Disabled",
+                  "labels": "Labels",
                   "uuid": "UUID"
                 },
                 "badge": {
@@ -3536,6 +3537,8 @@
                   "predefinedDockerImagesPlaceholder": "No predefined image selected",
                   "startupCommandCustom": "Custom",
                   "predefinedStartupCommands": "Predefined Startup Commands",
+                  "labels": "Container Labels",
+                  "labelsDescription": "Docker labels put on the server container, readable in the startup command as server.labels.<key>. Applied on the next start.",
                   "startOnCompletion": "Start on Completion",
                   "startOnCompletionDescription": "Start server after installation completes.",
                   "skipInstaller": "Skip Installer",
