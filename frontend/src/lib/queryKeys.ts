@@ -101,6 +101,7 @@ const admin = {
     detail: (uuid: string) => ['admin', 'database-agent-hosts', { uuid }] as const,
     token: (uuid: string) => ['admin', 'database-agent-hosts', uuid, 'token'] as const,
     capacity: (uuid: string) => ['admin', 'database-agent-hosts', uuid, 'capacity'] as const,
+    capacities: () => ['admin', 'database-agent-hosts', 'capacities'] as const,
     systemOverview: (uuid: string) => ['admin', 'database-agent-hosts', uuid, 'system', 'overview'] as const,
   },
 

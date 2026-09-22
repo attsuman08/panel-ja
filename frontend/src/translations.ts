@@ -411,12 +411,27 @@ const baseTranslations = defineTranslations({
         ignored: 'Ignored',
         showingFirstEntries: 'Showing the first {count} entries',
       },
+      databaseAgentHost: {
+        deployment: {
+          available: 'Deployment Enabled',
+          nearlyFull: 'Nearly Full',
+          full: 'No Capacity',
+          disabled: 'Deployment Disabled',
+          maintenance: 'Under Maintenance',
+          typesDisabled: 'No Types Enabled',
+          memoryUsage: 'Memory: {used} / {limit}',
+          memoryUsageUnlimited: 'Memory: {used} used, no host limit',
+          diskUsage: 'Disk: {used} / {limit}',
+          diskUsageUnlimited: 'Disk: {used} used, no host limit',
+        },
+      },
       node: {
         deployment: {
           available: 'Deployment Enabled',
           nearlyFull: 'Nearly Full',
           full: 'No Capacity',
           disabled: 'Deployment Disabled',
+          maintenance: 'Under Maintenance',
           memoryUsage: 'Memory: {used} / {limit}',
           memoryUsageUnlimited: 'Memory: {used} used, no node limit',
           diskUsage: 'Disk: {used} / {limit}',
@@ -4118,9 +4133,16 @@ const baseTranslations = defineTranslations({
               page: {
                 titleCreate: 'Create Database Agent Host',
                 titleUpdate: 'Update Database Agent Host',
+                tooltip: {
+                  errorWhileFetchingVersion: 'Error while fetching version',
+                  updateAvailable: '{version} (Update Available)',
+                },
                 form: {
                   typePublicHost: 'Public Host',
                   typePublicPort: 'Public Port',
+                  memoryDescription: 'The total memory available for database instances on this host.',
+                  diskDescription: 'The total disk available for database instances on this host.',
+                  unlimitedTooltip: '0 will not set a limit.',
                 },
                 alert: {
                   urlMissingPort:

@@ -271,12 +271,12 @@ impl DatabaseAgentHost {
             AND database_agent_hosts.deployment_enabled
             AND NOT database_agent_hosts.maintenance_enabled
             AND COALESCE((database_agent_hosts.types -> $3 ->> 'enabled')::BOOL, TRUE)
-            AND COALESCE(u.used_memory, 0) + $4 <= database_agent_hosts.memory
-            AND COALESCE(u.used_disk, 0) + $5 <= database_agent_hosts.disk
+            AND (database_agent_hosts.memory = 0 OR COALESCE(u.used_memory, 0) + $4 <= database_agent_hosts.memory)
+            AND (database_agent_hosts.disk = 0 OR COALESCE(u.used_disk, 0) + $5 <= database_agent_hosts.disk)
             ORDER BY
                 GREATEST(
-                    (COALESCE(u.used_memory, 0) + $4)::FLOAT / NULLIF(database_agent_hosts.memory, 0),
-                    (COALESCE(u.used_disk, 0) + $5)::FLOAT / NULLIF(database_agent_hosts.disk, 0)
+                    CASE WHEN database_agent_hosts.memory = 0 THEN 0 ELSE (COALESCE(u.used_memory, 0) + $4)::FLOAT / database_agent_hosts.memory END,
+                    CASE WHEN database_agent_hosts.disk = 0 THEN 0 ELSE (COALESCE(u.used_disk, 0) + $5)::FLOAT / database_agent_hosts.disk END
                 )
             "#,
             Self::columns_sql(None)
@@ -498,11 +498,11 @@ pub struct CreateDatabaseAgentHostOptions {
     #[schema(min_length = 3, max_length = 255, format = "uri")]
     pub url: compact_str::CompactString,
 
-    #[garde(range(min = 1))]
-    #[schema(minimum = 1)]
+    #[garde(range(min = 0))]
+    #[schema(minimum = 0)]
     pub memory: i64,
-    #[garde(range(min = 1))]
-    #[schema(minimum = 1)]
+    #[garde(range(min = 0))]
+    #[schema(minimum = 0)]
     pub disk: i64,
 
     #[garde(dive)]
@@ -585,11 +585,11 @@ pub struct UpdateDatabaseAgentHostOptions {
     #[schema(min_length = 3, max_length = 255, format = "uri")]
     pub url: Option<compact_str::CompactString>,
 
-    #[garde(range(min = 1))]
-    #[schema(minimum = 1)]
+    #[garde(range(min = 0))]
+    #[schema(minimum = 0)]
     pub memory: Option<i64>,
-    #[garde(range(min = 1))]
-    #[schema(minimum = 1)]
+    #[garde(range(min = 0))]
+    #[schema(minimum = 0)]
     pub disk: Option<i64>,
 
     #[garde(dive)]

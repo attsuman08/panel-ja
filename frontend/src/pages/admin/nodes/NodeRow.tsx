@@ -117,11 +117,6 @@ const NodeRow = forwardRef<HTMLTableRowElement, NodeRowProps>(function NodeRow(
               {nodeDeploymentStateInfo[deploymentState].label()}
             </Badge>
           </Tooltip>
-          {node.maintenanceEnabled && (
-            <Badge color='red' variant='light'>
-              {t('pages.admin.nodes.tabs.capacity.page.status.maintenanceEnabled', {})}
-            </Badge>
-          )}
           {isNodeAIO(node) && (
             <Tooltip label={t('pages.admin.nodes.tabs.general.page.tooltip.allInOneNode', {})}>
               <FontAwesomeIcon icon={faHeart} className='text-purple-500' />

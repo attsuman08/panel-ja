@@ -588,12 +588,27 @@
         "ignored": "Ignoriert",
         "showingFirstEntries": "Die ersten {count} Einträge werden angezeigt"
       },
+      "databaseAgentHost": {
+        "deployment": {
+          "available": "Bereitstellung aktiviert",
+          "nearlyFull": "Fast voll",
+          "full": "Keine Kapazität",
+          "disabled": "Bereitstellung deaktiviert",
+          "maintenance": "In Wartung",
+          "typesDisabled": "Keine Typen aktiviert",
+          "memoryUsage": "Arbeitsspeicher: {used} / {limit}",
+          "memoryUsageUnlimited": "Arbeitsspeicher: {used} belegt, kein Host-Limit",
+          "diskUsage": "Speicherplatz: {used} / {limit}",
+          "diskUsageUnlimited": "Speicherplatz: {used} belegt, kein Host-Limit"
+        }
+      },
       "node": {
         "deployment": {
           "available": "Bereitstellung aktiviert",
           "nearlyFull": "Fast voll",
           "full": "Keine Kapazität",
           "disabled": "Bereitstellung deaktiviert",
+          "maintenance": "In Wartung",
           "memoryUsage": "Arbeitsspeicher: {used} / {limit}",
           "memoryUsageUnlimited": "Arbeitsspeicher: {used} belegt, kein Node-Limit",
           "diskUsage": "Speicherplatz: {used} / {limit}",
@@ -4143,9 +4158,16 @@
               "page": {
                 "titleCreate": "Datenbank-Agent-Host erstellen",
                 "titleUpdate": "Datenbank-Agent-Host aktualisieren",
+                "tooltip": {
+                  "errorWhileFetchingVersion": "Fehler beim Abrufen der Version",
+                  "updateAvailable": "{version} (Update verfügbar)"
+                },
                 "form": {
                   "typePublicHost": "Öffentlicher Host",
-                  "typePublicPort": "Öffentlicher Port"
+                  "typePublicPort": "Öffentlicher Port",
+                  "memoryDescription": "Der gesamte Arbeitsspeicher, der Datenbank-Instanzen auf diesem Host zur Verfügung steht.",
+                  "diskDescription": "Der gesamte Speicherplatz, der Datenbank-Instanzen auf diesem Host zur Verfügung steht.",
+                  "unlimitedTooltip": "0 setzt kein Limit."
                 },
                 "alert": {
                   "urlMissingPort": "Kein Port angegeben. Das Panel verbindet sich mit diesem Host über Port {port}. Der Datenbank-Agent lauscht standardmäßig auf Port {agentPort}, füge ihn also zur URL hinzu, außer ein Reverse-Proxy auf Port {port} leitet an den Agent weiter."

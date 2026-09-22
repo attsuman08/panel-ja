@@ -5,6 +5,8 @@ import TableLink from '@/elements/data-display/TableLink.tsx';
 import FormattedTimestamp from '@/elements/time/FormattedTimestamp.tsx';
 import Code from '@/elements/typography/Code.tsx';
 import { adminDatabaseAgentHostSchema } from '@/lib/schemas/admin/databaseAgentHosts.ts';
+import DatabaseAgentHostDeploymentBadge from './DatabaseAgentHostDeploymentBadge.tsx';
+import DatabaseAgentHostHealthIcon from './DatabaseAgentHostHealthIcon.tsx';
 
 interface DatabaseAgentHostRowProps {
   databaseAgentHost: z.infer<typeof adminDatabaseAgentHostSchema>;
@@ -33,12 +35,21 @@ const DatabaseAgentHostRow = forwardRef<HTMLTableRowElement, DatabaseAgentHostRo
       )}
 
       <TableData>
+        <DatabaseAgentHostHealthIcon databaseAgentHost={databaseAgentHost} />
+      </TableData>
+
+      <TableData>
         <TableLink to={`/admin/database-agent-hosts/${databaseAgentHost.uuid}`}>
           <Code>{databaseAgentHost.uuid}</Code>
         </TableLink>
       </TableData>
 
-      <TableData>{databaseAgentHost.name}</TableData>
+      <TableData>
+        <span className='flex gap-2 items-center'>
+          {databaseAgentHost.name}&nbsp;
+          <DatabaseAgentHostDeploymentBadge databaseAgentHost={databaseAgentHost} />
+        </span>
+      </TableData>
 
       <TableData>
         <FormattedTimestamp timestamp={databaseAgentHost.created} />
