@@ -151,6 +151,78 @@
       "few": "{count} セッション",
       "many": "{count} セッション",
       "other": "{count} セッション"
+    },
+    "serverAllocation": {
+      "zero": "{count} 割り当て",
+      "one": "{count} 割り当て",
+      "two": "{count} 割り当て",
+      "few": "{count} 割り当て",
+      "many": "{count} 割り当て",
+      "other": "{count} 割り当て"
+    },
+    "database": {
+      "zero": "{count} データベース",
+      "one": "{count} データベース",
+      "two": "{count} データベース",
+      "few": "{count} データベース",
+      "many": "{count} データベース",
+      "other": "{count} データベース"
+    },
+    "databaseInstance": {
+      "zero": "{count} マネージドデータベース",
+      "one": "{count} マネージドデータベース",
+      "two": "{count} マネージドデータベース",
+      "few": "{count} マネージドデータベース",
+      "many": "{count} マネージドデータベース",
+      "other": "{count} マネージドデータベース"
+    },
+    "schedule": {
+      "zero": "{count} スケジュール",
+      "one": "{count} スケジュール",
+      "two": "{count} スケジュール",
+      "few": "{count} スケジュール",
+      "many": "{count} スケジュール",
+      "other": "{count} スケジュール"
+    },
+    "subuser": {
+      "zero": "{count} サブユーザー",
+      "one": "{count} サブユーザー",
+      "two": "{count} サブユーザー",
+      "few": "{count} サブユーザー",
+      "many": "{count} サブユーザー",
+      "other": "{count} サブユーザー"
+    },
+    "mount": {
+      "zero": "{count} マウント",
+      "one": "{count} マウント",
+      "two": "{count} マウント",
+      "few": "{count} マウント",
+      "many": "{count} マウント",
+      "other": "{count} マウント"
+    },
+    "apiKey": {
+      "zero": "{count} APIキー",
+      "one": "{count} APIキー",
+      "two": "{count} APIキー",
+      "few": "{count} APIキー",
+      "many": "{count} APIキー",
+      "other": "{count} APIキー"
+    },
+    "oauthLink": {
+      "zero": "{count} 連携アカウント",
+      "one": "{count} 連携アカウント",
+      "two": "{count} 連携アカウント",
+      "few": "{count} 連携アカウント",
+      "many": "{count} 連携アカウント",
+      "other": "{count} 連携アカウント"
+    },
+    "commandSnippet": {
+      "zero": "{count} コマンドスニペット",
+      "one": "{count} コマンドスニペット",
+      "two": "{count} コマンドスニペット",
+      "few": "{count} コマンドスニペット",
+      "many": "{count} コマンドスニペット",
+      "other": "{count} コマンドスニペット"
     }
   },
   "translations": {
@@ -211,7 +283,8 @@
         "error": "エラー",
         "warning": "警告",
         "success": "成功",
-        "clockOffset": "システム時刻がサーバーと5秒以上ずれています。これにより、パスキー認証や2要素認証で問題が発生する可能性があります。問題が発生した場合は時刻を同期してください。現在のずれ: {offset}秒。"
+        "clockOffset": "システム時刻がサーバーと5秒以上ずれています。これにより、パスキー認証や2要素認証で問題が発生する可能性があります。問題が発生した場合は時刻を同期してください。現在のずれ: {offset}秒。",
+        "passwordAuthUnavailable": "この接続ではパスワードを使用できません。SSHキーを使用してください。SSHキーはアカウントの「SSHキー」ページから追加できます。"
       },
       "divider": {
         "or": "または"
@@ -275,7 +348,29 @@
           "weekly": "週次で保持",
           "monthly": "月次で保持",
           "yearly": "年次で保持",
-          "ruleSummary": "{rule}: {count}"
+          "ruleSummary": "{rule}: {count}",
+          "status": {
+            "rule": {
+              "count": "最新",
+              "days": "直近",
+              "daily": "日次",
+              "weekly": "週次",
+              "monthly": "月次",
+              "yearly": "年次"
+            },
+            "locked": "ロック済み",
+            "indefinite": "無期限に保持",
+            "expired": "削除待ち",
+            "failed": "クリーンアップ",
+            "keptBy": "保持ルール: {rules}。",
+            "forecastDescription": "削除予定時刻はバックアップスケジュールに基づく推定です。",
+            "lockedDescription": "ロックされたバックアップは保持ルールによって削除されません。",
+            "indefiniteDescription": "適用される保持ルールはありません。",
+            "expiredDescription": "このバックアップを保持するルールはなくなりました。次回の保持処理で削除されます。",
+            "failedDescription": "失敗したバックアップは24時間後に削除されます。",
+            "expires": "{timestamp} に削除",
+            "expiresUnknown": "削除予定なし"
+          }
         }
       },
       "modal": {
@@ -418,6 +513,7 @@
         "truncateDirectory": "この操作を実行する前に、このサーバーのすべてのファイルを削除しますか？この操作は元に戻せません。"
       },
       "table": {
+        "selectRow": "行を選択",
         "pagination": {
           "results": "{total} 件中 {start} 〜 {end} 件を表示しています。",
           "empty": "アイテムが見つかりませんでした。"
@@ -460,6 +556,28 @@
           "host": "ホスト"
         }
       },
+      "bulkActions": {
+        "success": "{items}を{action}しました。",
+        "partial": "{successfulItems}を{action}しました。{failedItems}件は失敗しました。",
+        "successWithSkipped": "{items}を{action}しました。{skippedItems}件はスキップされました。",
+        "nothingToDo": "選択した項目にこの操作を適用できません。",
+        "verb": {
+          "deleted": "削除",
+          "removed": "削除",
+          "triggered": "実行",
+          "locked": "ロック",
+          "unlocked": "ロック解除",
+          "moved": "移動",
+          "enabled": "有効化",
+          "disabled": "無効化",
+          "attached": "接続",
+          "detached": "切断",
+          "started": "起動",
+          "stopped": "停止",
+          "restarted": "再起動",
+          "killed": "強制終了"
+        }
+      },
       "tabs": {
         "general": "一般"
       },
@@ -490,7 +608,22 @@
         "page": "{page} ページ",
         "emptyDirectory": "このディレクトリは空です",
         "ignored": "除外済み",
+        "partiallyIgnored": "一部無視",
         "showingFirstEntries": "先頭 {count} 件のエントリを表示中"
+      },
+      "databaseAgentHost": {
+        "deployment": {
+          "available": "デプロイ可能",
+          "nearlyFull": "残り容量わずか",
+          "full": "空き容量なし",
+          "disabled": "デプロイ無効",
+          "maintenance": "メンテナンス中",
+          "typesDisabled": "有効な種類なし",
+          "memoryUsage": "メモリ: {used} / {limit}",
+          "memoryUsageUnlimited": "メモリ: {used} 使用中、ホスト上限なし",
+          "diskUsage": "ディスク: {used} / {limit}",
+          "diskUsageUnlimited": "ディスク: {used} 使用中、ホスト上限なし"
+        }
       },
       "node": {
         "deployment": {
@@ -498,6 +631,7 @@
           "nearlyFull": "空き容量わずか",
           "full": "空き容量なし",
           "disabled": "デプロイ無効",
+          "maintenance": "メンテナンス中",
           "memoryUsage": "メモリ: {used} / {limit}",
           "memoryUsageUnlimited": "メモリ: {used} 使用中 (ノード制限なし)",
           "diskUsage": "ディスク: {used} / {limit}",
@@ -901,10 +1035,27 @@
         "modal": {
           "cancelAllUploads": {
             "content": "進行中のアップロードをすべてキャンセルしてもよろしいですか？一部のみアップロードされたファイルは破棄されます。"
+          },
+          "uploadConflict": {
+            "title": "アップロード時の競合を解決",
+            "description": "次の{items}は`{directory}`にすでに存在します。",
+            "alsoUploading": "競合のない{files}はそのままアップロードされます。",
+            "source": "選択した項目",
+            "selectedFolder": "{files}を含む",
+            "destination": "既存の項目",
+            "skip": "スキップ",
+            "overwrite": "上書き",
+            "merge": "統合",
+            "mergeHint": "{files}のいずれかと同名の既存ファイルは上書きされます。",
+            "rename": "名前を変更",
+            "skipAll": "すべてスキップ",
+            "overwriteAll": "すべて上書き",
+            "confirm": "{files}をアップロード"
           }
         },
         "toast": {
           "uploading": "{files} のアップロードを開始しました...",
+          "conflictCheckFailed": "既存ファイルを確認できませんでした。そのままアップロードします。",
           "failed": "アップロード失敗: {error}",
           "cancelledFile": "`{file}` のアップロードをキャンセルしました。",
           "cancelledFolder": "`{folder}` ({files}) のアップロードをキャンセルしました。",
@@ -1099,7 +1250,8 @@
             "usernameRequired": "ユーザー名を入力してください",
             "registrationDisabled": "一致するアカウントが見つかりませんでした。現在、新規登録は無効になっています。",
             "userAlreadyExists": "このユーザー名またはメールアドレスのアカウントは既に存在します。",
-            "securityKeyRequired": "このアカウントには2要素認証が必要です。代わりにセキュリティキーでサインインしてください。"
+            "securityKeyRequired": "このアカウントには2要素認証が必要です。代わりにセキュリティキーでサインインしてください。",
+            "passwordLoginDisabled": "このパネルではパスワードログインが無効です。以下のいずれかの方法でログインしてください。"
           },
           "passkey": {
             "error": {
@@ -1119,6 +1271,7 @@
             "username": {
               "title": "ログイン",
               "subtitle": "ユーザー名またはメールアドレスを入力して続行してください",
+              "subtitleProviderOnly": "プロバイダーを選択して続行",
               "form": {
                 "usernameOrEmailPlaceholder": "ユーザー名またはメールアドレス"
               },
@@ -1610,7 +1763,9 @@
             "previousPage": "前のページ",
             "nextPage": "次のページ",
             "firstPage": "最初のページ",
-            "lastPage": "最後のページ"
+            "lastPage": "最後のページ",
+            "selectAll": "すべての行を選択",
+            "deselectAll": "すべての行の選択を解除"
           },
           "console": {
             "title": "サーバーコンソール",
@@ -1658,6 +1813,10 @@
                 "created": "{sshKeys} を作成しました。"
               }
             },
+            "deleteSshKeys": {
+              "title": "SSHキーの削除を確認",
+              "content": "アカウントから**{sshKeys}**を削除してもよろしいですか？"
+            },
             "deleteSshKey": {
               "title": "SSHキーの削除確認",
               "content": "アカウントから **{name}** を削除してもよろしいですか？",
@@ -1686,6 +1845,10 @@
                 "updated": "コマンドスニペットを更新しました。"
               }
             },
+            "deleteCommandSnippets": {
+              "title": "コマンドスニペットの削除を確認",
+              "content": "アカウントから**{commandSnippets}**を削除してもよろしいですか？"
+            },
             "deleteCommandSnippet": {
               "title": "コマンドスニペットの削除確認",
               "content": "アカウントから **{name}** を削除してもよろしいですか？",
@@ -1713,6 +1876,10 @@
             }
           },
           "modal": {
+            "deleteOAuthLinks": {
+              "title": "OAuth連携の削除を確認",
+              "content": "アカウントから**{oauthLinks}**を削除してもよろしいですか？"
+            },
             "deleteOAuthLink": {
               "title": "OAuth連携の解除確認",
               "content": "アカウントから **{provider}** の連携を解除してもよろしいですか？",
@@ -1762,6 +1929,10 @@
               "toast": {
                 "recreated": "APIキーを再生成しました。"
               }
+            },
+            "deleteApiKeys": {
+              "title": "APIキーの削除を確認",
+              "content": "アカウントから**{apiKeys}**を削除してもよろしいですか？"
             },
             "deleteApiKey": {
               "title": "APIキーの削除確認",
@@ -1981,7 +2152,9 @@
                   "emailVerificationRequiredDescription": "新規ユーザーはパネルを使用する前にメールアドレスを確認する必要があります。メール送信の設定が必要です。",
                   "telemetryEnabled": "テレメトリを有効化",
                   "telemetryEnabledDescription": "アプリケーションの改善に役立てるため、Calagopusが限定的かつ匿名の利用状況データを収集することを許可します。",
-                  "registrationEnabled": "ユーザー登録を有効化"
+                  "registrationEnabled": "ユーザー登録を有効化",
+                  "passwordLoginEnabled": "パスワードログインを有効にする",
+                  "passwordLoginEnabledDescription": "ユーザーがユーザー名とパスワードでログインできるようにします。無効にすると、OAuthプロバイダーまたはセキュリティキーのみでログイン可能になり、ローカル登録、パスワードのリセット、SFTPのパスワード認証も利用できなくなります。"
                 },
                 "enum": {
                   "twoFactorMethod": {
@@ -2009,6 +2182,10 @@
                   "enableRegistration": {
                     "title": "ユーザー登録の有効化確認",
                     "content": "ユーザー登録を有効にしてもよろしいですか？有効にすると、誰でもこのパネルにアカウントを作成できるようになります。CAPTCHAが設定されていない場合、スパムの原因となる可能性があります。"
+                  },
+                  "disablePasswordLogin": {
+                    "title": "パスワードログインの無効化を確認",
+                    "content": "パスワードログインを無効にしてもよろしいですか？すべてのユーザーにOAuthプロバイダーまたはセキュリティキーでのログインが必要になり、ローカル登録、パスワードのリセット、SFTPのパスワード認証も利用できなくなります。続行する前に、ご自身が引き続きログインできることを確認してください。"
                   },
                   "telemetryPreview": {
                     "title": "テレメトリのプレビュー"
@@ -2440,6 +2617,10 @@
             "pendingRestart": {
               "title": "一部の拡張機能が有効化または無効化されました",
               "content": "変更はパネルの次回起動時に反映されます。"
+            },
+            "versionMismatch": {
+              "title": "パネルで異なるバージョン向けのビルドが実行されています",
+              "content": "実行中のパネルはバージョン{runningVersion}ですが、拡張機能のビルド対象はバージョン{targetVersion}です。インストールする拡張機能は{targetVersion}に対応している必要があります。"
             }
           },
           "button": {
@@ -3275,7 +3456,13 @@
             "modal": {
               "title": "一括操作の確認",
               "content": "**{servers}** に対して「{action}」を実行してもよろしいですか？",
-              "deleteContent": "**{servers}** とそのすべてのデータを完全に削除してもよろしいですか？この操作は元に戻せません。"
+              "deleteContent": "**{servers}** とそのすべてのデータを完全に削除してもよろしいですか？この操作は元に戻せません。",
+              "form": {
+                "deleteBackups": "これらのサーバーのバックアップも削除しますか？"
+              },
+              "alert": {
+                "forceWarning": "強制削除すると、ノードに接続できない場合でもパネルからサーバーが削除されます。ファイルやデータベースのクリーンアップが完了せず、孤立したデータが残る可能性があります。"
+              }
             },
             "successWithSkipped": "{servers} に対して正常に「{action}」を実行しました。{skippedServers} をスキップしました。",
             "nothingToDo": "選択されたサーバーはすべてすでにその状態です。"
@@ -3331,6 +3518,7 @@
                   "unlimited": "無制限",
                   "autoKillSeconds": "{seconds}秒",
                   "autoKillDisabled": "無効",
+                  "labels": "ラベル",
                   "uuid": "UUID"
                 },
                 "badge": {
@@ -3391,6 +3579,8 @@
                   "predefinedDockerImagesPlaceholder": "事前定義イメージが選択されていません",
                   "startupCommandCustom": "カスタム",
                   "predefinedStartupCommands": "事前定義された起動コマンド",
+                  "labels": "コンテナラベル",
+                  "labelsDescription": "サーバーコンテナに付与するDockerラベルです。起動コマンドではserver.labels.<key>として参照できます。次回の起動時に適用されます。",
                   "startOnCompletion": "完了時に起動",
                   "startOnCompletionDescription": "インストール完了後にサーバーを起動します。",
                   "skipInstaller": "インストーラーをスキップ",
@@ -4020,9 +4210,16 @@
               "page": {
                 "titleCreate": "データベースエージェントホストを作成",
                 "titleUpdate": "データベースエージェントホストを更新",
+                "tooltip": {
+                  "errorWhileFetchingVersion": "バージョンの取得中にエラーが発生しました",
+                  "updateAvailable": "{version}（更新可能）"
+                },
                 "form": {
                   "typePublicHost": "公開ホスト",
-                  "typePublicPort": "公開ポート"
+                  "typePublicPort": "公開ポート",
+                  "memoryDescription": "このホストでデータベースインスタンスが使用できるメモリの合計です。",
+                  "diskDescription": "このホストでデータベースインスタンスが使用できるディスク容量の合計です。",
+                  "unlimitedTooltip": "0を指定すると上限は設定されません。"
                 },
                 "alert": {
                   "urlMissingPort": "ポートが指定されていません。パネルはこのホストのポート {port} に接続します。データベースエージェントはデフォルトでポート {agentPort} をリッスンするため、ポート {port} のリバースプロキシがエージェントに転送しているのでない限り、URLにポートを追加してください。"
@@ -5030,7 +5227,10 @@
             "connect": "接続",
             "connectSftp": "SFTP経由",
             "connectVscode": "VS Code経由",
-            "openInNewWindow": "新しいウィンドウで開く",
+            "open": "開く",
+            "openInNewTab": "新しいタブで開く",
+            "openInPopup": "ポップアップで開く",
+            "openInVirtualWindow": "仮想ウィンドウで開く",
             "rename": "名前を変更",
             "copy": "コピー",
             "fingerprint": "フィンガープリント",
@@ -5758,6 +5958,10 @@
                 "kill": "マネージドデータベースを強制終了しました。"
               },
               "modal": {
+                "forceKillBulk": {
+                  "title": "データベースを強制終了",
+                  "content": "**{databaseInstances}**を強制終了すると、データが破損するおそれがあります。"
+                },
                 "forceKill": {
                   "title": "データベースを強制終了",
                   "content": "データベースを強制終了するとデータ破損につながる可能性があります。"
@@ -5838,6 +6042,13 @@
                   "applied": "テンプレートのアップデートを適用しました。"
                 }
               },
+              "deleteDatabaseInstances": {
+                "title": "マネージドデータベースの削除を確認",
+                "content": "マネージドデータベースを削除すると元に戻せません。**{databaseInstances}**とその中のすべてのデータが完全に削除されます。",
+                "alert": {
+                  "skipped": "ロックされたマネージドデータベースは削除できないため、{databaseInstances}はスキップされます。"
+                }
+              },
               "deleteDatabaseInstance": {
                 "title": "マネージドデータベースの削除確認",
                 "content": "マネージドデータベースの削除は恒久的な操作であり、元に戻すことはできません。**{name}** データベースが完全に削除され、関連するすべてのデータが破棄されます。",
@@ -5900,6 +6111,13 @@
               "content": "データベースを再作成すると、**{name}** データベース内のすべてのデータが完全に削除され、同じ接続詳細を持つ新しいデータベースが作成されます。",
               "toast": {
                 "recreated": "データベースを再作成しました。"
+              }
+            },
+            "deleteDatabases": {
+              "title": "データベースの削除を確認",
+              "content": "データベースを削除すると元に戻せません。**{databases}**と関連するすべてのデータが完全に削除されます。",
+              "alert": {
+                "skipped": "ロックされたデータベースは削除できないため、{databases}はスキップされます。"
               }
             },
             "deleteDatabase": {
@@ -6003,6 +6221,10 @@
             "calendar": {
               "title": "今後の実行予定カレンダー",
               "truncatedWarning": "カレンダーの応答性を維持するため、今後の実行予定の一部が省略されています。"
+            },
+            "deleteSchedules": {
+              "title": "スケジュールの削除を確認",
+              "content": "このサーバーから**{schedules}**を削除してもよろしいですか？"
             },
             "deleteSchedule": {
               "title": "スケジュールの削除確認",
@@ -6671,6 +6893,10 @@
                 "updated": "サブユーザーを更新しました。"
               }
             },
+            "removeSubusers": {
+              "title": "サブユーザーの削除を確認",
+              "content": "このサーバーから**{subusers}**を削除してもよろしいですか？"
+            },
             "removeSubuser": {
               "title": "サブユーザーの削除確認",
               "content": "このサーバーから **{username}** を削除してもよろしいですか？",
@@ -6695,6 +6921,7 @@
           "table": {
             "columns": {
               "kind": "種別",
+              "retention": "保持設定",
               "locked": "ロック状態"
             }
           },
@@ -6707,7 +6934,11 @@
             "browse": "参照",
             "exportToFiles": "ファイルにエクスポート",
             "createBackup": "バックアップを作成",
-            "createGroup": "バックアップグループを作成"
+            "createGroup": "バックアップグループを作成",
+            "moveToGroup": "グループに移動",
+            "removeFromGroup": "グループから削除",
+            "lock": "ロック",
+            "unlock": "ロック解除"
           },
           "toast": {
             "downloadStarted": "ダウンロードを開始しました。",
@@ -6737,6 +6968,13 @@
             },
             "exportBackup": {
               "title": "バックアップをファイルにエクスポート"
+            },
+            "deleteBackups": {
+              "title": "バックアップの削除を確認",
+              "content": "このサーバーから**{backups}**を削除してもよろしいですか？",
+              "alert": {
+                "skipped": "ロック中、未完了、または削除処理中のバックアップは削除できないため、{backups}はスキップされます。"
+              }
             },
             "deleteBackup": {
               "title": "バックアップの削除確認",
@@ -6811,6 +7049,13 @@
             "unsetPrimary": "割り当てのプライマリ設定を解除しました。"
           },
           "modal": {
+            "removeAllocations": {
+              "title": "割り当ての削除を確認",
+              "content": "このサーバーから**{allocations}**を削除してもよろしいですか？",
+              "alert": {
+                "skipped": "プライマリ割り当ては削除できないため、{allocations}はスキップされます。"
+              }
+            },
             "removeAllocation": {
               "title": "割り当ての削除確認",
               "content": "このサーバーから **{allocation}** を削除してもよろしいですか？"
@@ -7068,6 +7313,13 @@
               "content": "**{name}** を `{target}` にアタッチしますか？",
               "toast": {
                 "attached": "{name} をサーバーにマウントしました。"
+              }
+            },
+            "detachMounts": {
+              "title": "マウントを切り離す",
+              "content": "このサーバーから**{mounts}**を切り離しますか？",
+              "alert": {
+                "skipped": "接続されていないマウントは切り離せないため、{mounts}はスキップされます。"
               }
             },
             "detachMount": {
