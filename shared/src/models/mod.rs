@@ -103,7 +103,7 @@ pub struct PaginationParamsWithSearch {
     #[schema(min_length = 1, max_length = 128)]
     #[serde(
         default,
-        deserialize_with = "crate::deserialize::deserialize_string_option"
+        deserialize_with = "crate::deserialize::deserialize_search_option"
     )]
     pub search: Option<compact_str::CompactString>,
 }
@@ -171,6 +171,40 @@ impl<T: Serialize> Pagination<T> {
             data: results,
         })
     }
+}
+
+/// Builds the `search` predicate group for a paginated list query. `param` is only ever reused,
+/// never bound again, so adding this to a query never renumbers its other parameters.
+///
+/// A short id is the first four bytes of the uuid in hex, so the anchored prefix on
+/// `uuid_columns` matches a pasted uuid and a pasted short id alike.
+pub fn search_sql(
+    param: u8,
+    text_columns: &[&str],
+    uuid_columns: &[&str],
+) -> compact_str::CompactString {
+    let mut clauses = Vec::with_capacity(text_columns.len() + uuid_columns.len() + 1);
+    clauses.push(compact_str::format_compact!("${param}::text IS NULL"));
+
+    for column in text_columns {
+        clauses.push(compact_str::format_compact!(
+            "{column} ILIKE '%' || ${param} || '%'"
+        ));
+    }
+
+    for column in uuid_columns {
+        clauses.push(uuid_search_sql(param, column));
+    }
+
+    compact_str::format_compact!("({})", clauses.join_compact(" OR "))
+}
+
+/// A single uuid disjunct of [`search_sql`], for the few list queries whose text predicates are
+/// too bespoke to express as a column list and so still spell their search group out by hand.
+pub fn uuid_search_sql(param: u8, column: &str) -> compact_str::CompactString {
+    compact_str::format_compact!(
+        "(length(${param}) >= 8 AND {column}::text LIKE lower(${param}) || '%')"
+    )
 }
 
 pub type ModelExtensionList = parking_lot::RwLock<Vec<Box<dyn ModelExtension + Send + Sync>>>;

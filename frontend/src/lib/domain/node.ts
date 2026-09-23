@@ -12,12 +12,16 @@ export const MAX_TRANSFER_MULTIPLEX_CHANNELS = 16;
 
 export const NODE_DEPLOYMENT_NEARLY_FULL_RATIO = 0.9;
 
-export type NodeDeploymentState = 'disabled' | 'full' | 'nearlyFull' | 'available';
+export type NodeDeploymentState = 'disabled' | 'maintenance' | 'full' | 'nearlyFull' | 'available';
 
 export const nodeDeploymentStateInfo: Record<NodeDeploymentState, { badgeColor: string; label: () => string }> = {
   disabled: {
     badgeColor: 'red',
     label: () => getTranslations().t('common.node.deployment.disabled', {}),
+  },
+  maintenance: {
+    badgeColor: 'red',
+    label: () => getTranslations().t('common.node.deployment.maintenance', {}),
   },
   full: {
     badgeColor: 'orange',
@@ -46,6 +50,7 @@ export const getNodeDeploymentState = (
   allocated?: AdminNodeAllocatedCapacity,
 ): NodeDeploymentState => {
   if (!node.deploymentEnabled) return 'disabled';
+  if (node.maintenanceEnabled) return 'maintenance';
   if (!allocated) return 'available';
 
   const ratios = Object.values(getNodeDeploymentUsage(node, allocated)).map(({ used, limit }) =>

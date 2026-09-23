@@ -7,6 +7,7 @@ import { DatabasesRegistry } from './databases/index.ts';
 import { FilesRegistry } from './files.ts';
 import { MountsRegistry } from './mounts.ts';
 import { NetworkRegistry } from './network/index.ts';
+import { SchedulesRegistry } from './schedules.ts';
 import { SettingsRegistry } from './settings.ts';
 import { StartupRegistry } from './startup.ts';
 import { SubusersRegistry } from './subusers.ts';
@@ -16,6 +17,7 @@ export class ServerRegistry implements Registry {
     this.console.mergeFrom(other.console);
     this.files.mergeFrom(other.files);
     this.databases.mergeFrom(other.databases);
+    this.schedules.mergeFrom(other.schedules);
     this.subusers.mergeFrom(other.subusers);
     this.backups.mergeFrom(other.backups);
     this.network.mergeFrom(other.network);
@@ -33,6 +35,7 @@ export class ServerRegistry implements Registry {
   public console: ConsoleRegistry = new ConsoleRegistry();
   public files: FilesRegistry = new FilesRegistry();
   public databases: DatabasesRegistry = new DatabasesRegistry();
+  public schedules: SchedulesRegistry = new SchedulesRegistry();
   public subusers: SubusersRegistry = new SubusersRegistry();
   public backups: BackupsRegistry = new BackupsRegistry();
   public network: NetworkRegistry = new NetworkRegistry();
@@ -56,6 +59,11 @@ export class ServerRegistry implements Registry {
 
   public enterDatabases(callback: (registry: DatabasesRegistry) => unknown): this {
     callback(this.databases);
+    return this;
+  }
+
+  public enterSchedules(callback: (registry: SchedulesRegistry) => unknown): this {
+    callback(this.schedules);
     return this;
   }
 

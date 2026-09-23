@@ -123,8 +123,8 @@ export const announcementsTable = pgTable(
 export const emailTemplatesTable = pgTable('email_templates', {
   identifier: varchar({ length: 255 }).primaryKey().notNull(),
   enabled: boolean().default(true).notNull(),
-  subject: varchar({ length: 255 }).notNull(),
-  content: text().notNull(),
+  subject: varchar({ length: 255 }),
+  content: text(),
 });
 
 export const emailVariablesTable = pgTable(
@@ -1037,6 +1037,7 @@ export const serversTable = pgTable(
     pinned_cpus: smallint().array().notNull(),
     startup: text().notNull(),
     image: varchar({ length: 255 }).notNull(),
+    labels: json().default({}).notNull(),
     auto_kill: jsonb().default({ enabled: false, seconds: 30 }).notNull(),
     auto_start_behavior: serverAutoStartBehaviorEnum().default('UNLESS_STOPPED').notNull(),
     timezone: varchar({ length: 255 }),

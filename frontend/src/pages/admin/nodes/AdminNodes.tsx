@@ -16,7 +16,7 @@ import { nodeTableColumns } from '@/lib/tableColumns.ts';
 import LocationCreateOrUpdateModal from '@/pages/admin/locations/modals/LocationCreateOrUpdateModal.tsx';
 import { useResource } from '@/plugins/resource/useResource.ts';
 import { useSearchablePaginatedTable } from '@/plugins/resource/useSearchablePaginatedTable.ts';
-import { useAdminTableSelection } from '@/plugins/selection/useAdminTableSelection.ts';
+import { useTableSelection } from '@/plugins/selection/useTableSelection.ts';
 import { useTranslations } from '@/providers/TranslationProvider.tsx';
 import AdminPermissionGuard from '@/routers/guards/AdminPermissionGuard.tsx';
 import NodeActionBar from './NodeActionBar.tsx';
@@ -46,7 +46,7 @@ function NodesContainer() {
     setSelected: setSelectedNodes,
     toggle: toggleNode,
     selectionAreaProps,
-  } = useAdminTableSelection<z.infer<typeof adminNodeSchema>>({ items: nodes?.data });
+  } = useTableSelection<z.infer<typeof adminNodeSchema>>({ items: nodes?.data });
 
   const { data: locationsProbe } = useResource({
     queryKey: [...queryKeys.admin.locations.all(), 'probe'],
@@ -79,14 +79,7 @@ function NodesContainer() {
         <NodeActionBar selectedNodes={selectedNodes} setSelectedNodes={setSelectedNodes} />
 
         <SelectionArea {...selectionAreaProps}>
-          <Table
-            columns={columns}
-            loading={loading}
-            pagination={nodes}
-            onPageSelect={setPage}
-            allowSelect={false}
-            error={error}
-          >
+          <Table columns={columns} loading={loading} pagination={nodes} onPageSelect={setPage} error={error}>
             {nodes?.data.map((node) => (
               <SelectionArea.Selectable key={node.uuid} item={node}>
                 {(innerRef: Ref<HTMLElement>) => (

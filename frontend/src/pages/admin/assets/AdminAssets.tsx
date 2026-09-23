@@ -168,13 +168,7 @@ export default function AdminAssets() {
       />
 
       <SelectionArea onSelectedStart={onSelectedStart} onSelected={onSelected}>
-        <Table
-          columns={assetTableColumns()}
-          loading={loading}
-          pagination={data?.pagination}
-          onPageSelect={setPage}
-          allowSelect={false}
-        >
+        <Table columns={assetTableColumns()} loading={loading} pagination={data?.pagination} onPageSelect={setPage}>
           {assets?.map((asset) => (
             <SelectionArea.Selectable key={asset.name} item={asset}>
               {(innerRef: Ref<HTMLElement>) => (

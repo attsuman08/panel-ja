@@ -184,11 +184,16 @@ impl UserOAuthLink {
             r#"
             SELECT {}, COUNT(*) OVER() AS total_count
             FROM user_oauth_links
-            WHERE user_oauth_links.user_uuid = $1 AND ($2 IS NULL OR user_oauth_links.identifier ILIKE '%' || $2 || '%')
+            WHERE user_oauth_links.user_uuid = $1 AND {search}
             ORDER BY user_oauth_links.created
             LIMIT $3 OFFSET $4
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(
+                2,
+                &["user_oauth_links.identifier"],
+                &["user_oauth_links.uuid"]
+            )
         )))
         .bind(user_uuid)
         .bind(search)
@@ -261,11 +266,16 @@ impl UserOAuthLink {
             r#"
             SELECT {}, COUNT(*) OVER() AS total_count
             FROM user_oauth_links
-            WHERE user_oauth_links.oauth_provider_uuid = $1 AND ($2 IS NULL OR user_oauth_links.identifier ILIKE '%' || $2 || '%')
+            WHERE user_oauth_links.oauth_provider_uuid = $1 AND {search}
             ORDER BY user_oauth_links.created
             LIMIT $3 OFFSET $4
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(
+                2,
+                &["user_oauth_links.identifier"],
+                &["user_oauth_links.uuid"]
+            )
         )))
         .bind(oauth_provider_uuid)
         .bind(search)

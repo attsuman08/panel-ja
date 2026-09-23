@@ -257,11 +257,12 @@ impl UserSession {
             r#"
             SELECT {}, COUNT(*) OVER() AS total_count
             FROM user_sessions
-            WHERE user_sessions.user_uuid = $1 AND ($2 IS NULL OR user_sessions.user_agent ILIKE '%' || $2 || '%')
+            WHERE user_sessions.user_uuid = $1 AND {search}
             ORDER BY user_sessions.created DESC
             LIMIT $3 OFFSET $4
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(2, &["user_sessions.user_agent"], &["user_sessions.uuid"])
         )))
         .bind(user_uuid)
         .bind(search)

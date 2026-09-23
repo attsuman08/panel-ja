@@ -221,11 +221,12 @@ impl OAuthProvider {
             r#"
             SELECT {}, COUNT(*) OVER() AS total_count
             FROM oauth_providers
-            WHERE ($1 IS NULL OR oauth_providers.name ILIKE '%' || $1 || '%')
+            WHERE {search}
             ORDER BY oauth_providers.created
             LIMIT $2 OFFSET $3
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(1, &["oauth_providers.name"], &["oauth_providers.uuid"])
         )))
         .bind(search)
         .bind(per_page)

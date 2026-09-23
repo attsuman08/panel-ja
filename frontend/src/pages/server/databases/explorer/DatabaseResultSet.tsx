@@ -167,7 +167,6 @@ export default function DatabaseResultSet({
 
       <Table
         columns={columns}
-        allowSelect={!editing}
         loading={loading}
         error={error}
         verticalSpacing={4}

@@ -19,7 +19,7 @@ import { serverPowerAction } from '@/lib/schemas/server/server.ts';
 import { serverTableColumns } from '@/lib/tableColumns.ts';
 import ServerRow from '@/pages/admin/servers/ServerRow.tsx';
 import { useSearchablePaginatedTable } from '@/plugins/resource/useSearchablePaginatedTable.ts';
-import { useAdminTableSelection } from '@/plugins/selection/useAdminTableSelection.ts';
+import { useTableSelection } from '@/plugins/selection/useTableSelection.ts';
 import { useToast } from '@/providers/ToastProvider.tsx';
 import { useTranslations } from '@/providers/TranslationProvider.tsx';
 import BulkActionBar from './BulkActionBar.tsx';
@@ -64,7 +64,7 @@ export default function AdminNodeServers({ node }: { node: AdminNode }) {
     clear: clearSelectedServers,
     toggle: toggleServer,
     selectionAreaProps,
-  } = useAdminTableSelection<z.infer<typeof adminServerSchema>>({ items: nodeServers?.data });
+  } = useTableSelection<z.infer<typeof adminServerSchema>>({ items: nodeServers?.data });
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -216,14 +216,7 @@ export default function AdminNodeServers({ node }: { node: AdminNode }) {
         }
       >
         <SelectionArea {...selectionAreaProps}>
-          <Table
-            columns={columns}
-            loading={loading}
-            error={error}
-            pagination={nodeServers}
-            onPageSelect={setPage}
-            allowSelect={false}
-          >
+          <Table columns={columns} loading={loading} error={error} pagination={nodeServers} onPageSelect={setPage}>
             {nodeServers?.data.map((server) => (
               <SelectionArea.Selectable key={server.uuid} item={server}>
                 {(innerRef: Ref<HTMLElement>) => (
@@ -231,7 +224,6 @@ export default function AdminNodeServers({ node }: { node: AdminNode }) {
                     key={server.uuid}
                     server={server}
                     ref={innerRef as Ref<HTMLTableRowElement>}
-                    showSelection={true}
                     isSelected={selectedServers.has(server.uuid)}
                     onSelectionChange={(selected) => toggleServer(server, selected)}
                     onClick={(e) => handleServerClick(server, e)}

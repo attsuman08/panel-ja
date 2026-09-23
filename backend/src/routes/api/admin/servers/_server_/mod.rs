@@ -148,7 +148,7 @@ mod delete {
         {
             tracing::error!("failed to delete server: {:?}", err);
 
-            let (err, status) = shared::response::extract_readable_error(&err)
+            let (err, status) = shared::response::extract_readable_message(&err)
                 .unwrap_or_else(|| (err.to_string(), StatusCode::EXPECTATION_FAILED));
 
             return ApiResponse::error(format!("failed to delete server: {err}"))
@@ -163,7 +163,7 @@ mod delete {
                 if let Err(err) = backup.delete(&state, Default::default()).await {
                     tracing::error!(server = %server.uuid, backup = %backup_uuid, "failed to delete backup: {:?}", err);
 
-                    let (err, status) = shared::response::extract_readable_error(&err)
+                    let (err, status) = shared::response::extract_readable_message(&err)
                         .unwrap_or_else(|| (err.to_string(), StatusCode::EXPECTATION_FAILED));
 
                     if !data.force {
@@ -255,6 +255,7 @@ mod patch {
                     "pinned_cpus": server.pinned_cpus,
                     "startup": server.startup,
                     "image": server.image,
+                    "labels": server.labels,
                     "timezone": server.timezone,
 
                     "hugepages_passthrough_enabled": server.hugepages_passthrough_enabled,

@@ -151,6 +151,12 @@ impl ApiResponse {
     }
 
     #[inline]
+    pub fn errors(errors: Vec<String>) -> Self {
+        Self::new_serialized(ApiError::new_strings_value(errors))
+            .with_status(axum::http::StatusCode::BAD_REQUEST)
+    }
+
+    #[inline]
     pub fn with_status(mut self, status: axum::http::StatusCode) -> Self {
         self.status = status;
         self
@@ -205,8 +211,8 @@ where
     fn from(err: T) -> Self {
         let err: anyhow::Error = err.into();
 
-        if let Some((message, status)) = extract_readable_error(&err) {
-            return ApiResponse::error(message).with_status(status);
+        if let Some((errors, status)) = extract_readable_error(&err) {
+            return ApiResponse::errors(errors).with_status(status);
         }
 
         tracing::error!("a request error occurred: {:?}", err);
@@ -234,19 +240,19 @@ impl IntoResponse for ApiResponse {
     }
 }
 
-pub fn extract_readable_error(err: &anyhow::Error) -> Option<(String, axum::http::StatusCode)> {
+pub fn extract_readable_error(
+    err: &anyhow::Error,
+) -> Option<(Vec<String>, axum::http::StatusCode)> {
     if let Some(error) = err.downcast_ref::<DisplayError>() {
-        return Some((error.message.to_string(), error.status));
+        return Some((vec![error.message.to_string()], error.status));
     } else if let Some(DatabaseError::Validation(error)) = err.downcast_ref::<DatabaseError>() {
-        let error_messages = crate::utils::flatten_validation_errors(error);
-
         return Some((
-            ApiError::new_strings_value(error_messages).to_string(),
+            crate::utils::flatten_validation_errors(error),
             axum::http::StatusCode::BAD_REQUEST,
         ));
     } else if let Some(DatabaseError::InvalidRelation(error)) = err.downcast_ref::<DatabaseError>()
     {
-        return Some((error.to_string(), axum::http::StatusCode::BAD_REQUEST));
+        return Some((vec![error.to_string()], axum::http::StatusCode::BAD_REQUEST));
     } else if let Some(DatabaseError::Any(error)) = err.downcast_ref::<DatabaseError>() {
         return extract_readable_error(error);
     } else if let Some(error) = err.downcast_ref::<crate::cache::SharedComputeError>() {
@@ -254,6 +260,10 @@ pub fn extract_readable_error(err: &anyhow::Error) -> Option<(String, axum::http
     }
 
     None
+}
+
+pub fn extract_readable_message(err: &anyhow::Error) -> Option<(String, axum::http::StatusCode)> {
+    extract_readable_error(err).map(|(errors, status)| (errors.join(", "), status))
 }
 
 #[derive(Debug)]

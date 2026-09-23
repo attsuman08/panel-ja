@@ -163,7 +163,12 @@ export const locationDatabaseHostTableColumns = (): string[] => {
 
 export const databaseAgentHostTableColumns = (): string[] => {
   const { t } = getTranslations();
-  return [t('common.table.columns.id', {}), t('common.table.columns.name', {}), t('common.table.columns.created', {})];
+  return [
+    '',
+    t('common.table.columns.id', {}),
+    t('common.table.columns.name', {}),
+    t('common.table.columns.created', {}),
+  ];
 };
 
 export const databaseAgentTemplateTableColumns = (): string[] => {
@@ -179,6 +184,7 @@ export const databaseAgentTemplateTableColumns = (): string[] => {
 export const locationDatabaseAgentHostTableColumns = (): string[] => {
   const { t } = getTranslations();
   return [
+    '',
     t('common.table.columns.id', {}),
     t('common.table.columns.name', {}),
     t('common.table.columns.added', {}),
@@ -312,6 +318,7 @@ export const nodeDatabaseHostTableColumns = (): string[] => {
 export const nodeDatabaseAgentHostTableColumns = (): string[] => {
   const { t } = getTranslations();
   return [
+    '',
     t('common.table.columns.id', {}),
     t('common.table.columns.name', {}),
     t('common.table.columns.added', {}),
@@ -379,6 +386,7 @@ export const serverBackupTableColumns = (): string[] => {
     t('common.table.columns.checksum', {}),
     t('common.table.columns.size', {}),
     t('common.table.columns.files', {}),
+    t('pages.server.backups.table.columns.retention', {}),
     t('common.table.columns.created', {}),
     '',
   ];

@@ -13,7 +13,7 @@ import { queryKeys } from '@/lib/queryKeys.ts';
 import { AdminServer } from '@/lib/schemas/admin/servers.ts';
 import { serverTableColumns } from '@/lib/tableColumns.ts';
 import { useSearchablePaginatedTable } from '@/plugins/resource/useSearchablePaginatedTable.ts';
-import { useAdminTableSelection } from '@/plugins/selection/useAdminTableSelection.ts';
+import { useTableSelection } from '@/plugins/selection/useTableSelection.ts';
 import { useTranslations } from '@/providers/TranslationProvider.tsx';
 import AdminPermissionGuard from '@/routers/guards/AdminPermissionGuard.tsx';
 import ExternalIdLookupModal from './modals/ExternalIdLookupModal.tsx';
@@ -45,7 +45,7 @@ function ServersContainer() {
     clear: clearSelectedServers,
     toggle: toggleServer,
     selectionAreaProps,
-  } = useAdminTableSelection<AdminServer>({ items: servers?.data });
+  } = useTableSelection<AdminServer>({ items: servers?.data });
 
   const handleServerClick = (server: AdminServer, event: React.MouseEvent) => {
     if (event.ctrlKey || event.metaKey) {
@@ -93,7 +93,6 @@ function ServersContainer() {
             pagination={servers}
             onPageSelect={setPage}
             error={error}
-            allowSelect={false}
           >
             {servers?.data.map((server) => (
               <SelectionArea.Selectable key={server.uuid} item={server}>
@@ -101,7 +100,6 @@ function ServersContainer() {
                   <ServerRow
                     server={server}
                     ref={innerRef as Ref<HTMLTableRowElement>}
-                    showSelection={true}
                     isSelected={selectedServers.has(server.uuid)}
                     onSelectionChange={(selected) => toggleServer(server, selected)}
                     onClick={(e) => handleServerClick(server, e)}

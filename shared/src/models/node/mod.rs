@@ -28,6 +28,8 @@ pub enum NodeDeploymentBlocker {
     NoNodes,
     /// Nodes exist but deployment is disabled on all of them.
     DeploymentDisabled,
+    /// Deployment is enabled somewhere, but every such node is under maintenance.
+    MaintenanceEnabled,
     /// No node has enough unallocated memory.
     InsufficientMemory,
     /// No node has enough unallocated disk.
@@ -45,6 +47,9 @@ impl NodeDeploymentBlocker {
             Self::NoNodes => "no nodes exist in the selected location(s)",
             Self::DeploymentDisabled => {
                 "deployment is disabled on every node in the selected location(s)"
+            }
+            Self::MaintenanceEnabled => {
+                "every deployable node in the selected location(s) is under maintenance"
             }
             Self::InsufficientMemory => {
                 "no node in the selected location(s) has enough unallocated memory"
@@ -275,11 +280,12 @@ impl Node {
             SELECT {}, COUNT(*) OVER() AS total_count
             FROM nodes
             JOIN locations ON locations.uuid = nodes.location_uuid
-            WHERE nodes.location_uuid = $1 AND ($2 IS NULL OR nodes.name ILIKE '%' || $2 || '%')
+            WHERE nodes.location_uuid = $1 AND {search}
             ORDER BY nodes.created
             LIMIT $3 OFFSET $4
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(2, &["nodes.name"], &["nodes.uuid"])
         )))
         .bind(location_uuid)
         .bind(search)
@@ -315,11 +321,12 @@ impl Node {
             SELECT {}, COUNT(*) OVER() AS total_count
             FROM nodes
             JOIN locations ON locations.uuid = nodes.location_uuid
-            WHERE nodes.backup_configuration_uuid = $1 AND ($2 IS NULL OR nodes.name ILIKE '%' || $2 || '%')
+            WHERE nodes.backup_configuration_uuid = $1 AND {search}
             ORDER BY nodes.created
             LIMIT $3 OFFSET $4
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(2, &["nodes.name"], &["nodes.uuid"])
         )))
         .bind(backup_configuration_uuid)
         .bind(search)
@@ -354,11 +361,12 @@ impl Node {
             SELECT {}, COUNT(*) OVER() AS total_count
             FROM nodes
             JOIN locations ON locations.uuid = nodes.location_uuid
-            WHERE $1 IS NULL OR nodes.name ILIKE '%' || $1 || '%'
+            WHERE {search}
             ORDER BY nodes.created
             LIMIT $2 OFFSET $3
             "#,
-            Self::columns_sql(None)
+            Self::columns_sql(None),
+            search = super::search_sql(1, &["nodes.name"], &["nodes.uuid"])
         )))
         .bind(search)
         .bind(per_page)
@@ -403,6 +411,7 @@ impl Node {
             LEFT JOIN server_usage u ON nodes.uuid = u.node_uuid
             WHERE nodes.location_uuid = ANY($1)
             AND nodes.deployment_enabled
+            AND NOT nodes.maintenance_enabled
             AND (
                 $4 OR (
                     (nodes.memory = 0 OR COALESCE(u.used_memory, 0) + $2 <= nodes.memory)
@@ -530,16 +539,20 @@ impl Node {
             SELECT
                 COUNT(*) AS total,
                 COUNT(*) FILTER (WHERE nodes.deployment_enabled) AS deployable,
+                COUNT(*) FILTER (WHERE nodes.deployment_enabled AND NOT nodes.maintenance_enabled) AS available,
                 COUNT(*) FILTER (
                     WHERE nodes.deployment_enabled
+                    AND NOT nodes.maintenance_enabled
                     AND ($4 OR nodes.memory = 0 OR COALESCE(u.used_memory, 0) + $2 <= nodes.memory)
                 ) AS memory_ok,
                 COUNT(*) FILTER (
                     WHERE nodes.deployment_enabled
+                    AND NOT nodes.maintenance_enabled
                     AND ($4 OR nodes.disk = 0 OR COALESCE(u.used_disk, 0) + $3 <= nodes.disk)
                 ) AS disk_ok,
                 COUNT(*) FILTER (
                     WHERE nodes.deployment_enabled
+                    AND NOT nodes.maintenance_enabled
                     AND ($4 OR nodes.memory = 0 OR COALESCE(u.used_memory, 0) + $2 <= nodes.memory)
                     AND ($4 OR nodes.disk = 0 OR COALESCE(u.used_disk, 0) + $3 <= nodes.disk)
                 ) AS resource_ok
@@ -558,6 +571,7 @@ impl Node {
 
         let total: i64 = row.try_get("total")?;
         let deployable: i64 = row.try_get("deployable")?;
+        let available: i64 = row.try_get("available")?;
         let memory_ok: i64 = row.try_get("memory_ok")?;
         let disk_ok: i64 = row.try_get("disk_ok")?;
         let resource_ok: i64 = row.try_get("resource_ok")?;
@@ -566,6 +580,8 @@ impl Node {
             NodeDeploymentBlocker::NoNodes
         } else if deployable == 0 {
             NodeDeploymentBlocker::DeploymentDisabled
+        } else if available == 0 {
+            NodeDeploymentBlocker::MaintenanceEnabled
         } else if resource_ok > 0 {
             return Ok(None);
         } else if memory_ok == 0 && disk_ok == 0 {
