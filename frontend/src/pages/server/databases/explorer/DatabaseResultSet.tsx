@@ -11,7 +11,11 @@ import Checkbox from '@/elements/input/Checkbox.tsx';
 import Group from '@/elements/layout/Group.tsx';
 import Stack from '@/elements/layout/Stack.tsx';
 import Text from '@/elements/typography/Text.tsx';
-import { serverDatabaseQueryResultSchema, serverDatabaseQueryValueSchema } from '@/lib/schemas/server/databases.ts';
+import {
+  serverDatabaseQueryResultSchema,
+  serverDatabaseQueryValueSchema,
+  serverDatabaseSchemaColumnSchema,
+} from '@/lib/schemas/server/databases.ts';
 import { useTranslations } from '@/providers/TranslationProvider.tsx';
 import DatabaseResultCell from './DatabaseResultCell.tsx';
 
@@ -22,7 +26,7 @@ export interface DatabaseResultSort {
 }
 
 export interface DatabaseResultEditing {
-  editableColumns: Set<string>;
+  editableColumns: Map<string, z.infer<typeof serverDatabaseSchemaColumnSchema>>;
   isLocked: (rowIndex: number) => boolean;
   isDirty: (rowIndex: number, column: string) => boolean;
   onChange: (rowIndex: number, column: string, value: z.infer<typeof serverDatabaseQueryValueSchema>) => void;
@@ -188,6 +192,7 @@ export default function DatabaseResultSet({
               <DatabaseResultCell
                 key={`ghost-${ghostIndex}-${column.name}`}
                 value={ghost[column.name]}
+                column={editing.editableColumns.get(column.name)}
                 placeholder={editing.ghostPlaceholder}
                 editable={editing.editableColumns.has(column.name)}
                 onChange={(next) => editing.onGhostChange(ghostIndex, column.name, next)}
@@ -220,6 +225,7 @@ export default function DatabaseResultSet({
                 <DatabaseResultCell
                   key={`value-${valueIndex}`}
                   value={value}
+                  column={editing?.editableColumns.get(column)}
                   editable={editing?.editableColumns.has(column) && !editing.isLocked(rowIndex)}
                   dirty={editing?.isDirty(rowIndex, column)}
                   onChange={(next) => editing?.onChange(rowIndex, column, next)}

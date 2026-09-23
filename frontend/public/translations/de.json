@@ -5791,7 +5791,10 @@
             },
             "cell": {
               "setNull": "Auf NULL setzen",
+              "picker": "Wert auswählen",
               "null": "NULL",
+              "true": "TRUE",
+              "false": "FALSE",
               "empty": "leer",
               "truncated": "Dieser Wert ist zu groß, um vollständig geladen zu werden, und kann nicht bearbeitet werden.",
               "editorHint": "{enter} übernimmt den Wert, {shiftEnter} fügt eine neue Zeile ein."
