@@ -3296,6 +3296,22 @@ pub mod system_config {
         pub type Response = Response200;
     }
 }
+pub mod system_ips {
+    use super::*;
+
+    pub mod get {
+        use super::*;
+
+        nestify::nest! {
+            #[derive(Debug, ToSchema, Deserialize, Serialize, Clone)] pub struct Response200 {
+                #[schema(inline)]
+                pub ips: Vec<compact_str::CompactString>,
+            }
+        }
+
+        pub type Response = Response200;
+    }
+}
 pub mod system_logs {
     use super::*;
 

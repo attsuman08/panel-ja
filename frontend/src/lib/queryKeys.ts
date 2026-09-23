@@ -25,6 +25,7 @@ const admin = {
     capacities: () => ['admin', 'nodes', 'capacities'] as const,
     systemOverview: (nodeUuid: string) => ['admin', 'nodes', nodeUuid, 'system', 'overview'] as const,
     systemDirect: (nodeUuid: string) => ['admin', 'nodes', nodeUuid, 'system', 'direct'] as const,
+    systemIps: (nodeUuid: string) => ['admin', 'nodes', nodeUuid, 'system', 'ips'] as const,
     config: (nodeUuid: string) => ['admin', 'nodes', nodeUuid, 'config'] as const,
     logs: (nodeUuid: string) => ['admin', 'nodes', nodeUuid, 'system', 'logs'] as const,
     allocations: (nodeUuid: string) => ['admin', 'nodes', nodeUuid, 'allocations'] as const,

@@ -316,6 +316,11 @@
           "notFound": "No file with this name exists yet.",
           "isDirectory": "This is a directory, not a file."
         },
+        "nodeAllocationIpInput": {
+          "anyAddress": "All Addresses",
+          "nodeInterfaces": "Node Interfaces",
+          "inUse": "In Use"
+        },
         "ignoredFilesInput": {
           "onePatternPerLine": "One pattern per line.",
           "countMatches": "Count Matches",
@@ -2137,6 +2142,8 @@
               "page": {
                 "title": "Application Settings",
                 "form": {
+                  "additionalUrls": "Additional URLs",
+                  "additionalUrlsDescription": "Other addresses the panel is reachable at. Logins, OAuth and self-service emails use whichever URL the request came in on; everything else uses the main URL. Security keys only work on URLs under the WebAuthn RP ID.",
                   "icon": "Icon",
                   "iconLight": "Icon (Light Mode)",
                   "banner": "Banner",

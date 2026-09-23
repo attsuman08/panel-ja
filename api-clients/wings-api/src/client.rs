@@ -1456,6 +1456,10 @@ impl WingsClient {
         request_impl(self, Method::GET, "/api/system/config", None::<&()>, None).await
     }
 
+    pub async fn get_system_ips(&self) -> Result<super::system_ips::get::Response, ApiHttpError> {
+        request_impl(self, Method::GET, "/api/system/ips", None::<&()>, None).await
+    }
+
     pub async fn get_system_logs(&self) -> Result<super::system_logs::get::Response, ApiHttpError> {
         request_impl(self, Method::GET, "/api/system/logs", None::<&()>, None).await
     }

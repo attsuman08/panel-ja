@@ -316,6 +316,11 @@
           "notFound": "Es existiert noch keine Datei mit diesem Namen.",
           "isDirectory": "Das ist ein Verzeichnis, keine Datei."
         },
+        "nodeAllocationIpInput": {
+          "anyAddress": "Alle Adressen",
+          "nodeInterfaces": "Node-Schnittstellen",
+          "inUse": "In Verwendung"
+        },
         "ignoredFilesInput": {
           "onePatternPerLine": "Ein Muster pro Zeile.",
           "countMatches": "Treffer zählen",

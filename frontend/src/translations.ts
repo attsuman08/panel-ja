@@ -131,6 +131,11 @@ const baseTranslations = defineTranslations({
           notFound: 'No file with this name exists yet.',
           isDirectory: 'This is a directory, not a file.',
         },
+        nodeAllocationIpInput: {
+          anyAddress: 'All Addresses',
+          nodeInterfaces: 'Node Interfaces',
+          inUse: 'In Use',
+        },
         ignoredFilesInput: {
           onePatternPerLine: 'One pattern per line.',
           countMatches: 'Count Matches',
