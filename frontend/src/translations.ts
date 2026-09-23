@@ -566,6 +566,14 @@ const baseTranslations = defineTranslations({
       impersonatedBy: 'Impersonated by {username}',
     },
     elements: {
+      lockedConfigPaths: {
+        notice:
+          'These settings can only be changed in the configuration file on the machine itself. The panel ignores edits to them:',
+        toast: {
+          ignored:
+            'Configuration applied, except for these settings, which can only be changed in the configuration file on the machine itself: {paths}',
+        },
+      },
       chartLegend: {
         hide: 'Hide {series}',
         show: 'Show {series}',

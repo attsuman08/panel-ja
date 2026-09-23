@@ -738,6 +738,12 @@
       "impersonatedBy": "Impersoniert von {username}"
     },
     "elements": {
+      "lockedConfigPaths": {
+        "notice": "Diese Einstellungen können nur in der Konfigurationsdatei auf dem Rechner selbst geändert werden. Das Panel ignoriert Änderungen daran:",
+        "toast": {
+          "ignored": "Konfiguration übernommen, außer für diese Einstellungen, die nur in der Konfigurationsdatei auf dem Rechner selbst geändert werden können: {paths}"
+        }
+      },
       "chartLegend": {
         "hide": "{series} ausblenden",
         "show": "{series} einblenden"
