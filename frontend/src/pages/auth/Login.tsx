@@ -45,7 +45,7 @@ export default function Login() {
   const [passkeyOptions, setPasskeyOptions] = useState<CredentialRequestOptions>();
   const captcha = useCaptcha();
 
-  const webauthnEnabled = settings.webauthn?.enabled !== false;
+  const webauthnEnabled = settings.webauthn?.enabled !== false && window.isSecureContext;
 
   const usernameForm = useForm({
     initialValues: {
