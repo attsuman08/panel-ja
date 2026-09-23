@@ -2712,8 +2712,6 @@ pub mod system_config {
                     #[schema(inline)]
                     pub disable_remote_download: bool,
                     #[schema(inline)]
-                    pub server_remote_download_limit: u64,
-                    #[schema(inline)]
                     pub remote_download_blocked_cidrs: Vec<compact_str::CompactString>,
                     #[schema(inline)]
                     pub disable_directory_size: bool,
@@ -2739,6 +2737,8 @@ pub mod system_config {
                     pub file_decompression_threads: u64,
                     #[schema(inline)]
                     pub file_compression_threads: u64,
+                    #[schema(inline)]
+                    pub file_fingerprint_threads: u64,
                     #[schema(inline)]
                     pub upload_limit: MiB,
                     #[schema(inline)]
@@ -3230,6 +3230,14 @@ pub mod system_config {
                         pub config: IndexMap<compact_str::CompactString, compact_str::CompactString>,
                     },
 
+                },
+
+                #[schema(inline)]
+                pub limits: #[derive(Debug, ToSchema, Deserialize, Serialize, Clone)] pub struct Response200Limits {
+                    #[schema(inline)]
+                    pub server_concurrent_pulls: u64,
+                    #[schema(inline)]
+                    pub server_concurrent_operations: u64,
                 },
 
                 #[schema(inline)]
