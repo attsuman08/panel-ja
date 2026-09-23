@@ -727,12 +727,13 @@ impl Node {
     pub async fn public_url(
         &self,
         state: &crate::State,
+        request_host: Option<&str>,
         path: &str,
     ) -> Result<reqwest::Url, anyhow::Error> {
         let mut url = if self.is_all_in_one_node() {
             let mut url = state
                 .settings
-                .get_as(|s| reqwest::Url::parse(&s.app.url))
+                .get_as(|s| reqwest::Url::parse(s.app.url_for_host(request_host)))
                 .await??;
             url.path_segments_mut()
                 .unwrap()
@@ -897,7 +898,7 @@ impl IntoAdminApiObject for Node {
         let api_object = AdminApiNode::init_hooks(&self, state).await?;
 
         let public_url = if self.is_all_in_one_node() {
-            Some(self.public_url(state, "/").await?.to_string())
+            Some(self.public_url(state, None, "/").await?.to_string())
         } else {
             self.public_url.map(|url| url.to_string())
         };

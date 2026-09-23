@@ -12,6 +12,7 @@ export const applicationEmptyFormValues: ApplicationFormValues = {
   banner: null,
   bannerLight: null,
   url: '',
+  additionalUrls: [],
   language: 'en',
   twoFactorRequirement: 'none',
   emailTwoFactorEnabled: false,
@@ -84,6 +85,14 @@ export function useApplicationFormFields({
       advanced: true,
     },
     { type: 'text', name: 'url', label: t('common.form.url', {}), required: true },
+    {
+      type: 'tags',
+      name: 'additionalUrls',
+      label: t('pages.admin.settings.tabs.application.page.form.additionalUrls', {}),
+      description: t('pages.admin.settings.tabs.application.page.form.additionalUrlsDescription', {}),
+      placeholder: 'e.g. https://panel.example.org',
+      advanced: true,
+    },
     {
       type: 'text',
       name: 'sessionCookie',

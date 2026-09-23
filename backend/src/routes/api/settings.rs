@@ -12,6 +12,7 @@ mod get {
     #[derive(ToSchema, Serialize)]
     struct ResponseApp<'a> {
         url: &'a str,
+        additional_urls: &'a [compact_str::CompactString],
         icon: &'a str,
         icon_light: Option<&'a str>,
         banner: Option<&'a str>,
@@ -97,6 +98,7 @@ mod get {
             captcha_provider: settings.captcha_provider.to_public_provider(),
             app: ResponseApp {
                 url: &settings.app.url,
+                additional_urls: &settings.app.additional_urls,
                 icon: &settings.app.icon,
                 icon_light: settings.app.icon_light.as_deref(),
                 banner: settings.app.banner.as_deref(),

@@ -2002,6 +2002,9 @@ const baseTranslations = defineTranslations({
               page: {
                 title: 'Application Settings',
                 form: {
+                  additionalUrls: 'Additional URLs',
+                  additionalUrlsDescription:
+                    'Other addresses the panel is reachable at. Logins, OAuth and self-service emails use whichever URL the request came in on; everything else uses the main URL. Security keys only work on URLs under the WebAuthn RP ID.',
                   icon: 'Icon',
                   iconLight: 'Icon (Light Mode)',
                   banner: 'Banner',

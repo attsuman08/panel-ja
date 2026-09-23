@@ -360,6 +360,7 @@ impl UserSession {
 
     pub async fn get_cookie<'a>(
         state: &crate::State,
+        request_host: Option<&str>,
         key: impl Into<Cow<'a, str>>,
     ) -> Result<Cookie<'a>, anyhow::Error> {
         let settings = state.settings.get().await?;
@@ -367,7 +368,12 @@ impl UserSession {
         Ok(Cookie::build((settings.app.session_cookie.clone(), key))
             .http_only(true)
             .same_site(tower_cookies::cookie::SameSite::Lax)
-            .secure(settings.app.url.starts_with("https://"))
+            .secure(
+                settings
+                    .app
+                    .url_for_host(request_host)
+                    .starts_with("https://"),
+            )
             .path("/")
             .expires(
                 tower_cookies::cookie::time::OffsetDateTime::now_utc()

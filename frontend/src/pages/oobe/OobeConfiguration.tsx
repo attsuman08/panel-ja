@@ -94,6 +94,7 @@ export default function OobeConfiguration({ onNext }: OobeComponentProps) {
       bannerLight: null,
       language: form.values.applicationLanguage,
       url: form.values.applicationUrl,
+      additionalUrls: [],
       twoFactorRequirement: 'none',
       emailTwoFactorEnabled: false,
       twoFactorAcceptedMethods: ['totp', 'security_key'],

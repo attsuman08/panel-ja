@@ -30,6 +30,7 @@ export const createSettingsSlice: StateCreator<AdminStore, [], [], SettingsSlice
     iconLight: null,
     language: '',
     url: '',
+    additionalUrls: [],
     banner: null,
     bannerLight: null,
     twoFactorRequirement: 'none',

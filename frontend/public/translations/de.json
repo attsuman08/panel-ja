@@ -2132,6 +2132,8 @@
               "page": {
                 "title": "Anwendungseinstellungen",
                 "form": {
+                  "additionalUrls": "Zusätzliche URLs",
+                  "additionalUrlsDescription": "Weitere Adressen, unter denen das Panel erreichbar ist. Anmeldungen, OAuth und selbst ausgelöste E-Mails verwenden die URL, über die die Anfrage kam; alles andere verwendet die Haupt-URL. Sicherheitsschlüssel funktionieren nur unter URLs, die zur WebAuthn RP ID gehören.",
                   "icon": "Symbol",
                   "iconLight": "Symbol (Helles Design)",
                   "banner": "Banner",
