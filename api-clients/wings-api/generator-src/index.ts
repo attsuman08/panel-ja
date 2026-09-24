@@ -60,6 +60,7 @@ const compatBodyProperties: Record<string, Record<string, 'client' | 'extra'>> =
     'post /api/servers/{server}/files/search': { match_context: 'extra' },
     'post /api/servers/{server}/files/sqlite-query': { ignored: 'client' },
     'post /api/servers/{server}/files/stat': { ignored: 'client' },
+    'post /api/servers/{server}/reinstall': { start_on_completion: 'extra' },
 }
 
 /** Properties wings only started sending after the schema shipped, so older nodes omit them. */

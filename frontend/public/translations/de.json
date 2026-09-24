@@ -316,6 +316,11 @@
           "notFound": "Es existiert noch keine Datei mit diesem Namen.",
           "isDirectory": "Das ist ein Verzeichnis, keine Datei."
         },
+        "nodeAllocationIpInput": {
+          "anyAddress": "Alle Adressen",
+          "nodeInterfaces": "Node-Schnittstellen",
+          "inUse": "In Verwendung"
+        },
         "ignoredFilesInput": {
           "onePatternPerLine": "Ein Muster pro Zeile.",
           "countMatches": "Treffer zählen",
@@ -733,6 +738,12 @@
       "impersonatedBy": "Impersoniert von {username}"
     },
     "elements": {
+      "lockedConfigPaths": {
+        "notice": "Diese Einstellungen können nur in der Konfigurationsdatei auf dem Rechner selbst geändert werden. Das Panel ignoriert Änderungen daran:",
+        "toast": {
+          "ignored": "Konfiguration übernommen, außer für diese Einstellungen, die nur in der Konfigurationsdatei auf dem Rechner selbst geändert werden können: {paths}"
+        }
+      },
       "chartLegend": {
         "hide": "{series} ausblenden",
         "show": "{series} einblenden"
@@ -2132,6 +2143,8 @@
               "page": {
                 "title": "Anwendungseinstellungen",
                 "form": {
+                  "additionalUrls": "Zusätzliche URLs",
+                  "additionalUrlsDescription": "Weitere Adressen, unter denen das Panel erreichbar ist. Anmeldungen, OAuth und selbst ausgelöste E-Mails verwenden die URL, über die die Anfrage kam; alles andere verwendet die Haupt-URL. Sicherheitsschlüssel funktionieren nur unter URLs, die zur WebAuthn RP ID gehören.",
                   "icon": "Symbol",
                   "iconLight": "Symbol (Helles Design)",
                   "banner": "Banner",
@@ -5778,7 +5791,10 @@
             },
             "cell": {
               "setNull": "Auf NULL setzen",
+              "picker": "Wert auswählen",
               "null": "NULL",
+              "true": "TRUE",
+              "false": "FALSE",
               "empty": "leer",
               "truncated": "Dieser Wert ist zu groß, um vollständig geladen zu werden, und kann nicht bearbeitet werden.",
               "editorHint": "{enter} übernimmt den Wert, {shiftEnter} fügt eine neue Zeile ein."
@@ -7352,6 +7368,7 @@
             "modal": {
               "title": "Server neu installieren",
               "button": "Neu installieren",
+              "startOnCompletion": "Server nach Abschluss der Neuinstallation starten",
               "toast": {
                 "reinstalling": "Server wird neu installiert..."
               }

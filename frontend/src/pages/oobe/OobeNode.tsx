@@ -19,6 +19,7 @@ import AlertError from '@/elements/alerts/AlertError.tsx';
 import Button from '@/elements/buttons/Button.tsx';
 import Card from '@/elements/data-display/Card.tsx';
 import Alert from '@/elements/feedback/Alert.tsx';
+import NodeAllocationIpInput from '@/elements/input/NodeAllocationIpInput.tsx';
 import NumberInput from '@/elements/input/NumberInput.tsx';
 import SizeInput from '@/elements/input/SizeInput.tsx';
 import TagsInput from '@/elements/input/TagsInput.tsx';
@@ -254,9 +255,10 @@ export default function OobeNode({ onNext, onBack, canGoBack, skipFrom, data }: 
               <Card>
                 <Title order={4}>{t('pages.oobe.node.allocationsTitle', {})}</Title>
                 <div className='flex flex-col sm:flex-row gap-2 items-start'>
-                  <TextInput
+                  <NodeAllocationIpInput
                     withAsterisk
                     className='flex-1'
+                    nodeUuid={existingNode?.uuid}
                     label={t('pages.oobe.node.form.ip', {})}
                     {...allocationsForm.getInputProps('ip')}
                   />

@@ -70,6 +70,18 @@ pub const BUFFER_SIZE: usize = 32 * 1024;
 
 pub type GetIp = axum::extract::Extension<std::net::IpAddr>;
 
+#[derive(Clone, Default)]
+pub struct RequestHost(pub Option<compact_str::CompactString>);
+
+impl RequestHost {
+    #[inline]
+    pub fn as_deref(&self) -> Option<&str> {
+        self.0.as_deref()
+    }
+}
+
+pub type GetRequestHost = axum::extract::Extension<RequestHost>;
+
 #[derive(ToSchema, Serialize)]
 pub struct ApiError {
     pub errors: Vec<String>,

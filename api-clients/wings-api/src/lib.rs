@@ -2378,6 +2378,14 @@ pub mod servers_server_reinstall {
         pub type Response409 = ApiError;
 
         pub type Response = Response202;
+
+        #[derive(Debug, Clone, Default)]
+        #[allow(clippy::manual_non_exhaustive)]
+        pub struct Extra {
+            pub start_on_completion: bool,
+            #[doc(hidden)]
+            pub __priv: (),
+        }
     }
 }
 pub mod servers_server_schedules_schedule {
@@ -2704,8 +2712,6 @@ pub mod system_config {
                     #[schema(inline)]
                     pub disable_remote_download: bool,
                     #[schema(inline)]
-                    pub server_remote_download_limit: u64,
-                    #[schema(inline)]
                     pub remote_download_blocked_cidrs: Vec<compact_str::CompactString>,
                     #[schema(inline)]
                     pub disable_directory_size: bool,
@@ -2731,6 +2737,8 @@ pub mod system_config {
                     pub file_decompression_threads: u64,
                     #[schema(inline)]
                     pub file_compression_threads: u64,
+                    #[schema(inline)]
+                    pub file_fingerprint_threads: u64,
                     #[schema(inline)]
                     pub upload_limit: MiB,
                     #[schema(inline)]
@@ -3225,6 +3233,14 @@ pub mod system_config {
                 },
 
                 #[schema(inline)]
+                pub limits: #[derive(Debug, ToSchema, Deserialize, Serialize, Clone)] pub struct Response200Limits {
+                    #[schema(inline)]
+                    pub server_concurrent_pulls: u64,
+                    #[schema(inline)]
+                    pub server_concurrent_operations: u64,
+                },
+
+                #[schema(inline)]
                 pub throttles: #[derive(Debug, ToSchema, Deserialize, Serialize, Clone)] pub struct Response200Throttles {
                     #[schema(inline)]
                     pub enabled: bool,
@@ -3274,6 +3290,22 @@ pub mod system_config {
                 pub ignore_panel_config_updates: bool,
                 #[schema(inline)]
                 pub ignore_panel_wings_upgrades: bool,
+            }
+        }
+
+        pub type Response = Response200;
+    }
+}
+pub mod system_ips {
+    use super::*;
+
+    pub mod get {
+        use super::*;
+
+        nestify::nest! {
+            #[derive(Debug, ToSchema, Deserialize, Serialize, Clone)] pub struct Response200 {
+                #[schema(inline)]
+                pub ips: Vec<compact_str::CompactString>,
             }
         }
 

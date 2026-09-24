@@ -130,11 +130,15 @@ export default function OAuthProviderCreateOrUpdate({
 
         <Card className='flex flex-col md:flex-row! items-center justify-between mt-4'>
           <Title order={4}>{t('pages.admin.oAuthProviders.tabs.general.page.card.redirectUrl.title', {})}</Title>
-          <Code>
-            {contextOAuthProvider
-              ? `${settings.app.url}/api/auth/oauth/${contextOAuthProvider.uuid}`
-              : t('pages.admin.oAuthProviders.tabs.general.page.card.redirectUrl.unavailable', {})}
-          </Code>
+          {contextOAuthProvider ? (
+            <div className='flex flex-col items-center md:items-end gap-1'>
+              {[settings.app.url, ...settings.app.additionalUrls].map((url) => (
+                <Code key={url}>{`${url.replace(/\/+$/, '')}/api/auth/oauth/${contextOAuthProvider.uuid}`}</Code>
+              ))}
+            </div>
+          ) : (
+            <Code>{t('pages.admin.oAuthProviders.tabs.general.page.card.redirectUrl.unavailable', {})}</Code>
+          )}
         </Card>
 
         <FormEngine form={form} fields={fieldsMain} className='mt-4' />

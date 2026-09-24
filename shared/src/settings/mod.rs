@@ -1156,15 +1156,33 @@ impl Settings {
     pub async fn get_webauthn(&self) -> Result<webauthn_rs::Webauthn, anyhow::Error> {
         let settings = self.get().await?;
 
-        Ok(webauthn_rs::WebauthnBuilder::new(
-            &settings.webauthn.rp_id,
-            &settings.webauthn.rp_origin.parse()?,
-        )?
-        .rp_name(&settings.app.name)
-        .timeout(std::time::Duration::from_secs(
-            settings.webauthn.authentication_timeout_seconds,
-        ))
-        .build()?)
+        let rp_origin: reqwest::Url = settings.webauthn.rp_origin.parse()?;
+        let mut builder = webauthn_rs::WebauthnBuilder::new(&settings.webauthn.rp_id, &rp_origin)?;
+
+        for url in settings.app.urls() {
+            let Ok(url) = reqwest::Url::parse(url) else {
+                continue;
+            };
+
+            if url.origin() == rp_origin.origin() {
+                continue;
+            }
+
+            // browsers reject credentials whose rp_id is not a registrable suffix of the page origin
+            if url.domain().is_some_and(|domain| {
+                domain == settings.webauthn.rp_id
+                    || domain.ends_with(&format!(".{}", settings.webauthn.rp_id))
+            }) {
+                builder = builder.append_allowed_origin(&url);
+            }
+        }
+
+        Ok(builder
+            .rp_name(&settings.app.name)
+            .timeout(std::time::Duration::from_secs(
+                settings.webauthn.authentication_timeout_seconds,
+            ))
+            .build()?)
     }
 
     pub async fn get_mut(&self) -> Result<SettingsWriteGuard<'_>, anyhow::Error> {

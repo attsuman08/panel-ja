@@ -65,6 +65,8 @@ mod put {
         banner_light: Option<Option<compact_str::CompactString>>,
         #[garde(url)]
         url: Option<compact_str::CompactString>,
+        #[garde(length(max = 32), inner(inner(url)))]
+        additional_urls: Option<Vec<compact_str::CompactString>>,
         #[garde(
             length(chars, min = 2, max = 15),
             inner(custom(shared::utils::validate_language))
@@ -355,7 +357,18 @@ mod put {
                 settings.app.banner_light = banner_light;
             }
             if let Some(url) = app.url {
-                settings.app.url = url;
+                settings.app.url = url.trim_end_matches('/').into();
+            }
+            if let Some(additional_urls) = app.additional_urls {
+                let mut deduped: Vec<compact_str::CompactString> = Vec::new();
+                for url in additional_urls {
+                    let url = url.trim_end_matches('/');
+                    if url != settings.app.url && !deduped.iter().any(|u| u == url) {
+                        deduped.push(url.into());
+                    }
+                }
+
+                settings.app.additional_urls = deduped;
             }
             if let Some(language) = app.language {
                 settings.app.language = language;

@@ -131,6 +131,11 @@ const baseTranslations = defineTranslations({
           notFound: 'No file with this name exists yet.',
           isDirectory: 'This is a directory, not a file.',
         },
+        nodeAllocationIpInput: {
+          anyAddress: 'All Addresses',
+          nodeInterfaces: 'Node Interfaces',
+          inUse: 'In Use',
+        },
         ignoredFilesInput: {
           onePatternPerLine: 'One pattern per line.',
           countMatches: 'Count Matches',
@@ -561,6 +566,14 @@ const baseTranslations = defineTranslations({
       impersonatedBy: 'Impersonated by {username}',
     },
     elements: {
+      lockedConfigPaths: {
+        notice:
+          'These settings can only be changed in the configuration file on the machine itself. The panel ignores edits to them:',
+        toast: {
+          ignored:
+            'Configuration applied, except for these settings, which can only be changed in the configuration file on the machine itself: {paths}',
+        },
+      },
       chartLegend: {
         hide: 'Hide {series}',
         show: 'Show {series}',
@@ -2002,6 +2015,9 @@ const baseTranslations = defineTranslations({
               page: {
                 title: 'Application Settings',
                 form: {
+                  additionalUrls: 'Additional URLs',
+                  additionalUrlsDescription:
+                    'Other addresses the panel is reachable at. Logins, OAuth and self-service emails use whichever URL the request came in on; everything else uses the main URL. Security keys only work on URLs under the WebAuthn RP ID.',
                   icon: 'Icon',
                   iconLight: 'Icon (Light Mode)',
                   banner: 'Banner',
@@ -5806,7 +5822,10 @@ const baseTranslations = defineTranslations({
             },
             cell: {
               setNull: 'Set to NULL',
+              picker: 'Pick a value',
               null: 'NULL',
+              true: 'TRUE',
+              false: 'FALSE',
               empty: 'empty',
               truncated: 'This value was too large to load in full and cannot be edited.',
               editorHint: '{enter} applies the value, {shiftEnter} inserts a new line.',
@@ -7439,6 +7458,7 @@ const baseTranslations = defineTranslations({
             modal: {
               title: 'Reinstall Server',
               button: 'Reinstall',
+              startOnCompletion: 'Start the server after the reinstall has finished',
               toast: {
                 reinstalling: 'Reinstalling server...',
               },

@@ -45,7 +45,7 @@ export default function Login() {
   const [passkeyOptions, setPasskeyOptions] = useState<CredentialRequestOptions>();
   const captcha = useCaptcha();
 
-  const webauthnEnabled = settings.webauthn?.enabled !== false;
+  const webauthnEnabled = settings.webauthn?.enabled !== false && window.isSecureContext;
 
   const usernameForm = useForm({
     initialValues: {
@@ -246,7 +246,7 @@ export default function Login() {
             })}
           </Alert>
         )}
-        {settings.app.url !== window.location.origin && (
+        {![settings.app.url, ...settings.app.additionalUrls].includes(window.location.origin) && (
           <Alert
             icon={<FontAwesomeIcon icon={faExclamationTriangle} />}
             color='yellow'

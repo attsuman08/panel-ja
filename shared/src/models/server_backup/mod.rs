@@ -1258,6 +1258,7 @@ impl ServerBackup {
     pub async fn download_url(
         &self,
         state: &crate::State,
+        request_host: Option<&str>,
         user: &super::user::User,
         node: &super::node::Node,
         archive_format: wings_api::StreamableArchiveFormat,
@@ -1343,7 +1344,9 @@ impl ServerBackup {
             },
         )?;
 
-        let mut url = node.public_url(state, "/download/backup").await?;
+        let mut url = node
+            .public_url(state, request_host, "/download/backup")
+            .await?;
         url.set_query(Some(&format!(
             "token={}&archive_format={}",
             urlencoding::encode(&token),

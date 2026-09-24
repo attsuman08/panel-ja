@@ -68,6 +68,7 @@ mod get {
     ))]
     pub async fn route(
         state: GetState,
+        request_host: shared::GetRequestHost,
         permissions: GetPermissionManager,
         user: GetUser,
         mut server: GetServer,
@@ -129,6 +130,7 @@ mod get {
             let mut url = node
                 .public_url(
                     &state,
+                    request_host.as_deref(),
                     if params.directory {
                         "/download/directory"
                     } else {
@@ -178,7 +180,9 @@ mod get {
                 },
             )?;
 
-            let mut url = node.public_url(&state, "/download/files").await?;
+            let mut url = node
+                .public_url(&state, request_host.as_deref(), "/download/files")
+                .await?;
             url.set_query(Some(&format!(
                 "token={}&archive_format={}",
                 urlencoding::encode(&token),
