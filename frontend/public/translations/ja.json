@@ -316,6 +316,11 @@
           "notFound": "この名前のファイルはまだ存在しません。",
           "isDirectory": "これはディレクトリであり、ファイルではありません。"
         },
+        "nodeAllocationIpInput": {
+          "anyAddress": "すべてのアドレス",
+          "nodeInterfaces": "ノードのネットワークインターフェース",
+          "inUse": "使用中"
+        },
         "ignoredFilesInput": {
           "onePatternPerLine": "1行に1パターンずつ入力してください。",
           "countMatches": "一致数をカウント",
@@ -738,6 +743,12 @@
       "impersonatedBy": "{username} が代理ログイン中"
     },
     "elements": {
+      "lockedConfigPaths": {
+        "notice": "これらの設定は、マシン上の設定ファイルでのみ変更できます。パネルでの変更は無視されます:",
+        "toast": {
+          "ignored": "設定を適用しました。ただし、次の設定はマシン上の設定ファイルでのみ変更できるため、変更は適用されていません: {paths}"
+        }
+      },
       "chartLegend": {
         "hide": "{series} を非表示",
         "show": "{series} を表示"
@@ -2137,6 +2148,8 @@
               "page": {
                 "title": "アプリケーション設定",
                 "form": {
+                  "additionalUrls": "追加URL",
+                  "additionalUrlsDescription": "パネルにアクセスできるその他のアドレスです。ログイン、OAuth、自動送信メールではリクエストに使われたURLが使用され、それ以外ではメインURLが使用されます。セキュリティキーはWebAuthn RP IDに含まれるURLでのみ使用できます。",
                   "icon": "アイコン",
                   "iconLight": "アイコン（ライトモード）",
                   "banner": "バナー",
@@ -7378,6 +7391,7 @@
             "modal": {
               "title": "サーバーを再インストール",
               "button": "再インストール",
+              "startOnCompletion": "再インストール完了後にサーバーを起動",
               "toast": {
                 "reinstalling": "サーバーを再インストール中..."
               }
