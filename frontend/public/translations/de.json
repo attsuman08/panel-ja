@@ -200,6 +200,14 @@
       "many": "{count} Mounts",
       "other": "{count} Mounts"
     },
+    "device": {
+      "zero": "{count} Geräte",
+      "one": "{count} Gerät",
+      "two": "{count} Geräte",
+      "few": "{count} Geräte",
+      "many": "{count} Geräte",
+      "other": "{count} Geräte"
+    },
     "apiKey": {
       "zero": "{count} API-Schlüssel",
       "one": "{count} API-Schlüssel",
@@ -433,6 +441,7 @@
         "username": "Benutzername",
         "usernameOrEmail": "Benutzername/E-Mail",
         "server": "Server",
+        "servers": "Server",
         "url": "URL",
         "email": "E-Mail",
         "path": "Pfad",
@@ -479,6 +488,7 @@
         "additionalAllocations": "Zusätzliche Allocations",
         "externalId": "Externe ID",
         "mount": "Mount",
+        "device": "Gerät",
         "nest": "Nest",
         "lines": "Zeilen",
         "databaseHost": "Datenbank-Host",
@@ -770,6 +780,7 @@
           "redirect": "Weiterleitung"
         },
         "empty": "Keine Routen konfiguriert. Füge unten Routen, Trenner oder Weiterleitungen hinzu.",
+        "missingRoutes": "Die folgenden Seiten fehlen in dieser Routen-Konfiguration und sind für Benutzer nicht verfügbar: {routes}.",
         "unnamed": "(unbenannt)",
         "dividerPlaceholder": "Trenner-Bezeichnung (optional)",
         "redirectNamePlaceholder": "Weiterleitungsname",
@@ -1434,7 +1445,7 @@
                     "title": "Server zu {group} hinzufügen",
                     "noServers": "Alle Server sind bereits in dieser Gruppe.",
                     "toast": {
-                      "added": "Server zur Gruppe hinzugefügt."
+                      "added": "{servers} zur Gruppe hinzugefügt."
                     }
                   },
                   "removeServerFromGroup": {
@@ -2913,6 +2924,51 @@
         "nodes": {
           "title": "Nodes",
           "resourceName": "Node",
+          "pairing": {
+            "mode": {
+              "pair": "Wartenden Node koppeln",
+              "manual": "Manuell einrichten"
+            },
+            "title": "Mit Wings koppeln",
+            "description": "Starte Wings ohne Konfigurationsdatei, dann wartet es auf die Kopplung. Der Kopplungscode steht in den Logs (`journalctl -u wings` oder `docker compose logs wings`).",
+            "form": {
+              "address": "Node-Adresse",
+              "addressDescription": "Die Adresse, über die das Panel Wings erreicht, inklusive Port.",
+              "pairingCode": "Kopplungscode",
+              "pairingCodeDescription": "Steht in den Wings-Logs, solange es auf die Kopplung wartet.",
+              "panelUrl": "Panel-URL",
+              "panelUrlDescription": "Optionale Überschreibung, z. B. die nächste Region."
+            },
+            "section": {
+              "allocations": "Allokationen",
+              "advanced": "Erweitert"
+            },
+            "probe": {
+              "title": "Wings {version} wartet auf die Kopplung",
+              "resources": "{cores} CPU-Kerne, {memory} Arbeitsspeicher, {disk} Speicherplatz ({architecture})",
+              "dockerAvailable": "Docker {version} ist erreichbar.",
+              "dockerUnavailable": "Docker ist nicht erreichbar. Wings kann erst Server starten, wenn es erreichbar ist.",
+              "container": "Wings läuft in einem Container und sieht die Netzwerkschnittstellen des Hosts nicht. Gib die Allokations-IP selbst ein."
+            },
+            "enrollment": {
+              "description": "Führe diesen Befehl auf dem Node aus. Der Code funktioniert einmal und läuft nach 30 Minuten ab."
+            },
+            "button": {
+              "connect": "Verbinden",
+              "change": "Ändern",
+              "pair": "Koppeln",
+              "createAndPair": "Erstellen & koppeln",
+              "generateCommand": "Registrierungsbefehl erzeugen"
+            },
+            "status": {
+              "waiting": "Warte auf die Verbindung von Wings...",
+              "connected": "Wings {version} ist verbunden.",
+              "timeout": "Wings ist noch nicht online. Prüfe die Logs auf dem Node."
+            },
+            "toast": {
+              "pairFailed": "Der Node wurde erstellt, aber die Kopplung ist fehlgeschlagen: {error}"
+            }
+          },
           "tabs": {
             "overview": {
               "title": "Übersicht",
@@ -3166,6 +3222,25 @@
                   "remove": {
                     "title": "Entfernen des Node Mounts bestätigen",
                     "content": "Bist du sicher, dass du den Mount **{mount}** von **{name}** entfernen möchtest?"
+                  }
+                }
+              }
+            },
+            "devices": {
+              "title": "Geräte",
+              "page": {
+                "title": "Node-Geräte",
+                "toast": {
+                  "added": "Gerät hinzugefügt.",
+                  "removed": "Gerät entfernt."
+                },
+                "modal": {
+                  "add": {
+                    "title": "Gerät hinzufügen"
+                  },
+                  "remove": {
+                    "title": "Entfernen des Geräts bestätigen",
+                    "content": "Bist du sicher, dass du das Gerät **{device}** von **{name}** entfernen möchtest?"
                   }
                 }
               }
@@ -3657,6 +3732,25 @@
                 }
               }
             },
+            "devices": {
+              "title": "Geräte",
+              "page": {
+                "title": "Server-Geräte",
+                "toast": {
+                  "added": "Gerät hinzugefügt.",
+                  "deleted": "Gerät entfernt."
+                },
+                "modal": {
+                  "add": {
+                    "title": "Gerät hinzufügen"
+                  },
+                  "remove": {
+                    "title": "Entfernen des Geräts bestätigen",
+                    "content": "Bist du sicher, dass du das Gerät **{device}** von **{name}** entfernen möchtest?"
+                  }
+                }
+              }
+            },
             "backups": {
               "title": "Backups",
               "page": {
@@ -3970,6 +4064,25 @@
                         "delete": {
                           "title": "Entfernen des Egg Mounts bestätigen",
                           "content": "Bist du sicher, dass du das Mount **{mount}** von **{egg}** entfernen möchtest?"
+                        }
+                      }
+                    }
+                  },
+                  "devices": {
+                    "title": "Geräte",
+                    "page": {
+                      "title": "Egg-Geräte",
+                      "toast": {
+                        "added": "Gerät hinzugefügt.",
+                        "deleted": "Gerät entfernt."
+                      },
+                      "modal": {
+                        "add": {
+                          "title": "Gerät hinzufügen"
+                        },
+                        "delete": {
+                          "title": "Entfernen des Geräts bestätigen",
+                          "content": "Bist du sicher, dass du das Gerät **{device}** von **{egg}** entfernen möchtest?"
                         }
                       }
                     }
@@ -4666,6 +4779,10 @@
                 "modal": {
                   "delete": {
                     "title": "Löschen der Backup-Konfiguration bestätigen"
+                  },
+                  "removeProvider": {
+                    "title": "Entfernen der Provider-Einstellungen bestätigen",
+                    "content": "Beim Speichern werden die **{provider}**-Einstellungen entfernt. Bereits vorhandene Backups, die auf diesen Konfigurations-Optionen basieren, werden nicht mehr funktionieren."
                   }
                 },
                 "s3": {
@@ -4978,6 +5095,76 @@
               "title": "Server",
               "page": {
                 "title": "Mount Server"
+              }
+            }
+          }
+        },
+        "devices": {
+          "title": "Geräte",
+          "resourceName": "Gerät",
+          "tabs": {
+            "general": {
+              "page": {
+                "titleCreate": "Gerät erstellen",
+                "titleUpdate": "Gerät aktualisieren",
+                "alert": "Gerätezugriff ist eine mächtige und potenziell gefährliche Funktion. Unsachgemäße Nutzung kann zu Datenverlust oder Sicherheitslücken führen (einschließlich Container-Ausbrüchen). Stelle sicher, dass du die Auswirkungen verstehst, bevor du Geräte erstellst oder aktualisierst.",
+                "form": {
+                  "userAttachable": "Vom Benutzer einbindbar",
+                  "permissions": "Berechtigungen",
+                  "permissionsDescription": "Gerätezugriff: r zum Lesen, w zum Schreiben und m zum Erstellen von Gerätedateien."
+                },
+                "modal": {
+                  "delete": {
+                    "title": "Gerät-Löschung bestätigen"
+                  }
+                }
+              }
+            },
+            "eggs": {
+              "title": "Eggs",
+              "page": {
+                "title": "Geräte-Eggs",
+                "toast": {
+                  "added": "Egg hinzugefügt.",
+                  "removed": "Egg entfernt."
+                },
+                "modal": {
+                  "add": {
+                    "title": "Egg hinzufügen",
+                    "form": {
+                      "egg": "Egg"
+                    }
+                  },
+                  "remove": {
+                    "title": "Entfernen des Geräte-Eggs bestätigen",
+                    "content": "Bist du sicher, dass du das Gerät **{device}** von **{name}** entfernen möchtest?"
+                  }
+                }
+              }
+            },
+            "nodes": {
+              "title": "Nodes",
+              "page": {
+                "title": "Geräte-Nodes",
+                "toast": {
+                  "added": "Node hinzugefügt.",
+                  "removed": "Node entfernt."
+                },
+                "modal": {
+                  "add": {
+                    "title": "Node hinzufügen"
+                  },
+                  "remove": {
+                    "title": "Entfernen des Geräte-Nodes bestätigen",
+                    "content": "Bist du sicher, dass du das Gerät **{device}** von **{name}** entfernen möchtest?"
+                  }
+                }
+              }
+            },
+            "servers": {
+              "title": "Server",
+              "page": {
+                "title": "Geräte-Server"
               }
             }
           }
@@ -7314,6 +7501,41 @@
             },
             "detachMount": {
               "title": "Mount trennen",
+              "content": "Möchtest du **{name}** von `{target}` trennen?",
+              "toast": {
+                "detached": "{name} wurde von deinem Server getrennt."
+              }
+            }
+          }
+        },
+        "devices": {
+          "title": "Geräte",
+          "table": {
+            "columns": {
+              "attached": "Eingebunden"
+            }
+          },
+          "button": {
+            "attach": "Einbinden",
+            "detach": "Trennen"
+          },
+          "modal": {
+            "attachDevice": {
+              "title": "Gerät einbinden",
+              "content": "Möchtest du **{name}** in `{target}` einbinden?",
+              "toast": {
+                "attached": "{name} wurde in deinen Server eingebunden."
+              }
+            },
+            "detachDevices": {
+              "title": "Geräte trennen",
+              "content": "Möchtest du **{devices}** von diesem Server trennen?",
+              "alert": {
+                "skipped": "Übersprungen: {devices}. Nicht eingebundene Geräte können nicht getrennt werden."
+              }
+            },
+            "detachDevice": {
+              "title": "Gerät trennen",
               "content": "Möchtest du **{name}** von `{target}` trennen?",
               "toast": {
                 "detached": "{name} wurde von deinem Server getrennt."
