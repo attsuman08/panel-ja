@@ -200,6 +200,14 @@
       "many": "{count} マウント",
       "other": "{count} マウント"
     },
+    "device": {
+      "zero": "{count} デバイス",
+      "one": "{count} デバイス",
+      "two": "{count} デバイス",
+      "few": "{count} デバイス",
+      "many": "{count} デバイス",
+      "other": "{count} デバイス"
+    },
     "apiKey": {
       "zero": "{count} APIキー",
       "one": "{count} APIキー",
@@ -433,6 +441,7 @@
         "username": "ユーザー名",
         "usernameOrEmail": "ユーザー名 / メールアドレス",
         "server": "サーバー",
+        "servers": "サーバー",
         "url": "URL",
         "email": "メールアドレス",
         "path": "パス",
@@ -479,6 +488,7 @@
         "additionalAllocations": "追加の割り当て",
         "externalId": "外部ID",
         "mount": "マウント",
+        "device": "デバイス",
         "nest": "Nest",
         "lines": "行数",
         "databaseHost": "データベースホスト",
@@ -775,6 +785,7 @@
           "redirect": "リダイレクト"
         },
         "empty": "ルートが設定されていません。以下からルート、区切り線、リダイレクトを追加してください。",
+        "missingRoutes": "次のページはこのルート設定に含まれていないため、ユーザーはアクセスできません: {routes}。",
         "unnamed": "(名前なし)",
         "dividerPlaceholder": "区切り線のラベル（任意）",
         "redirectNamePlaceholder": "リダイレクト名",
@@ -2918,6 +2929,51 @@
         "nodes": {
           "title": "ノード",
           "resourceName": "ノード",
+          "pairing": {
+            "mode": {
+              "pair": "待機中のノードをペアリング",
+              "manual": "手動で設定"
+            },
+            "title": "Wingsとペアリング",
+            "description": "設定ファイルなしでWingsを起動すると、ペアリング待機状態になります。ペアリングコードはログ（`journalctl -u wings` または `docker compose logs wings`）に出力されます。",
+            "form": {
+              "address": "ノードのアドレス",
+              "addressDescription": "パネルからWingsに接続するためのアドレスです。ポートも含めてください。",
+              "pairingCode": "ペアリングコード",
+              "pairingCodeDescription": "ペアリング待機中のWingsのログに出力されます。",
+              "panelUrl": "パネルURL",
+              "panelUrlDescription": "必要に応じて上書きします（例: 最も近いリージョンのURL）。"
+            },
+            "section": {
+              "allocations": "割り当て",
+              "advanced": "詳細設定"
+            },
+            "probe": {
+              "title": "Wings {version} がペアリングを待機しています",
+              "resources": "CPU {cores} コア、メモリ {memory}、ディスク {disk}（{architecture}）",
+              "dockerAvailable": "Docker {version} に接続できます。",
+              "dockerUnavailable": "Dockerに接続できません。接続できるようになるまでWingsはサーバーを起動できません。",
+              "container": "Wingsがコンテナ内で動作しているため、ホストのネットワークインターフェースを検出できません。割り当てIPを手動で入力してください。"
+            },
+            "enrollment": {
+              "description": "ノード上でこのコマンドを実行してください。コードは一度だけ使用でき、30分後に期限切れになります。"
+            },
+            "button": {
+              "connect": "接続",
+              "change": "変更",
+              "pair": "ペアリング",
+              "createAndPair": "作成してペアリング",
+              "generateCommand": "登録コマンドを生成"
+            },
+            "status": {
+              "waiting": "Wingsの接続を待っています...",
+              "connected": "Wings {version} に接続しました。",
+              "timeout": "Wingsがまだオンラインになっていません。ノード上のログを確認してください。"
+            },
+            "toast": {
+              "pairFailed": "ノードは作成されましたが、ペアリングに失敗しました: {error}"
+            }
+          },
           "tabs": {
             "overview": {
               "title": "概要",
@@ -3171,6 +3227,25 @@
                   "remove": {
                     "title": "ノードマウントの削除確認",
                     "content": "**{name}** からマウント **{mount}** を削除してもよろしいですか？"
+                  }
+                }
+              }
+            },
+            "devices": {
+              "title": "デバイス",
+              "page": {
+                "title": "ノードのデバイス",
+                "toast": {
+                  "added": "ノードデバイスを追加しました。",
+                  "removed": "ノードデバイスを削除しました。"
+                },
+                "modal": {
+                  "add": {
+                    "title": "ノードデバイスを追加"
+                  },
+                  "remove": {
+                    "title": "ノードデバイスの削除確認",
+                    "content": "**{name}** からデバイス **{device}** を削除してもよろしいですか？"
                   }
                 }
               }
@@ -3683,6 +3758,25 @@
                 }
               }
             },
+            "devices": {
+              "title": "デバイス",
+              "page": {
+                "title": "サーバーのデバイス",
+                "toast": {
+                  "added": "サーバーデバイスを追加しました。",
+                  "deleted": "サーバーデバイスを削除しました。"
+                },
+                "modal": {
+                  "add": {
+                    "title": "サーバーデバイスを追加"
+                  },
+                  "remove": {
+                    "title": "サーバーデバイスの削除確認",
+                    "content": "**{name}** からデバイス **{device}** を削除してもよろしいですか？"
+                  }
+                }
+              }
+            },
             "backups": {
               "title": "バックアップ",
               "page": {
@@ -3996,6 +4090,25 @@
                         "delete": {
                           "title": "Eggマウントの削除確認",
                           "content": "**{egg}** からマウント **{mount}** を削除してもよろしいですか？"
+                        }
+                      }
+                    }
+                  },
+                  "devices": {
+                    "title": "デバイス",
+                    "page": {
+                      "title": "Eggのデバイス",
+                      "toast": {
+                        "added": "Eggデバイスを追加しました。",
+                        "deleted": "Eggデバイスを削除しました。"
+                      },
+                      "modal": {
+                        "add": {
+                          "title": "Eggデバイスを追加"
+                        },
+                        "delete": {
+                          "title": "Eggデバイスの削除確認",
+                          "content": "**{egg}** からデバイス **{device}** を削除してもよろしいですか？"
                         }
                       }
                     }
@@ -4692,6 +4805,10 @@
                 "modal": {
                   "delete": {
                     "title": "バックアップ設定の削除確認"
+                  },
+                  "removeProvider": {
+                    "title": "プロバイダー設定の削除確認",
+                    "content": "保存すると **{provider}** の設定が削除されます。この設定に依存する既存のバックアップは利用できなくなります。"
                   }
                 },
                 "s3": {
@@ -5004,6 +5121,76 @@
               "title": "サーバー",
               "page": {
                 "title": "マウントサーバー"
+              }
+            }
+          }
+        },
+        "devices": {
+          "title": "デバイス",
+          "resourceName": "デバイス",
+          "tabs": {
+            "general": {
+              "page": {
+                "titleCreate": "デバイスを作成",
+                "titleUpdate": "デバイスを更新",
+                "alert": "デバイスは強力でありながら潜在的に危険な機能です。不適切な使用はデータの損失やセキュリティ上の脆弱性（コンテナエスケープなど）につながる可能性があります。デバイスを作成または更新する前に、その影響を必ず理解してください。",
+                "form": {
+                  "userAttachable": "ユーザーによるアタッチを許可",
+                  "permissions": "権限",
+                  "permissionsDescription": "デバイスへのアクセス権限: r は読み取り、w は書き込み、m はデバイスノードの作成を許可します。"
+                },
+                "modal": {
+                  "delete": {
+                    "title": "デバイスの削除確認"
+                  }
+                }
+              }
+            },
+            "eggs": {
+              "title": "Egg",
+              "page": {
+                "title": "デバイスのEgg",
+                "toast": {
+                  "added": "デバイスEggを追加しました。",
+                  "removed": "デバイスEggを削除しました。"
+                },
+                "modal": {
+                  "add": {
+                    "title": "デバイスEggを追加",
+                    "form": {
+                      "egg": "Egg"
+                    }
+                  },
+                  "remove": {
+                    "title": "デバイスEggの削除確認",
+                    "content": "**{name}** からデバイス **{device}** を削除してもよろしいですか？"
+                  }
+                }
+              }
+            },
+            "nodes": {
+              "title": "ノード",
+              "page": {
+                "title": "デバイスのノード",
+                "toast": {
+                  "added": "デバイスノードを追加しました。",
+                  "removed": "デバイスノードを削除しました。"
+                },
+                "modal": {
+                  "add": {
+                    "title": "デバイスノードを追加"
+                  },
+                  "remove": {
+                    "title": "デバイスノードの削除確認",
+                    "content": "**{name}** からデバイス **{device}** を削除してもよろしいですか？"
+                  }
+                }
+              }
+            },
+            "servers": {
+              "title": "サーバー",
+              "page": {
+                "title": "デバイスのサーバー"
               }
             }
           }
@@ -5817,7 +6004,10 @@
             },
             "cell": {
               "setNull": "NULL に設定",
+              "picker": "値を選択",
               "null": "NULL",
+              "true": "TRUE",
+              "false": "FALSE",
               "empty": "空",
               "truncated": "この値は大きすぎるため全体を読み込むことができず、編集できません。",
               "editorHint": "{enter} で値を適用、{shiftEnter} で改行を挿入します。"
@@ -7340,6 +7530,41 @@
               "content": "**{name}** を `{target}` からデタッチしますか？",
               "toast": {
                 "detached": "{name} をサーバーから削除しました。"
+              }
+            }
+          }
+        },
+        "devices": {
+          "title": "デバイス",
+          "table": {
+            "columns": {
+              "attached": "アタッチ済み"
+            }
+          },
+          "button": {
+            "attach": "アタッチ",
+            "detach": "デタッチ"
+          },
+          "modal": {
+            "attachDevice": {
+              "title": "デバイスをアタッチ",
+              "content": "**{name}** を `{target}` にアタッチしますか？",
+              "toast": {
+                "attached": "{name} をサーバーにアタッチしました。"
+              }
+            },
+            "detachDevices": {
+              "title": "デバイスをデタッチ",
+              "content": "**{devices}** をこのサーバーからデタッチしますか？",
+              "alert": {
+                "skipped": "{devices} はスキップされます。アタッチされていないデバイスはデタッチできません。"
+              }
+            },
+            "detachDevice": {
+              "title": "デバイスをデタッチ",
+              "content": "**{name}** を `{target}` からデタッチしますか？",
+              "toast": {
+                "detached": "{name} をサーバーからデタッチしました。"
               }
             }
           }
