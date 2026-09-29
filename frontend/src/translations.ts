@@ -85,6 +85,7 @@ const baseTranslations = defineTranslations({
         details: 'Details',
         loadLogs: 'Load Logs',
         sendTestEmail: 'Send Test Email',
+        test: 'Test',
         setPrimary: 'Set Primary',
         unsetPrimary: 'Unset Primary',
         leavePage: 'Leave Page',
@@ -2277,9 +2278,18 @@ const baseTranslations = defineTranslations({
                 toast: {
                   updated: 'Captcha settings updated.',
                 },
+                cap: {
+                  form: {
+                    apiUrl: 'Instance URL',
+                    apiUrlDescription: 'Public URL of your Cap Standalone instance, without the site key.',
+                  },
+                },
                 recaptcha: {
                   form: {
                     v3: 'V3',
+                    threshold: 'Score threshold',
+                    thresholdDescription:
+                      'Minimum score required to pass verification, from 0 to 1. Higher values are stricter. Default: 0.5.',
                   },
                 },
               },
@@ -4592,12 +4602,16 @@ const baseTranslations = defineTranslations({
                 form: {
                   clientId: 'Client Id',
                   clientSecret: 'Client Secret',
+                  clientSecretDescription: 'Leave empty for public clients that authenticate with PKCE only.',
                   authUrl: 'Auth URL',
                   tokenUrl: 'Token URL',
                   infoUrl: 'Info URL',
                   basicAuth: 'Basic Auth',
                   basicAuthDescription:
                     'Uses HTTP Basic Authentication to transmit the client id and secret, not common anymore.',
+                  pkce: 'PKCE',
+                  pkceDescription:
+                    'Sends a Proof Key for Code Exchange (S256) with every login, supported by most modern providers.',
                   scopes: 'Scopes',
                   scopesDescription:
                     'The OAuth2 scopes to request, make sure to include scopes for email and profile info when needed.',
@@ -4785,6 +4799,14 @@ const baseTranslations = defineTranslations({
                     title: 'Confirm Provider Settings Removal',
                     content:
                       'This will remove the **{provider}** settings when saving. Any existing backups relying on these configuration options will stop working.',
+                  },
+                  test: {
+                    title: 'Test Backup Configuration',
+                    content:
+                      'Checks the current form values from the selected node without saving them. For Btrfs and ZFS only the tooling and filesystem are checked, server volumes are verified once a backup runs.',
+                    run: 'Run Test',
+                    successful: 'The node can use this backup configuration, the test took {duration}.',
+                    failed: 'The test failed after {duration}.',
                   },
                 },
                 s3: {
