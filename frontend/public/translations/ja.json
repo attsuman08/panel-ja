@@ -279,6 +279,7 @@
         "details": "詳細",
         "loadLogs": "ログを読み込む",
         "sendTestEmail": "テストメールを送信",
+        "test": "テスト",
         "setPrimary": "プライマリに設定",
         "unsetPrimary": "プライマリを解除",
         "leavePage": "ページを離れる",
@@ -363,14 +364,6 @@
           "yearly": "年次で保持",
           "ruleSummary": "{rule}: {count}",
           "status": {
-            "rule": {
-              "count": "最新",
-              "days": "直近",
-              "daily": "日次",
-              "weekly": "週次",
-              "monthly": "月次",
-              "yearly": "年次"
-            },
             "locked": "ロック済み",
             "indefinite": "無期限に保持",
             "expired": "削除待ち",
@@ -389,6 +382,10 @@
       "modal": {
         "duplicate": {
           "title": "{resource} を複製"
+        },
+        "unsavedChanges": {
+          "title": "未保存の変更",
+          "content": "未保存の変更があります。このページを離れてもよろしいですか？離れると変更内容は失われます。"
         },
         "delete": {
           "content": "**{name}** を削除してもよろしいですか？"
@@ -525,7 +522,17 @@
         "target": "ターゲット",
         "replaceWith": "置換後の文字列",
         "caseInsensitive": "大文字と小文字を区別しない",
-        "truncateDirectory": "この操作を実行する前に、このサーバーのすべてのファイルを削除しますか？この操作は元に戻せません。"
+        "truncateDirectory": "この操作を実行する前に、このサーバーのすべてのファイルを削除しますか？この操作は元に戻せません。",
+        "rule": {
+          "invalidCharacters": "使用できない文字が含まれています。",
+          "username": "半角英数字とアンダースコアのみで、3〜15文字で入力してください。",
+          "databaseName": "半角英数字とアンダースコアのみで、31文字以内で入力してください。",
+          "databaseInstanceIdentifier": "半角英数字のみで、2〜23文字で入力してください。",
+          "captchaSiteKey": "半角英数字、ハイフン、アンダースコアのみを使用してください。",
+          "variableName": "半角英小文字で始め、その後に半角英小文字、数字、アンダースコアを最大63文字まで使用できます。",
+          "hexColor": "#1c7ed6 のような16進数のカラーコードを入力してください。",
+          "devicePermissions": "r（読み取り）、w（書き込み）、m（mknod）を任意に組み合わせて指定してください。"
+        }
       },
       "table": {
         "selectRow": "行を選択",
@@ -606,7 +613,8 @@
         "inbound": "受信",
         "outbound": "送信",
         "uptime": "稼働時間",
-        "resources": "リソース"
+        "resources": "リソース",
+        "limit": "上限 {limit}"
       },
       "badge": {
         "active": "アクティブ",
@@ -651,6 +659,12 @@
           "memoryUsageUnlimited": "メモリ: {used} 使用中 (ノード制限なし)",
           "diskUsage": "ディスク: {used} / {limit}",
           "diskUsageUnlimited": "ディスク: {used} 使用中 (ノード制限なし)"
+        },
+        "allowedSources": {
+          "checking": "ノードを確認中",
+          "notAllowed": "ノードで許可されていません",
+          "mountNotAllowed": "このマウントのソースがノードの `allowed_mounts` で許可されていないため、wings はサーバー起動時にこのマウントをスキップします。",
+          "deviceNotAllowed": "このデバイスのソースがノードの `allowed_devices` で許可されていないか、権限が無効なため、wings はサーバー起動時にこのデバイスをスキップします。"
         }
       },
       "server": {
@@ -691,6 +705,14 @@
           "starting": "開始中",
           "finished": "完了",
           "failed": "失敗"
+        },
+        "backupRetentionRule": {
+          "count": "最新",
+          "days": "直近",
+          "daily": "日次",
+          "weekly": "週次",
+          "monthly": "月次",
+          "yearly": "年次"
         },
         "serverBackupKind": {
           "server": "サーバー",
@@ -1593,10 +1615,12 @@
               "none": "アカウントに2つ目の認証要素が設定されていません。",
               "requirementMet": "アカウントは2要素認証の要件を満たしています。",
               "requirementUnmet": "アカウントはまだ2要素認証の要件を満たしていません。",
-              "method": {
-                "totp": "認証アプリ",
-                "securityKey": "セキュリティキー",
-                "email": "メール"
+              "enum": {
+                "twoFactorMethod": {
+                  "totp": "認証アプリ",
+                  "securityKey": "セキュリティキー",
+                  "email": "メール"
+                }
               }
             },
             "emailTwoFactor": {
@@ -1919,7 +1943,8 @@
             "copyUuid": "UUIDをコピー"
           },
           "tooltip": {
-            "limitReached": "APIキーは最大 {max} 個までに制限されています。"
+            "limitReached": "APIキーは最大 {max} 個までに制限されています。",
+            "keyStartOnly": "キーの先頭部分のみが表示されています。キー全体は作成または再生成の直後に一度だけ表示されます。"
           },
           "table": {
             "columns": {
@@ -1943,6 +1968,12 @@
               "title": "APIキーを更新",
               "toast": {
                 "updated": "APIキーを更新しました。"
+              }
+            },
+            "duplicateApiKey": {
+              "title": "APIキーを複製",
+              "toast": {
+                "duplicated": "APIキーを複製しました。"
               }
             },
             "recreateApiKey": {
@@ -2055,11 +2086,14 @@
                     "misses": "計算"
                   }
                 },
-                "containerType": {
-                  "none": "未検出",
-                  "official": "公式",
-                  "officialAio": "公式 AIO",
-                  "officialHeavy": "公式 Heavy"
+                "enum": {
+                  "containerType": {
+                    "none": "未検出",
+                    "official": "公式",
+                    "officialAio": "公式 AIO",
+                    "officialHeavy": "公式 Heavy",
+                    "officialHeavyAio": "公式 Heavy AIO"
+                  }
                 },
                 "stats": {
                   "users": "ユーザー",
@@ -2304,6 +2338,9 @@
                 "toast": {
                   "updated": "メール設定を更新しました。"
                 },
+                "tooltip": {
+                  "noProvider": "テストメールを送信する前に、メールプロバイダーの設定を保存してください。"
+                },
                 "modal": {
                   "sendTestEmail": {
                     "title": "テストメールを送信",
@@ -2399,9 +2436,17 @@
                 "toast": {
                   "updated": "CAPTCHA設定を更新しました。"
                 },
+                "cap": {
+                  "form": {
+                    "apiUrl": "インスタンスURL",
+                    "apiUrlDescription": "Cap Standalone インスタンスの公開URLです。サイトキーは含めないでください。"
+                  }
+                },
                 "recaptcha": {
                   "form": {
-                    "v3": "V3"
+                    "v3": "V3",
+                    "threshold": "スコアのしきい値",
+                    "thresholdDescription": "検証に合格するために必要な最低スコアです。0〜1の範囲で指定し、値が高いほど判定が厳しくなります。デフォルト: 0.5。"
                   }
                 }
               }
@@ -2629,6 +2674,7 @@
           "unknownExtension": "不明な拡張機能",
           "alert": {
             "noExtensions": "拡張機能がインストールされていません。",
+            "managementDisabled": "このパネルでは拡張機能の管理が無効になっています。",
             "heavyImageMissing": "拡張機能のインストールに必要な Heavy イメージを使用していないようです。切り替え方法については [こちら]({docsUrl}) をご覧ください。",
             "supervisorUnreachable": {
               "title": "拡張機能スーパーバイザーが応答しません",
@@ -4633,11 +4679,14 @@
                 "form": {
                   "clientId": "クライアントID",
                   "clientSecret": "クライアントシークレット",
+                  "clientSecretDescription": "PKCEのみで認証するパブリッククライアントの場合は空欄にしてください。",
                   "authUrl": "認証URL",
                   "tokenUrl": "トークンURL",
                   "infoUrl": "情報取得URL",
                   "basicAuth": "Basic認証",
                   "basicAuthDescription": "クライアントIDとシークレットの送信にHTTP Basic認証を使用します（現在はあまり一般的ではありません）。",
+                  "pkce": "PKCE",
+                  "pkceDescription": "ログインのたびに Proof Key for Code Exchange（S256）を送信します。現在のほとんどのプロバイダーでサポートされています。",
                   "scopes": "スコープ",
                   "scopesDescription": "リクエストするOAuth2スコープです。必要に応じてメールやプロフィール情報のスコープを含めてください。",
                   "identifierPath": "識別子パス",
@@ -4663,12 +4712,21 @@
                   "userManageable": "連携をユーザーが管理可能",
                   "userManageableDescription": "ユーザーがこのプロバイダーの連携・解除を行えるようにします。"
                 },
+                "button": {
+                  "discover": "OpenID Discovery からインポート"
+                },
                 "toast": {
-                  "exported": "OAuthプロバイダーをエクスポートしました。"
+                  "exported": "OAuthプロバイダーをエクスポートしました。",
+                  "discovered": "プロバイダー設定をインポートしました。クライアントIDとシークレットを入力して設定を完了してください。"
                 },
                 "modal": {
                   "delete": {
                     "title": "OAuthプロバイダーの削除確認"
+                  },
+                  "discover": {
+                    "title": "OpenID Discovery からインポート",
+                    "url": "発行者URL",
+                    "urlDescription": "発行者URL、または /.well-known/openid-configuration を含む完全なURLを指定してください。プライベートネットワーク上のプロバイダーは、APP_BLOCKED_CIDRS の設定で許可されていない限りブロックされます。"
                   }
                 }
               }
@@ -4809,6 +4867,13 @@
                   "removeProvider": {
                     "title": "プロバイダー設定の削除確認",
                     "content": "保存すると **{provider}** の設定が削除されます。この設定に依存する既存のバックアップは利用できなくなります。"
+                  },
+                  "test": {
+                    "title": "バックアップ設定をテスト",
+                    "content": "現在のフォームの値を保存せずに、選択したノードから検証します。Btrfs と ZFS ではツールとファイルシステムのみを確認し、サーバーボリュームは実際にバックアップを実行した際に検証します。",
+                    "run": "テストを実行",
+                    "successful": "このノードでこのバックアップ設定を使用できます。テストの所要時間: {duration}。",
+                    "failed": "テストは {duration} 後に失敗しました。"
                   }
                 },
                 "s3": {
@@ -5250,7 +5315,8 @@
           "title": "コンソール",
           "input": {
             "placeholder": "コマンドを入力...",
-            "ariaLabel": "コンソールコマンド入力欄"
+            "ariaLabel": "コンソールコマンド入力欄",
+            "prefixPlaceholder": "プレフィックス（例: \"say \"）"
           },
           "toast": {
             "installCancelled": "サーバーのインストールをキャンセルしました。",
@@ -5291,7 +5357,8 @@
             "decreaseFontSize": "フォントサイズを縮小",
             "increaseFontSize": "フォントサイズを拡大",
             "copySelection": "選択範囲をコピー",
-            "popout": "別ウィンドウで開く"
+            "popout": "別ウィンドウで開く",
+            "commandPrefix": "コマンドプレフィックス"
           },
           "quickAction": {
             "search": "コンソール内を検索",
@@ -5785,7 +5852,12 @@
             },
             "largestDirectories": {
               "title": "容量の大きいディレクトリ",
-              "empty": "ディレクトリが見つかりませんでした。"
+              "empty": "ディレクトリが見つかりませんでした。",
+              "files": "このフォルダー内のファイル",
+              "smallerFolders": "容量の小さいフォルダー {count} 個",
+              "inaccessible": "アクセスできません",
+              "openFolder": "フォルダーを開く",
+              "noSubdirectories": "このフォルダーは {size} を使用しており、容量の大きいサブディレクトリはありません。"
             },
             "searchFiles": {
               "title": "ファイルを検索",
@@ -6625,6 +6697,9 @@
             }
           },
           "steps": {
+            "tooltip": {
+              "limitReached": "このスケジュールのステップ数は最大 {max} 個までに制限されています。"
+            },
             "empty": {
               "title": "ステップが設定されていません",
               "description": "このスケジュールにはまだステップがありません。アクションを追加して設定を始めてください。"
