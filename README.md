@@ -29,7 +29,7 @@ Calagopus is a ground-up reimplementation of [Pterodactyl Panel](https://github.
 - **Modern frontend** - React, Mantine, and Tailwind for a clean, responsive UI.
 - **Extensible by design** - first-class extension systems for backend and frontend, no hacky patches or overrides, real plugin APIs.
 - **Egg compatible** - reuses Pterodactyl-style eggs, including a Rust port of Laravel's validation rules.
-- **Migration friendly** - import your existing setup from [Pterodactyl](https://calagopus.com/docs/advanced/migrating/pterodactyl) or [Pelican](https://calagopus.com/docs/advanced/migrating/pelican).
+- **Migration friendly** - import your existing setup from [Pterodactyl](https://calagopus.com/docs/additional/migrations/pterodactyl) or [Pelican](https://calagopus.com/docs/additional/migrations/pelican).
 
 ## Installation
 

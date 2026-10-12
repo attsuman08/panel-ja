@@ -14,6 +14,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 mod allocations;
 mod backups;
+mod bandwidth;
 mod capacity;
 mod config;
 mod database_agent_hosts;
@@ -173,6 +174,7 @@ mod patch {
         models::{
             UpdatableModel,
             admin_activity::GetAdminActivityLogger,
+            egg_configuration::DisabledFeatures,
             node::{GetNode, UpdateNodeOptions},
             user::GetPermissionManager,
         },
@@ -204,6 +206,7 @@ mod patch {
     ) -> ApiResponseResult {
         permissions.has_admin_permission("nodes.update")?;
 
+        let disabled_features = DisabledFeatures::resolve(&state.database).await?;
         match node.update(&state, data).await {
             Ok(_) => {}
             Err(err) if err.is_unique_violation() => {
@@ -235,6 +238,8 @@ mod patch {
             )
             .await;
 
+        disabled_features.propagate(&state).await;
+
         ApiResponse::new_serialized(Response {}).ok()
     }
 }
@@ -252,6 +257,7 @@ pub fn router(state: &State) -> OpenApiRouter<State> {
         .nest("/allocations", allocations::router(state))
         .nest("/system", system::router(state))
         .nest("/capacity", capacity::router(state))
+        .nest("/bandwidth", bandwidth::router(state))
         .nest("/servers", servers::router(state))
         .nest("/mounts", mounts::router(state))
         .nest("/devices", devices::router(state))

@@ -22,6 +22,7 @@ const admin = {
     detail: (uuid: string) => ['admin', 'nodes', { uuid }] as const,
     token: (uuid: string) => ['admin', 'nodes', uuid, 'token'] as const,
     capacity: (nodeUuid: string) => ['admin', 'nodes', nodeUuid, 'capacity'] as const,
+    bandwidth: (nodeUuid: string) => ['admin', 'nodes', nodeUuid, 'bandwidth'] as const,
     capacities: () => ['admin', 'nodes', 'capacities'] as const,
     systemOverview: (nodeUuid: string) => ['admin', 'nodes', nodeUuid, 'system', 'overview'] as const,
     systemDirect: (nodeUuid: string) => ['admin', 'nodes', nodeUuid, 'system', 'direct'] as const,
@@ -326,6 +327,7 @@ const user = {
   },
   commandSnippets: {
     all: () => ['user', 'command-snippets'] as const,
+    egg: (eggUuid: string) => ['user', 'command-snippets', 'egg', eggUuid] as const,
   },
   eggs: {
     all: () => ['user', 'eggs'] as const,
@@ -338,7 +340,6 @@ const user = {
   },
   servers: {
     all: () => ['user', 'servers'] as const,
-    detail: (uuid: string) => ['user', 'servers', { uuid }] as const,
   },
   serverGroups: {
     all: () => ['user', 'server-groups'] as const,

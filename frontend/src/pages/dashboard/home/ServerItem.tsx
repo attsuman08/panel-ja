@@ -35,7 +35,7 @@ import { bytesToString, mbToBytes } from '@/lib/format/size.ts';
 import { serverPowerAction, serverSchema } from '@/lib/schemas/server/server.ts';
 import { useBulkPowerActions } from '@/plugins/server/useBulkPowerActions.ts';
 import { useServerListShowOthers } from '@/plugins/server/useServerListShowOthers.ts';
-import { useServerStats } from '@/plugins/server/useServerStats.ts';
+import { useServerStats, useServerStatsUnavailable } from '@/plugins/server/useServerStats.ts';
 import { useAuth } from '@/providers/AuthProvider.tsx';
 import { useTranslations } from '@/providers/TranslationProvider.tsx';
 import { useUserStore } from '@/stores/user.ts';
@@ -73,6 +73,7 @@ export default function ServerItem({
 
   const [openModal, setOpenModal] = useState<'add-group' | 'kill' | null>(null);
   const stats = useServerStats(server);
+  const statsUnavailable = useServerStatsUnavailable(server);
 
   const availableServerGroups = useMemo(
     () => serverGroups.filter((g) => !g.serverOrder.includes(server.uuid)),
@@ -355,7 +356,14 @@ export default function ServerItem({
                       </div>
                     ) : !stats ? (
                       <div className='col-span-3 flex flex-row items-center justify-center'>
-                        <Spinner size={16} />
+                        {statsUnavailable ? (
+                          <>
+                            <FontAwesomeIcon size='1x' icon={faTriangleExclamation} color='yellow' />
+                            <p className='ml-2 text-sm'>{t('common.server.state.resourcesUnavailable', {})}</p>
+                          </>
+                        ) : (
+                          <Spinner size={16} />
+                        )}
                       </div>
                     ) : (
                       <div className='flex flex-col sm:flex-row justify-center'>

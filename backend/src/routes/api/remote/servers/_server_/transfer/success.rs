@@ -158,6 +158,12 @@ mod post {
             shared::tunnel::poke_nodes(&state.database).await;
         }
 
+        // the destination received its configuration while the server still resolved against the
+        // source node, so sync once more now that it resolves against this one
+        if let Some(transferred) = Server::by_uuid_optional(&state.database, server.uuid).await? {
+            transferred.batch_sync(&state.database).await;
+        }
+
         if let Err(err) = server
             .node
             .fetch_cached(&state.database)
