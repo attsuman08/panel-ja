@@ -336,7 +336,8 @@
           "matches": "{count}件一致",
           "noMatches": "一致なし",
           "exception": "除外",
-          "tooManyPatterns": "パターンが{max}件を超える場合、一致数は自動でカウントされません。"
+          "tooManyPatterns": "パターンが{max}件を超える場合、一致数は自動でカウントされません。",
+          "unanchoredException": "`{pattern}` はすべての階層に一致します。ルートディレクトリのみに一致させるには `{anchored}` を使用してください。"
         },
         "cronInput": {
           "segments": {
@@ -676,7 +677,8 @@
           "restoringBackup": "バックアップを復元中",
           "installing": "インストール中",
           "installFailed": "インストール失敗",
-          "backupRestoreFailed": "バックアップの復元に失敗しました"
+          "backupRestoreFailed": "バックアップの復元に失敗しました",
+          "resourcesUnavailable": "リソース使用量を取得できません"
         }
       },
       "enum": {
@@ -756,6 +758,11 @@
           "gibibytes": "GiB",
           "tebibytes": "TiB",
           "pebibytes": "PiB"
+        },
+        "rate": {
+          "kilobits": "Kbps",
+          "megabits": "Mbps",
+          "gigabits": "Gbps"
         }
       },
       "unlimited": "無制限",
@@ -3706,6 +3713,13 @@
                   "ioWeight": "IOウェイト",
                   "ioWeightDescription": "他のコンテナと比較した、サーバーコンテナの相対的なIOウェイトです。",
                   "ioWeightTooltip": "0〜1000。すべてのシステムで動作するとは限りません。",
+                  "bandwidth": {
+                    "upload": "アップロード制限",
+                    "download": "ダウンロード制限",
+                    "description": "0を指定すると無制限になります。",
+                    "unavailable": "このノードは帯域制限に対応していません。",
+                    "disabled": "帯域制限はノード設定で無効になっています。"
+                  },
                   "pinnedCpus": "固定CPU",
                   "pinnedCpusDescription": "このサーバーが固定されるCPUコアです。",
                   "pinnedCpusTooltip": "インデックスで指定（例: 0, 1, 2）。すべてのコアを許可する場合は空欄にしてください。",
@@ -4175,7 +4189,8 @@
           "resourceName": "Egg構成",
           "table": {
             "columns": {
-              "order": "順序"
+              "order": "順序",
+              "appliesTo": "適用対象"
             }
           },
           "tabs": {
@@ -4186,9 +4201,39 @@
                 "form": {
                   "order": "順序",
                   "eggsPlaceholder": "Eggを選択",
-                  "eggsEmpty": "設定されたEggがありません。Egg構成を作成する前にNestとEggを作成してください。"
+                  "eggsEmpty": "設定されたEggがありません。Egg構成を作成する前にNestとEggを作成してください。",
+                  "nestsPlaceholder": "Nestを選択",
+                  "nodesPlaceholder": "ノードを選択",
+                  "locationsPlaceholder": "ロケーションを選択",
+                  "matcher": "適用対象",
+                  "matcherDescription": "サーバーのEgg、Nest、ノード、ロケーションに基づいて、この構成を適用するサーバーを決定します。1つのサーバーに複数の構成が適用される場合、順序の値が大きい構成が小さい構成より優先されます。",
+                  "matcherType": "マッチャータイプ"
+                },
+                "matcher": {
+                  "allMustMatch": "すべてのマッチャーが一致する必要があります:",
+                  "anyMustMatch": "いずれかのマッチャーが一致する必要があります:",
+                  "mustNotMatch": "マッチャーに一致してはなりません:"
+                },
+                "button": {
+                  "addMatcher": "マッチャーを追加"
                 },
                 "enum": {
+                  "matcherType": {
+                    "never": "なし (どれにも適用されない)",
+                    "all": "すべて (常に適用)",
+                    "and": "AND (すべて一致)",
+                    "or": "OR (いずれか一致)",
+                    "not": "NOT (一致しないこと)",
+                    "eggs": "Egg",
+                    "nests": "Nest",
+                    "nodes": "ノード",
+                    "locations": "ロケーション"
+                  },
+                  "featureState": {
+                    "inherit": "継承",
+                    "enabled": "有効",
+                    "disabled": "無効"
+                  },
                   "deploymentType": {
                     "random": "ランダム",
                     "range": "ポート範囲",
@@ -4234,6 +4279,16 @@
                       "assignToVariablePlaceholder": "例: SERVER_PORT"
                     },
                     "removeRule": "デプロイルールを削除"
+                  }
+                },
+                "features": {
+                  "title": "機能設定",
+                  "description": "他のセクションとは異なり、「継承」に設定された各機能は、順序の低い構成で設定された値を引き継ぎます。どの構成でも設定されていない機能は有効のままです。",
+                  "form": {
+                    "firewall": "ファイアウォール",
+                    "firewallDescription": "ユーザーがサーバーのファイアウォールルールを管理できるようにします。無効にしても既存のルールは保持されますが、適用は停止されます。",
+                    "privateNetwork": "プライベートネットワーク",
+                    "privateNetworkDescription": "サーバーがプライベートネットワークに参加し、他のサーバーに接続できるようにします。無効にすると、再び有効になるまでネットワークから除外されます。"
                   }
                 },
                 "startup": {
@@ -4683,6 +4738,8 @@
                   "authUrl": "認証URL",
                   "tokenUrl": "トークンURL",
                   "infoUrl": "情報取得URL",
+                  "infoUrls": "追加の情報取得URL",
+                  "infoUrlsDescription": "ログインのたびにアクセストークンを使って取得される追加のエンドポイントです。マッピングのマッチャーでソースとして使用できます。404レスポンスは「存在しない」として扱われ、それ以外のエラーはログインに失敗します。",
                   "basicAuth": "Basic認証",
                   "basicAuthDescription": "クライアントIDとシークレットの送信にHTTP Basic認証を使用します（現在はあまり一般的ではありません）。",
                   "pkce": "PKCE",
@@ -4747,6 +4804,7 @@
                   },
                   "matcherType": {
                     "none": "なし (常に適用)",
+                    "never": "なし (どれにも適用されない)",
                     "and": "AND (すべて一致)",
                     "or": "OR (いずれか一致)",
                     "not": "NOT (一致しないこと)",
@@ -4777,6 +4835,9 @@
                   "matcherType": "マッチャータイプ",
                   "scopes": "スコープ",
                   "scopesDescription": "このマッチャーが一致するために、すべて付与されている必要があるOAuthスコープです。",
+                  "source": "ソース",
+                  "sourceDescription": "パスを評価するレスポンスです。404で応答したソースは一致しません。",
+                  "sourceInfoUrl": "情報取得URL",
                   "path": "フィールドパス",
                   "pathDescription": "情報取得URLのレスポンスから比較対象のフィールドを抽出するために使用されるパスです (https://serdejsonpath.live)。",
                   "equals": "等しい",
@@ -5408,6 +5469,7 @@
             "port": "ポート",
             "networkIn": "ネットワーク (受信)",
             "networkOut": "ネットワーク (送信)",
+            "networkDetails": "合計 {total} · {packets} pps",
             "normalizeCpuLoad": "CPU負荷を正規化 (最大100%に調整)"
           },
           "power": {
@@ -5606,6 +5668,8 @@
             "editorEngine": "エディタエンジン",
             "editorPreviewTabs": "ツリーのタブでファイルをプレビュー表示",
             "editorPreviewTabsDescription": "編集するかタブをダブルクリックすると開いたままになります。",
+            "alwaysOverwrite": "既存のファイルを常に上書き",
+            "alwaysOverwriteDescription": "アップロード、コピー、貼り付け時の競合確認をスキップします。",
             "vscodeUriScheme": "VS Code URI スキーム",
             "imageViewerSmoothing": "画像を滑らかにする (アンチエイリアス)"
           },
