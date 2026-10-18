@@ -192,6 +192,7 @@ pub struct Server {
     pub auto_kill: wings_api::ServerConfigurationAutoKill,
     pub auto_start_behavior: ServerAutoStartBehavior,
     pub timezone: Option<compact_str::CompactString>,
+    pub trash: Option<TrashSettings>,
 
     pub hugepages_passthrough_enabled: bool,
     pub kvm_passthrough_enabled: bool,
@@ -320,6 +321,10 @@ impl BaseModel for Server {
                 compact_str::format_compact!("{prefix}timezone"),
             ),
             (
+                "servers.trash",
+                compact_str::format_compact!("{prefix}trash"),
+            ),
+            (
                 "servers.hugepages_passthrough_enabled",
                 compact_str::format_compact!("{prefix}hugepages_passthrough_enabled"),
             ),
@@ -430,6 +435,12 @@ impl BaseModel for Server {
             auto_start_behavior: row
                 .try_get(compact_str::format_compact!("{prefix}auto_start_behavior").as_str())?,
             timezone: row.try_get(compact_str::format_compact!("{prefix}timezone").as_str())?,
+            trash: row
+                .try_get::<Option<serde_json::Value>, _>(
+                    compact_str::format_compact!("{prefix}trash").as_str(),
+                )?
+                .map(serde_json::from_value)
+                .transpose()?,
             hugepages_passthrough_enabled: row.try_get(
                 compact_str::format_compact!("{prefix}hugepages_passthrough_enabled").as_str(),
             )?,
@@ -1459,16 +1470,16 @@ impl Server {
     }
 
     /// Syncs the server with the node. This will update server resources, schedules, name, etc.
-    pub async fn sync(self, database: &crate::database::Database) -> Result<(), anyhow::Error> {
+    pub async fn sync(self, state: &crate::State) -> Result<(), anyhow::Error> {
         self.node
-            .fetch_cached(database)
+            .fetch_cached(&state.database)
             .await?
-            .api_client(database)
+            .api_client(&state.database)
             .await?
             .post_servers_server_sync(
                 self.uuid,
                 &wings_api::servers_server_sync::post::RequestBody {
-                    server: serde_json::to_value(self.into_remote_api_object(database).await?)?,
+                    server: serde_json::to_value(self.into_remote_api_object(state).await?)?,
                 },
             )
             .await?;
@@ -1479,12 +1490,13 @@ impl Server {
     /// Same as [`sync`](Self::sync) but runs in a background task, is deduplicated and is not awaited. Any errors will be logged but not returned.
     ///
     /// This method is meant to be used in 90% of cases where you want to sync the server with low priority.
-    pub async fn batch_sync(self, database: &Arc<crate::database::Database>) {
-        database
+    pub async fn batch_sync(self, state: &crate::State) {
+        state
+            .database
             .batch_action("sync_server", self.uuid, {
-                let database = database.clone();
+                let state = state.clone();
 
-                async move { self.sync(&database).await }
+                async move { self.sync(&state).await }
             })
             .await;
     }
@@ -1887,46 +1899,6 @@ impl Server {
         permissions
     }
 
-    pub fn wings_subuser_permissions<'a>(
-        &self,
-        settings: &crate::settings::AppSettings,
-        subuser: &'a super::server_subuser::ServerSubuser,
-        scope: &'a crate::models::user::CredentialScope,
-    ) -> Vec<&'a str> {
-        let scope = scope.server_permissions();
-        let mut permissions = vec!["websocket.connect", "meta.calagopus"];
-
-        if subuser.user.admin {
-            permissions.reserve(scope.map_or(1, |s| s.len()) + 3);
-
-            crate::utils::push_scope_or_star(&mut permissions, scope);
-
-            if Self::scope_allows_console_streams(scope) {
-                permissions.push("admin.websocket.errors");
-                permissions.push("admin.websocket.install");
-                permissions.push("admin.websocket.transfer");
-            }
-
-            return permissions;
-        }
-
-        let role_permissions = subuser
-            .user
-            .role
-            .as_ref()
-            .map_or(&[][..], |role| role.server_permissions.as_slice());
-
-        permissions.reserve(subuser.permissions.len() + role_permissions.len() + 1);
-        Self::push_granted_permissions(
-            &mut permissions,
-            role_permissions.iter().chain(subuser.permissions.iter()),
-            scope,
-            settings,
-        );
-
-        permissions
-    }
-
     /// Gets the feature limits for the server, useful in case you need to loop over them or want to pass them to the frontend individually.
     pub async fn feature_limits(
         &self,
@@ -2025,12 +1997,36 @@ impl Server {
         self.is_ignored(path, false) || self.is_ignored(path, true)
     }
 
+    pub fn effective_trash(&self, settings: &crate::settings::AppSettings) -> TrashPolicy {
+        self.trash.unwrap_or(settings.server.trash).into()
+    }
+
+    pub fn api_trash(&self, settings: &crate::settings::AppSettings) -> ApiServerTrash {
+        let TrashPolicy {
+            retention,
+            usage_threshold,
+        } = self.effective_trash(settings);
+
+        ApiServerTrash {
+            retention,
+            usage_threshold,
+            custom: self.trash.is_some(),
+            defaults: settings.server.trash,
+        }
+    }
+
     #[inline]
     pub async fn into_remote_api_object(
         self,
-        database: &crate::database::Database,
+        state: &crate::State,
     ) -> Result<RemoteApiServer, anyhow::Error> {
-        let firewall_enabled = self.egg_configuration(database).await?.firewall_enabled();
+        let trash = self
+            .trash
+            .unwrap_or(state.settings.get().await?.server.trash);
+        let firewall_enabled = self
+            .egg_configuration(&state.database)
+            .await?
+            .firewall_enabled();
 
         let (variables, backups, schedules, mounts, devices, allocations, firewall_rules) = tokio::try_join!(
             sqlx::query!(
@@ -2041,21 +2037,21 @@ impl Server {
                 self.uuid,
                 self.egg.uuid
             )
-            .fetch_all(database.read()),
+            .fetch_all(state.database.read()),
             sqlx::query!(
                 "SELECT server_backups.uuid
                 FROM server_backups
                 WHERE server_backups.server_uuid = $1",
                 self.uuid
             )
-            .fetch_all(database.read()),
+            .fetch_all(state.database.read()),
             sqlx::query!(
                 "SELECT server_schedules.uuid, server_schedules.triggers, server_schedules.condition
                 FROM server_schedules
                 WHERE server_schedules.server_uuid = $1 AND server_schedules.enabled",
                 self.uuid
             )
-            .fetch_all(database.read()),
+            .fetch_all(state.database.read()),
             sqlx::query!(
                 "SELECT mounts.source, mounts.target, mounts.read_only
                 FROM server_mounts
@@ -2063,7 +2059,7 @@ impl Server {
                 WHERE server_mounts.server_uuid = $1",
                 self.uuid
             )
-            .fetch_all(database.read()),
+            .fetch_all(state.database.read()),
             sqlx::query(
                 "SELECT devices.source, devices.target, devices.permissions
                 FROM server_devices
@@ -2071,7 +2067,7 @@ impl Server {
                 WHERE server_devices.server_uuid = $1",
             )
             .bind(self.uuid)
-            .fetch_all(database.read()),
+            .fetch_all(state.database.read()),
             sqlx::query!(
                 "SELECT node_allocations.ip, node_allocations.port
                 FROM server_allocations
@@ -2079,8 +2075,8 @@ impl Server {
                 WHERE server_allocations.server_uuid = $1",
                 self.uuid
             )
-            .fetch_all(database.read()),
-            firewall::fetch_raw_rules(database, self.uuid),
+            .fetch_all(state.database.read()),
+            firewall::fetch_raw_rules(&state.database, self.uuid),
         )?;
 
         let mut futures = Vec::new();
@@ -2095,7 +2091,7 @@ impl Server {
                     ORDER BY server_schedule_steps.order_, server_schedule_steps.created",
                     schedule.uuid
                 )
-                .fetch_all(database.read()),
+                .fetch_all(state.database.read()),
             );
         }
 
@@ -2240,6 +2236,10 @@ impl Server {
                 },
                 auto_kill: self.auto_kill,
                 auto_start_behavior: self.auto_start_behavior.into(),
+                trash: Some(wings_api::ServerConfigurationTrash {
+                    retention: trash.retention,
+                    usage_threshold: Some(trash.usage_threshold),
+                }),
                 features: wings_api::ServerConfigurationFeatures {
                     startup_cpu_boost: None,
                     runtime_cpu_boost: None,
@@ -2349,6 +2349,8 @@ impl super::IntoAdminApiObject for Server {
                 auto_kill: self.auto_kill,
                 auto_start_behavior: self.auto_start_behavior,
                 timezone: self.timezone,
+                trash: self.trash,
+                trash_defaults: state.settings.get().await?.server.trash,
                 hugepages_passthrough_enabled: self.hugepages_passthrough_enabled,
                 kvm_passthrough_enabled: self.kvm_passthrough_enabled,
                 created: self.created.and_utc(),
@@ -2373,6 +2375,7 @@ impl super::IntoApiObject for Server {
     ) -> Result<Self::ApiObject, crate::database::DatabaseError> {
         let feature_limits = ApiServerFeatureLimits::init_hooks(&self, state).await?;
         let api_object = ApiServer::init_hooks(&self, state).await?;
+        let trash = self.api_trash(&*state.settings.get().await?);
 
         let allocation_uuid = self.allocation.as_ref().map(|a| a.uuid);
         let allocation = match self.allocation {
@@ -2448,6 +2451,7 @@ impl super::IntoApiObject for Server {
                 auto_kill: self.auto_kill,
                 auto_start_behavior: self.auto_start_behavior,
                 timezone: self.timezone,
+                trash,
                 created: self.created.and_utc(),
             },
             api_object,
@@ -2559,6 +2563,9 @@ pub struct CreateServerOptions {
     #[garde(skip)]
     #[schema(value_type = Option<String>)]
     pub timezone: Option<chrono_tz::Tz>,
+    #[garde(dive)]
+    #[schema(inline)]
+    pub trash: Option<TrashSettings>,
 
     #[garde(skip)]
     pub hugepages_passthrough_enabled: bool,
@@ -2680,6 +2687,14 @@ impl CreatableModel for Server {
                 .set("image", &options.image)
                 .set("labels", OrderedJson(&options.labels))
                 .set("timezone", options.timezone.as_ref().map(|t| t.name()))
+                .set(
+                    "trash",
+                    options
+                        .trash
+                        .as_ref()
+                        .map(serde_json::to_value)
+                        .transpose()?,
+                )
                 .set(
                     "hugepages_passthrough_enabled",
                     options.hugepages_passthrough_enabled,
@@ -2916,6 +2931,14 @@ pub struct UpdateServerOptions {
         with = "::serde_with::rust::double_option"
     )]
     pub timezone: Option<Option<chrono_tz::Tz>>,
+    #[garde(dive)]
+    #[schema(inline)]
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        with = "::serde_with::rust::double_option"
+    )]
+    pub trash: Option<Option<TrashSettings>>,
 
     #[garde(skip)]
     pub hugepages_passthrough_enabled: Option<bool>,
@@ -2935,6 +2958,48 @@ impl UpdatableModel for Server {
             LazyLock::new(|| Arc::new(ModelHandlerList::default()));
 
         &UPDATE_LISTENERS
+    }
+
+    async fn update(
+        &mut self,
+        state: &crate::State,
+        options: Self::UpdateOptions,
+    ) -> Result<(), crate::database::DatabaseError> {
+        let previous_owner = options
+            .owner_uuid
+            .is_some_and(|owner_uuid| owner_uuid != self.owner.uuid)
+            .then_some(self.owner.uuid);
+
+        let mut transaction = state.database.write().begin().await?;
+
+        if let Err(err) = self
+            .update_with_transaction(state, options, &mut transaction)
+            .await
+        {
+            transaction.rollback().await?;
+            return Err(err);
+        }
+
+        transaction.commit().await?;
+
+        super::invalidate_cache_keys(&state.database, &self.cache_invalidation_keys()).await;
+
+        if let Some(previous_owner) = previous_owner {
+            match self.node.fetch_cached(&state.database).await {
+                Ok(node) => node.invalidate_permissions(
+                    &state.database,
+                    super::node::PermissionsInvalidation {
+                        users: vec![previous_owner, self.owner.uuid],
+                        ..Default::default()
+                    },
+                ),
+                Err(err) => {
+                    tracing::error!(server = %self.uuid, "failed to invalidate permissions in wings: {:?}", err);
+                }
+            }
+        }
+
+        Ok(())
     }
 
     async fn update_with_transaction(
@@ -3050,6 +3115,14 @@ impl UpdatableModel for Server {
                     .map(|t| t.as_ref().map(|t| t.name())),
             )
             .set(
+                "trash",
+                options
+                    .trash
+                    .as_ref()
+                    .map(|t| t.as_ref().map(serde_json::to_value).transpose())
+                    .transpose()?,
+            )
+            .set(
                 "hugepages_passthrough_enabled",
                 options.hugepages_passthrough_enabled,
             )
@@ -3140,6 +3213,9 @@ impl UpdatableModel for Server {
         }
         if let Some(timezone) = options.timezone {
             self.timezone = timezone.map(|t| t.name().into());
+        }
+        if let Some(trash) = options.trash {
+            self.trash = trash;
         }
         if let Some(hugepages_passthrough_enabled) = options.hugepages_passthrough_enabled {
             self.hugepages_passthrough_enabled = hugepages_passthrough_enabled;
@@ -3336,6 +3412,41 @@ pub struct AdminApiServerLimits {
     pub bandwidth: Option<ApiServerBandwidth>,
 }
 
+/// Trash policy as configured: `retention` in seconds and `usage_threshold` in percent of the
+/// disk limit, where 0 disables the respective behavior.
+#[derive(ToSchema, Validate, Serialize, Deserialize, Clone, Copy)]
+pub struct TrashSettings {
+    #[garde(range(min = 0, max = 365 * 24 * 60 * 60))]
+    #[schema(minimum = 0, maximum = 31536000)]
+    pub retention: u64,
+    #[garde(range(min = 0, max = 100))]
+    #[schema(minimum = 0, maximum = 100)]
+    pub usage_threshold: u64,
+}
+
+pub struct TrashPolicy {
+    pub retention: Option<u64>,
+    pub usage_threshold: Option<u64>,
+}
+
+impl From<TrashSettings> for TrashPolicy {
+    fn from(settings: TrashSettings) -> Self {
+        Self {
+            retention: (settings.retention > 0).then_some(settings.retention),
+            usage_threshold: (settings.usage_threshold > 0).then_some(settings.usage_threshold),
+        }
+    }
+}
+
+#[derive(ToSchema, Serialize, Clone, Copy)]
+pub struct ApiServerTrash {
+    pub retention: Option<u64>,
+    pub usage_threshold: Option<u64>,
+    pub custom: bool,
+    #[schema(inline)]
+    pub defaults: TrashSettings,
+}
+
 #[derive(ToSchema, Validate, Serialize, Deserialize, Clone, Copy)]
 pub struct ApiServerLimits {
     #[garde(range(min = 0))]
@@ -3351,6 +3462,7 @@ pub struct ApiServerLimits {
     #[schema(minimum = 0)]
     pub disk: i64,
     #[garde(skip)]
+    #[serde(default)]
     pub bandwidth: ApiServerBandwidth,
 }
 
@@ -3410,6 +3522,10 @@ pub struct AdminApiServer {
     pub auto_kill: wings_api::ServerConfigurationAutoKill,
     pub auto_start_behavior: ServerAutoStartBehavior,
     pub timezone: Option<compact_str::CompactString>,
+    #[schema(inline)]
+    pub trash: Option<TrashSettings>,
+    #[schema(inline)]
+    pub trash_defaults: TrashSettings,
 
     pub hugepages_passthrough_enabled: bool,
     pub kvm_passthrough_enabled: bool,
@@ -3461,6 +3577,8 @@ pub struct ApiServer {
     pub auto_kill: wings_api::ServerConfigurationAutoKill,
     pub auto_start_behavior: ServerAutoStartBehavior,
     pub timezone: Option<compact_str::CompactString>,
+    #[schema(inline)]
+    pub trash: ApiServerTrash,
 
     pub created: chrono::DateTime<chrono::Utc>,
 }
