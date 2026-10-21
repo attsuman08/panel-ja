@@ -41,12 +41,12 @@
       "other": "{count} サーバー"
     },
     "sshKey": {
-      "zero": "{count} 個のSSHキー",
-      "one": "{count} 個のSSHキー",
-      "two": "{count} 個のSSHキー",
-      "few": "{count} 個のSSHキー",
-      "many": "{count} 個のSSHキー",
-      "other": "{count} 個のSSHキー"
+      "zero": "{count} SSHキー",
+      "one": "{count} SSHキー",
+      "two": "{count} SSHキー",
+      "few": "{count} SSHキー",
+      "many": "{count} SSHキー",
+      "other": "{count} SSHキー"
     },
     "asset": {
       "zero": "{count} アセット",
@@ -73,12 +73,12 @@
       "other": "{count} データベースエージェントホスト"
     },
     "allocation": {
-      "zero": "{count} 個のノード割り当て",
-      "one": "{count} 個のノード割り当て",
-      "two": "{count} 個のノード割り当て",
-      "few": "{count} 個のノード割り当て",
-      "many": "{count} 個のノード割り当て",
-      "other": "{count} 個のノード割り当て"
+      "zero": "{count} ノード割り当て",
+      "one": "{count} ノード割り当て",
+      "two": "{count} ノード割り当て",
+      "few": "{count} ノード割り当て",
+      "many": "{count} ノード割り当て",
+      "other": "{count} ノード割り当て"
     },
     "egg": {
       "zero": "{count} Egg",
@@ -364,7 +364,7 @@
           },
           "retention": "保持期間",
           "retentionDescription": "削除されたファイルがゴミ箱に残る期間です。0 に設定するとゴミ箱を無効にします。",
-          "usageThreshold": "ディスク使用量で削除",
+          "usageThreshold": "ゴミ箱を空にするディスク使用率",
           "usageThresholdDescription": "ディスク使用量が上限のこの割合に達すると、ゴミ箱内の古いエントリから順に削除します。0 に設定すると、書き込みによって上限を超える場合にのみゴミ箱を空にします。"
         },
         "backupRetention": {
@@ -600,8 +600,8 @@
       },
       "bulkActions": {
         "success": "{items}を{action}しました。",
-        "partial": "{successfulItems}を{action}しました。{failedItems}件は失敗しました。",
-        "successWithSkipped": "{items}を{action}しました。{skippedItems}件はスキップされました。",
+        "partial": "{successfulItems}を{action}しました。{failedItems}は失敗しました。",
+        "successWithSkipped": "{items}を{action}しました。{skippedItems}はスキップされました。",
         "nothingToDo": "選択した項目にこの操作を適用できません。",
         "verb": {
           "deleted": "削除",
@@ -612,8 +612,8 @@
           "moved": "移動",
           "enabled": "有効化",
           "disabled": "無効化",
-          "attached": "接続",
-          "detached": "切断",
+          "attached": "アタッチ",
+          "detached": "デタッチ",
           "started": "起動",
           "stopped": "停止",
           "restarted": "再起動",
@@ -652,13 +652,13 @@
         "page": "{page} ページ",
         "emptyDirectory": "このディレクトリは空です",
         "ignored": "除外済み",
-        "partiallyIgnored": "一部無視",
+        "partiallyIgnored": "一部除外済み",
         "showingFirstEntries": "先頭 {count} 件のエントリを表示中"
       },
       "databaseAgentHost": {
         "deployment": {
-          "available": "デプロイ可能",
-          "nearlyFull": "残り容量わずか",
+          "available": "デプロイ有効",
+          "nearlyFull": "空き容量わずか",
           "full": "空き容量なし",
           "disabled": "デプロイ無効",
           "maintenance": "メンテナンス中",
@@ -754,14 +754,14 @@
           "never": "起動しない"
         },
         "bulkActionServerAction": {
-          "started": "起動しました",
-          "stopped": "停止しました",
-          "restarted": "再起動しました",
-          "killed": "強制終了しました",
-          "suspended": "一時停止しました",
-          "unsuspended": "一時停止を解除しました",
-          "clearedState": "状態をクリアしました",
-          "deleted": "削除しました"
+          "started": "起動",
+          "stopped": "停止",
+          "restarted": "再起動",
+          "killed": "強制終了",
+          "suspended": "一時停止",
+          "unsuspended": "一時停止の解除",
+          "clearedState": "状態のクリア",
+          "deleted": "削除"
         },
         "compressionLevel": {
           "bestSpeed": "最高速度",
@@ -1463,7 +1463,7 @@
         "home": {
           "title": "サーバー",
           "tooltip": {
-            "removeFromGroup": "グループから削除",
+            "removeFromGroup": "グループから除外",
             "addToGroup": "グループに追加",
             "addServerToGroup": "サーバーをグループに追加",
             "groupActions": "グループアクション",
@@ -1502,7 +1502,7 @@
                     "title": "サーバーを {group} に追加",
                     "noServers": "すべてのサーバーが既にこのグループに含まれています。",
                     "toast": {
-                      "added": "サーバーをグループに追加しました。"
+                      "added": "{servers}をグループに追加しました。"
                     }
                   },
                   "removeServerFromGroup": {
@@ -1767,7 +1767,7 @@
           },
           "table": {
             "columns": {
-              "thisDevice": "このデバイスですか？",
+              "thisDevice": "このデバイス",
               "userAgent": "ユーザーエージェント"
             }
           },
@@ -2235,7 +2235,7 @@
                   "emailTwoFactorEnabled": "メール2要素認証",
                   "emailTwoFactorEnabledDescription": "ユーザーがメールでワンタイムログインコードを受け取れるようにします。メール送信の設定が必要です。",
                   "twoFactorAcceptedMethods": "許可する2要素認証方法",
-                  "twoFactorAcceptedMethodsDescription": "2要素認証の要件を満たす認証要素を選択します。メールはデフォルトでオフになっています（パスワード再設定もメール経由で行われるため、パスワードから独立していないためです）。",
+                  "twoFactorAcceptedMethodsDescription": "2要素認証の要件を満たす認証要素を選択します。パスワード再設定もメール経由で行われ、メールはパスワードから独立していないため、デフォルトでオフになっています。",
                   "emailVerificationRequired": "メールアドレスの確認を必須化",
                   "emailVerificationRequiredDescription": "新規ユーザーはパネルを使用する前にメールアドレスを確認する必要があります。メール送信の設定が必要です。",
                   "telemetryEnabled": "テレメトリを有効化",
@@ -2276,7 +2276,7 @@
                   },
                   "enableRegistration": {
                     "title": "ユーザー登録の有効化確認",
-                    "content": "ユーザー登録を有効にしてもよろしいですか？有効にすると、誰でもこのパネルにアカウントを作成できるようになります。CAPTCHAが設定されていない場合、スパムの原因となる可能性があります。"
+                    "content": "ユーザー登録を有効にしてもよろしいですか？有効にすると、誰でもこのパネルにアカウントを作成できるようになります。CAPTCHAが設定されていない場合、この設定は誤りである可能性があります。"
                   },
                   "disablePasswordLogin": {
                     "title": "パスワードログインの無効化を確認",
@@ -2414,7 +2414,7 @@
                   "syntaxOr": "や",
                   "syntaxAfter": "などの制御構造がサポートされています。",
                   "variablesBefore": "テキストフラグメントは",
-                  "variablesAfter": "で参照され、「変数」セクションで言語ごとに翻訳されるため、テンプレートはユーザーが選択できる言語ごとに1つのレイアウトを用意するだけで済みます。"
+                  "variablesAfter": "で参照され、「変数」セクションで言語ごとに翻訳されるため、テンプレートは1つのレイアウトでユーザーが選択できるすべての言語に対応できます。"
                 },
                 "variables": {
                   "title": "変数",
@@ -2544,7 +2544,7 @@
                   "allowViewingTransferProgressDescription": "有効にすると、コンソール閲覧権限を持つユーザーがWebSocket接続経由で移行進捗ログも閲覧できるようになります。無効にすると、移行進捗ログは管理者のみが閲覧できます。",
                   "trashRetention": "ゴミ箱の保持期間",
                   "trashRetentionDescription": "サーバーのゴミ箱内のファイルを完全に削除するまでの保持期間です。0 に設定するとゴミ箱を無効にします。ゴミ箱内のファイルはサーバーのディスク上限に含まれます。各サーバーでは、代わりに独自のゴミ箱設定を使用することもできます。",
-                  "trashUsageThreshold": "ゴミ箱を削除するディスク使用量",
+                  "trashUsageThreshold": "ゴミ箱を空にするディスク使用率",
                   "trashUsageThresholdDescription": "サーバーがディスク上限のこの割合に達すると、ゴミ箱内の古いエントリから順に削除します。0 に設定すると、書き込みによって上限を超える場合にのみゴミ箱を空にします。",
                   "allowChangingTrashSettings": "ゴミ箱設定の変更を許可",
                   "allowChangingTrashSettingsDescription": "有効にすると、ユーザーは自分のサーバーのゴミ箱設定をカスタマイズできます。無効にすると、変更できるのは管理者のみになります。サーバーにすでに設定されているカスタム設定はそのまま有効です。",
@@ -2704,7 +2704,7 @@
             "deleteSelection": "選択項目を削除"
           },
           "dropzone": {
-            "title": "ファイルをここにドロップしてアップロード",
+            "title": "ファイルやフォルダーをここにドロップしてアップロード",
             "subtitle": "離すとアップロードが開始されます"
           },
           "toast": {
@@ -2775,7 +2775,7 @@
             "disableExtension": "拡張機能を無効化"
           },
           "phase": {
-            "queued": "キュー追加済み…",
+            "queued": "待機中…",
             "preparing": "準備中…",
             "clearing": "拡張機能をクリア中…",
             "adding": "拡張機能を追加中 ({done}/{total})…",
@@ -3238,7 +3238,7 @@
                 "label": {
                   "memory": "メモリ",
                   "disk": "ディスク",
-                  "memoryOverhead": "メモリオフセット/オーバーヘッド",
+                  "memoryOverhead": "メモリオーバーヘッド",
                   "servers": "サーバー数",
                   "noLimit": "ノードの制限なし",
                   "free": "空き {size}",
@@ -3523,7 +3523,7 @@
                   "title": "ノードの状態",
                   "daemon": "デーモン",
                   "connected": "接続済み",
-                  "disconnected": "切断",
+                  "disconnected": "切断済み",
                   "unknown": "不明",
                   "epoch": "状態バージョン",
                   "certificate": "証明書のフィンガープリント",
@@ -3539,9 +3539,9 @@
                     "uptime": "デーモンの稼働時間",
                     "controlLink": "コントロールリンク",
                     "frontends": "バインドされたフロントエンド",
-                    "flowsOpen": "{count} フロー オープン",
+                    "flowsOpen": "オープン中のフロー: {count}",
                     "localDrops": "同一ノードでのドロップ",
-                    "frozenFlows": "{count} フロー 凍結"
+                    "frozenFlows": "凍結中のフロー: {count}"
                   },
                   "column": {
                     "peer": "ピア",
@@ -3767,7 +3767,7 @@
                   "swapTooltip": "-1を指定すると無制限になります。",
                   "memoryDescription": "サーバーコンテナのメモリ制限です。",
                   "memoryTooltip": "0を指定すると無制限になります。",
-                  "memoryOverhead": "メモリオフセット/オーバーヘッド",
+                  "memoryOverhead": "メモリオーバーヘッド",
                   "memoryOverheadDescription": "コンテナに追加される隠しメモリです。",
                   "diskSpace": "ディスク容量",
                   "diskSpaceDescription": "サーバーのディスク制限です。",
@@ -4287,7 +4287,7 @@
                 },
                 "enum": {
                   "matcherType": {
-                    "never": "なし (どれにも適用されない)",
+                    "never": "適用しない (どれにも適用されない)",
                     "all": "すべて (常に適用)",
                     "and": "AND (すべて一致)",
                     "or": "OR (いずれか一致)",
@@ -4453,7 +4453,7 @@
                   "sync": "同期"
                 },
                 "toast": {
-                  "synced": "Eggリポジトリを同期しました。{eggs} 個のEggが見つかりました。"
+                  "synced": "Eggリポジトリを同期しました。{eggs}が見つかりました。"
                 },
                 "modal": {
                   "delete": {
@@ -4566,7 +4566,7 @@
                 "titleUpdate": "データベースエージェントホストを更新",
                 "tooltip": {
                   "errorWhileFetchingVersion": "バージョンの取得中にエラーが発生しました",
-                  "updateAvailable": "{version}（更新可能）"
+                  "updateAvailable": "{version} (アップデート利用可能)"
                 },
                 "form": {
                   "typePublicHost": "公開ホスト",
@@ -4930,8 +4930,8 @@
                     "serverSubuser": "サーバーサブユーザー"
                   },
                   "matcherType": {
-                    "none": "なし (常に適用)",
-                    "never": "なし (どれにも適用されない)",
+                    "none": "条件なし (常に適用)",
+                    "never": "適用しない (どれにも適用されない)",
                     "and": "AND (すべて一致)",
                     "or": "OR (いずれか一致)",
                     "not": "NOT (一致しないこと)",
@@ -4966,7 +4966,7 @@
                   "sourceDescription": "パスを評価するレスポンスです。404で応答したソースは一致しません。",
                   "sourceInfoUrl": "情報取得URL",
                   "path": "フィールドパス",
-                  "pathDescription": "情報取得URLのレスポンスから比較対象のフィールドを抽出するために使用されるパスです (https://serdejsonpath.live)。",
+                  "pathDescription": "ソースのレスポンスから比較対象のフィールドを抽出するために使用されるパスです (https://serdejsonpath.live)。",
                   "equals": "等しい",
                   "contains": "含む",
                   "startsWith": "先頭が一致",
@@ -5320,7 +5320,7 @@
                 "titleUpdate": "マウントを更新",
                 "alert": "マウントは強力でありながら潜在的に危険な機能です。不適切な使用はデータの損失やセキュリティ上の脆弱性（コンテナエスケープなど）につながる可能性があります。マウントを作成または更新する前に、その影響を必ず理解してください。",
                 "form": {
-                  "userMountable": "ユーザーによるマウント可能"
+                  "userMountable": "ユーザーによるマウントを許可"
                 },
                 "modal": {
                   "delete": {
@@ -5611,7 +5611,7 @@
             "offline": "サーバーはオフラインです"
           },
           "socketConnected": "接続済み (Ping: {ping}ms)",
-          "socketDisconnected": "切断"
+          "socketDisconnected": "切断済み"
         },
         "files": {
           "title": "ファイル",
@@ -5756,7 +5756,7 @@
             "moveHere": "ここに {files} を移動"
           },
           "searchBanner": {
-            "resultsTitle": "検索結果 ({files} 件見つかりました)",
+            "resultsTitle": "検索結果 ({files}が見つかりました)",
             "emptyTitle": "一致するファイルがありませんでした",
             "root": "ルート:",
             "query": "クエリ:",
@@ -5791,7 +5791,7 @@
             "cancelAllOperations": "すべての操作をキャンセル"
           },
           "dropzone": {
-            "title": "ファイルをここにドロップしてアップロード",
+            "title": "ファイルやフォルダーをここにドロップしてアップロード",
             "subtitle": "離すとアップロードが開始されます"
           },
           "settings": {
@@ -6117,7 +6117,7 @@
               "title": "ファイルを検索",
               "placeholder": "ファイルを検索...",
               "advancedFilters": "詳細フィルター",
-              "pathPatterns": "パターンのパス",
+              "pathPatterns": "パスパターン",
               "include": "対象に含める",
               "includePlaceholder": "例: *.js, src/**",
               "exclude": "除外する",
@@ -6267,9 +6267,9 @@
               "noMatchesTruncated": "検索に一致するテーブルがありません。最初の {tables} テーブルのみ読み込まれているため、残りは検索できません。",
               "truncated": "このデータベースには読み込み可能な上限を超えるテーブルがあります。最初の {tables} 件のみ表示されています。",
               "tableBeyondLimit": "このテーブルは、このデータベースが読み込み可能な先頭 {tables} 件の範囲外にあります。",
-              "rowEstimate": "約 {rows} 行",
+              "rowEstimate": "約 {rows}",
               "badge": {
-                "view": "表示"
+                "view": "ビュー"
               }
             },
             "rows": {
@@ -6325,7 +6325,7 @@
               }
             },
             "result": {
-              "rowsAffected": "{rows} 件が影響を受けました。",
+              "rowsAffected": "{rows}が影響を受けました。",
               "truncated": "この結果セットは途中で切り捨てられました。すべて表示するには、条件を絞り込むか行数制限を小さくしてください。"
             },
             "cell": {
@@ -6995,7 +6995,7 @@
             },
             "elseIf": {
               "title": "Else If",
-              "description": "直前の分岐が実行されず、かつ条件が真の場合に後続ステップを実行します。",
+              "description": "それまでのいずれの分岐も実行されず、かつ条件が真の場合に後続ステップを実行します。",
               "renderer": {
                 "compact": "それ以外で条件に一致する場合"
               }
@@ -7472,7 +7472,7 @@
             "createBackup": "バックアップを作成",
             "createGroup": "バックアップグループを作成",
             "moveToGroup": "グループに移動",
-            "removeFromGroup": "グループから削除",
+            "removeFromGroup": "グループから除外",
             "lock": "ロック",
             "unlock": "ロック解除"
           },
@@ -7852,17 +7852,17 @@
               }
             },
             "detachMounts": {
-              "title": "マウントを切り離す",
-              "content": "このサーバーから**{mounts}**を切り離しますか？",
+              "title": "マウントをデタッチ",
+              "content": "このサーバーから**{mounts}**をデタッチしますか？",
               "alert": {
-                "skipped": "接続されていないマウントは切り離せないため、{mounts}はスキップされます。"
+                "skipped": "アタッチされていないマウントはデタッチできないため、{mounts}はスキップされます。"
               }
             },
             "detachMount": {
               "title": "マウントをデタッチ",
               "content": "**{name}** を `{target}` からデタッチしますか？",
               "toast": {
-                "detached": "{name} をサーバーから削除しました。"
+                "detached": "{name} をサーバーからデタッチしました。"
               }
             }
           }
