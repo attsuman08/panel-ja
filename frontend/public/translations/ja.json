@@ -336,6 +336,8 @@
           "matches": "{count}件一致",
           "noMatches": "一致なし",
           "exception": "除外",
+          "invalid": "パターンが無効です",
+          "unavailable": "件数を取得できません",
           "tooManyPatterns": "パターンが{max}件を超える場合、一致数は自動でカウントされません。",
           "unanchoredException": "`{pattern}` はすべての階層に一致します。ルートディレクトリのみに一致させるには `{anchored}` を使用してください。"
         },
@@ -349,6 +351,21 @@
             "weekday": "曜日"
           },
           "nextRun": "次回実行予定: {timestamp}。"
+        },
+        "trashRetention": {
+          "days": "日"
+        },
+        "trashSettings": {
+          "custom": "このサーバーではカスタムのゴミ箱設定を使用する",
+          "default": "パネルのデフォルト: {summary}",
+          "summary": {
+            "disabled": "無効",
+            "withThreshold": "{retention}、ディスク使用率 {threshold}% で削除"
+          },
+          "retention": "保持期間",
+          "retentionDescription": "削除されたファイルがゴミ箱に残る期間です。0 に設定するとゴミ箱を無効にします。",
+          "usageThreshold": "ディスク使用量で削除",
+          "usageThresholdDescription": "ディスク使用量が上限のこの割合に達すると、ゴミ箱内の古いエントリから順に削除します。0 に設定すると、書き込みによって上限を超える場合にのみゴミ箱を空にします。"
         },
         "backupRetention": {
           "title": "保持設定",
@@ -401,7 +418,8 @@
       },
       "toast": {
         "duplicated": "{resource} を複製しました。",
-        "failedBackupDeletionStarted": "{count}件の失敗したバックアップをバックグラウンドで削除しています。"
+        "failedBackupDeletionStarted": "{count}件の失敗したバックアップをバックグラウンドで削除しています。",
+        "requestBlockedByExtension": "このリクエストは拡張機能によってブロックされました。"
       },
       "settingScope": {
         "account": "アカウントと同期",
@@ -488,6 +506,7 @@
         "mount": "マウント",
         "device": "デバイス",
         "nest": "Nest",
+        "nestCreateHint": "見つからない場合は、新しい Nest を作成してください",
         "lines": "行数",
         "databaseHost": "データベースホスト",
         "databaseAgentHost": "データベースエージェントホスト",
@@ -625,6 +644,7 @@
         "successful": "成功",
         "failed": "失敗",
         "installed": "インストール済み",
+        "updateAvailable": "アップデートあり",
         "systemBackup": "システム"
       },
       "label": {
@@ -1233,15 +1253,18 @@
           "repositories": {
             "pterodactylGame": {
               "title": "Pterodactyl ゲームEgg",
-              "description": "MinecraftやTerrariaなど、多数のゲーム向けEggです。"
+              "description": "MinecraftやTerrariaなど、多数のゲーム向けEggです。",
+              "nest": "ゲーム"
             },
             "pterodactylApplication": {
               "title": "Pterodactyl アプリケーションEgg",
-              "description": "Grafana、Meilisearch、各種データベースなどのアプリケーション向けEggです。"
+              "description": "Grafana、Meilisearch、各種データベースなどのアプリケーション向けEggです。",
+              "nest": "アプリケーション"
             },
             "pterodactylGeneral": {
               "title": "Pterodactyl 汎用Egg",
-              "description": "Node.js、Java、Rustなどの一般的なランタイム向けEggです。"
+              "description": "Node.js、Java、Rustなどの一般的なランタイム向けEggです。",
+              "nest": "汎用"
             }
           }
         },
@@ -2221,6 +2244,13 @@
                   "passwordLoginEnabled": "パスワードログインを有効にする",
                   "passwordLoginEnabledDescription": "ユーザーがユーザー名とパスワードでログインできるようにします。無効にすると、OAuthプロバイダーまたはセキュリティキーのみでログイン可能になり、ローカル登録、パスワードのリセット、SFTPのパスワード認証も利用できなくなります。"
                 },
+                "section": {
+                  "general": "一般",
+                  "branding": "ブランディング",
+                  "authentication": "認証",
+                  "sessions": "セッション",
+                  "telemetry": "テレメトリ"
+                },
                 "enum": {
                   "twoFactorMethod": {
                     "totp": "認証アプリ (TOTP)",
@@ -2512,8 +2542,22 @@
                   "allowAcknowledgingInstallationFailureDescription": "有効にすると、ユーザーが「インストール失敗」状態のサーバーに対して失敗を確認・承認し、管理者を待たずにサーバーの起動を試みることができるようになります。無効にすると、管理者のみがインストール失敗を確認・承認できます。",
                   "allowViewingTransferProgress": "移行進捗の閲覧を許可",
                   "allowViewingTransferProgressDescription": "有効にすると、コンソール閲覧権限を持つユーザーがWebSocket接続経由で移行進捗ログも閲覧できるようになります。無効にすると、移行進捗ログは管理者のみが閲覧できます。",
+                  "trashRetention": "ゴミ箱の保持期間",
+                  "trashRetentionDescription": "サーバーのゴミ箱内のファイルを完全に削除するまでの保持期間です。0 に設定するとゴミ箱を無効にします。ゴミ箱内のファイルはサーバーのディスク上限に含まれます。各サーバーでは、代わりに独自のゴミ箱設定を使用することもできます。",
+                  "trashUsageThreshold": "ゴミ箱を削除するディスク使用量",
+                  "trashUsageThresholdDescription": "サーバーがディスク上限のこの割合に達すると、ゴミ箱内の古いエントリから順に削除します。0 に設定すると、書き込みによって上限を超える場合にのみゴミ箱を空にします。",
+                  "allowChangingTrashSettings": "ゴミ箱設定の変更を許可",
+                  "allowChangingTrashSettingsDescription": "有効にすると、ユーザーは自分のサーバーのゴミ箱設定をカスタマイズできます。無効にすると、変更できるのは管理者のみになります。サーバーにすでに設定されているカスタム設定はそのまま有効です。",
                   "containerPrelude": "コンテナプレリュード",
                   "containerPreludeDescription": "サーバーコンソールでの一部のステータス関連メッセージに使用されるターミナルプレリュードです。"
+                },
+                "section": {
+                  "fileManager": "ファイルマネージャー",
+                  "limits": "上限",
+                  "networking": "ネットワーク",
+                  "databaseInstances": "データベースインスタンス",
+                  "lifecycle": "コンソールとライフサイクル",
+                  "trash": "ゴミ箱"
                 },
                 "toast": {
                   "updated": "サーバー設定を更新しました。"
@@ -2533,7 +2577,13 @@
                   "maxSettingsCount": "最大同期設定数",
                   "maxSettingsValueBytes": "同期設定の最大サイズ（バイト）",
                   "allowChangingLanguage": "言語の変更を許可",
-                  "allowChangingLanguageDescription": "有効にすると、ユーザーが言語設定を変更できるようになります。"
+                  "allowChangingLanguageDescription": "有効にすると、ユーザーが言語設定を変更できるようになります。",
+                  "allowChangingAvatar": "アバターの変更を許可",
+                  "allowChangingAvatarDescription": "有効にすると、ユーザーはアバターのアップロードと削除を行えるようになります。"
+                },
+                "section": {
+                  "limits": "上限",
+                  "permissions": "権限"
                 },
                 "routeOrder": {
                   "title": "クライアントのルート順序"
@@ -2689,7 +2739,8 @@
             },
             "buildFailed": {
               "title": "直前の拡張機能ビルドに失敗しました",
-              "content": "これらの拡張機能は、変更が加えられるかビルドを明示的に再試行するまで再ビルドされません。"
+              "content": "これらの拡張機能は、変更が加えられるかビルドを明示的に再試行するまで再ビルドされません。",
+              "failedExtensions": "{extensions} でビルドに失敗しました。拡張機能を更新または削除してから、ビルドを再試行してください。"
             },
             "pendingRestart": {
               "title": "一部の拡張機能が有効化または無効化されました",
@@ -2739,9 +2790,11 @@
             "frontendMissing": "フロントエンドがありません",
             "backendMissing": "バックエンドがありません",
             "pendingBuild": "ビルド待ち",
+            "buildFailed": "ビルド失敗",
             "pendingRemoval": "削除待ち",
             "pendingRestart": "再起動待ち",
-            "disabled": "無効"
+            "disabled": "無効",
+            "processing": "処理中"
           },
           "card": {
             "version": "バージョン",
@@ -3659,6 +3712,7 @@
                   "unlimited": "無制限",
                   "autoKillSeconds": "{seconds}秒",
                   "autoKillDisabled": "無効",
+                  "trash": "ゴミ箱",
                   "labels": "ラベル",
                   "uuid": "UUID"
                 },
@@ -3689,12 +3743,20 @@
                 "badge": {
                   "serverSuspended": "サーバー一時停止中"
                 },
+                "empty": {
+                  "noEggs": {
+                    "title": "Egg がまだインストールされていません",
+                    "description": "サーバーは Egg から作成されます。Egg リポジトリからインストールすると、このサーバー用にすぐ選択されます。",
+                    "button": "リポジトリからインストール"
+                  }
+                },
                 "form": {
                   "serverNamePlaceholder": "マイゲームサーバー",
                   "externalIdPlaceholder": "任意の外部識別子",
                   "descriptionPlaceholder": "サーバーの説明",
                   "owner": "所有者",
                   "ownerCreateHint": "見つかりませんか？新しいユーザーを作成",
+                  "eggInstallHint": "見つからない場合は、リポジトリからインストールしてください",
                   "egg": "Egg",
                   "backupConfigurationPlaceholder": "ノード/ロケーションから継承",
                   "cpuLimit": "CPU制限 (%)",
@@ -3876,6 +3938,12 @@
               "title": "管理",
               "page": {
                 "title": "サーバー管理",
+                "trash": {
+                  "title": "ゴミ箱",
+                  "toast": {
+                    "updated": "サーバーのゴミ箱設定を更新しました。"
+                  }
+                },
                 "transfer": {
                   "title": "移行",
                   "content": "このサーバーとそのデータをシステム内の別のノードに移行します。",
@@ -4307,6 +4375,48 @@
             }
           }
         },
+        "eggLibrary": {
+          "title": "Egg ライブラリ",
+          "tabs": {
+            "installed": {
+              "title": "インストール済み",
+              "page": {
+                "title": "インストール済みの Egg",
+                "empty": {
+                  "title": "Egg がまだインストールされていません",
+                  "description": "リポジトリからインストールした Egg や手動でインポートした Egg がここに表示されます。利用可能な Egg を参照して、最初の Egg をインストールしてください。",
+                  "button": "利用可能な Egg を参照"
+                },
+                "toast": {
+                  "updated": "{egg} をリポジトリから更新しました。"
+                }
+              }
+            },
+            "available": {
+              "title": "利用可能",
+              "page": {
+                "title": "利用可能な Egg",
+                "empty": {
+                  "title": "利用可能な Egg がありません",
+                  "description": "Egg リポジトリを追加すると自動的に同期され、インストール可能な Egg がここに表示されます。",
+                  "button": "Egg リポジトリへ"
+                }
+              }
+            }
+          },
+          "card": {
+            "repository": "リポジトリ",
+            "author": "作成者",
+            "installedIn": "インストール先"
+          },
+          "badge": {
+            "manual": "手動"
+          },
+          "button": {
+            "open": "開く",
+            "readme": "README"
+          }
+        },
         "eggRepositories": {
           "title": "Eggリポジトリ",
           "resourceName": "Eggリポジトリ",
@@ -4326,7 +4436,11 @@
                   "credentialType": "認証情報タイプ",
                   "password": "パスワードまたはアクセストークン",
                   "privateKey": "秘密鍵",
-                  "passphrase": "パスフレーズ"
+                  "passphrase": "パスフレーズ",
+                  "defaultNest": "デフォルトの Nest",
+                  "defaultNestDescription": "このリポジトリからインストールされた Egg は、別の Nest を選択しない限りこの Nest に配置されます。",
+                  "autoSync": "自動同期",
+                  "autoSyncDescription": "1日1回このリポジトリを再同期し、「同期」を押さなくても新規・更新された Egg が表示されるようにします。"
                 },
                 "enum": {
                   "credentialType": {
@@ -4354,16 +4468,29 @@
                 "title": "EggリポジトリのEgg",
                 "table": {
                   "columns": {
-                    "path": "パス"
+                    "path": "パス",
+                    "repository": "リポジトリ",
+                    "installedIn": "インストール先"
                   }
                 },
                 "toast": {
-                  "installed": "{eggs} をインストールしました。"
+                  "installed": "{eggs} をインストールしました。",
+                  "alreadyInstalled": "この Egg はすでに {nest} にインストールされていたため、既存の Egg を使用しました。"
                 },
                 "modal": {
                   "install": {
                     "title": "{eggs} をインストール",
                     "button": "{eggs} をインストール"
+                  },
+                  "catalog": {
+                    "title": "リポジトリから Egg をインストール",
+                    "searchPlaceholder": "すべてのリポジトリから Egg を検索...",
+                    "selected": "選択中: **{egg}**",
+                    "moreResults": "{total} 件中 {shown} 件を表示しています。絞り込むにはさらに入力してください。",
+                    "installingInto": "Egg は **{nest}** にインストールされます。",
+                    "noEggs": "利用可能な Egg がまだありません。「Egg リポジトリ」からリポジトリを追加すると、自動的に同期されます。",
+                    "button": "インストール",
+                    "buttonSelect": "インストールして選択"
                   }
                 },
                 "drawer": {
@@ -5567,6 +5694,12 @@
             "extract": "展開",
             "archive": "アーカイブ",
             "more": "その他",
+            "moveToTrash": "ゴミ箱へ移動",
+            "deletePermanently": "完全に削除",
+            "trash": "ゴミ箱",
+            "emptyTrash": "ゴミ箱を空にする",
+            "backToFiles": "ファイルに戻る",
+            "restoreTo": "復元先を指定...",
             "remoteCopy": "リモートコピー",
             "search": "検索",
             "exitBackup": "バックアップの閲覧を終了",
@@ -5613,6 +5746,8 @@
             "permissionsSelection": "権限を変更",
             "fingerprintSelection": "ファイルのフィンガープリントを表示",
             "deleteSelection": "選択項目を削除",
+            "trashSelection": "選択項目をゴミ箱へ移動",
+            "openTrash": "ゴミ箱を開く",
             "saveFile": "ファイルを保存",
             "createFile": "ファイルを作成"
           },
@@ -5687,6 +5822,10 @@
             "moveCouldNotBeUndone": "移動を元に戻せませんでした。",
             "downloadStarted": "ダウンロードを開始しました。",
             "filesDeleted": "ファイルを削除しました。",
+            "filesTrashed": "{files} をゴミ箱に移動しました。",
+            "filesTrashedPartiallyDeleted": "{files} をゴミ箱に移動し、{deleted} を完全に削除しました。",
+            "trashUndone": "{files} をゴミ箱から復元しました。",
+            "trashCouldNotBeUndone": "ファイルをゴミ箱から復元できませんでした。",
             "archiveCreationStarted": "アーカイブの作成を開始しました。",
             "decompressionStarted": "アーカイブの展開を開始しました。",
             "fileCopyingStarted": "ファイルのコピーを開始しました。",
@@ -5745,6 +5884,53 @@
                 "original": "リビジョン",
                 "current": "現在"
               }
+            }
+          },
+          "trash": {
+            "title": "ゴミ箱",
+            "subtitle": "削除されたファイルは {retention} 保持された後、完全に削除されます。",
+            "subtitleDisabled": "このサーバーではゴミ箱が無効になっています。既存のエントリは、復元または削除されるまで残ります。",
+            "table": {
+              "columns": {
+                "originalLocation": "元の場所",
+                "deletedAt": "削除日時"
+              }
+            },
+            "empty": {
+              "title": "ゴミ箱は空です",
+              "description": "削除したファイルはここに移動され、期限が切れるまで復元できます。"
+            },
+            "modal": {
+              "deleteEntries": {
+                "title": "完全に削除",
+                "content": "ゴミ箱内の {entries} を完全に削除してもよろしいですか？この操作は元に戻せません。"
+              },
+              "deleteEntry": {
+                "title": "完全に削除",
+                "content": "ゴミ箱内の **{name}** を完全に削除してもよろしいですか？この操作は元に戻せません。"
+              },
+              "emptyTrash": {
+                "title": "ゴミ箱を空にする",
+                "content": "ゴミ箱内のすべてのファイルを完全に削除してもよろしいですか？この操作は元に戻せません。"
+              },
+              "restoreTo": {
+                "title": "ディレクトリに復元",
+                "destination": "復元先ディレクトリ",
+                "restoredAs": "このファイルは次の名前で復元されます: "
+              },
+              "restoreConflict": {
+                "title": "復元時の競合を解決",
+                "description": "以下の {files} を復元する場所に、同名のものがすでに存在します。",
+                "confirm": "{files} を復元"
+              }
+            },
+            "toast": {
+              "restored": "{entries} を復元しました。",
+              "nothingRestored": "復元できるものがありませんでした。",
+              "restoreUndone": "{files} をゴミ箱に戻しました。",
+              "restoreCouldNotBeUndone": "復元を取り消せませんでした。",
+              "deleted": "{entries} を完全に削除しました。",
+              "emptied": "ゴミ箱を空にしました。"
             }
           },
           "modal": {
@@ -5827,7 +6013,11 @@
             "deleteFile": {
               "title": "ファイルを削除",
               "singleFileWarning": "一度削除すると、{file} の内容を復元することはできません。",
-              "multipleFilesWarning": "一度削除すると、以下のファイルの内容を復元することはできません。"
+              "multipleFilesWarning": "一度削除すると、以下のファイルの内容を復元することはできません。",
+              "trashTitle": "ゴミ箱へ移動",
+              "singleFileTrash": "**{file}** はゴミ箱に移動され、{retention} の間復元できます。",
+              "multipleFilesTrash": "以下のファイルはゴミ箱に移動され、{retention} の間復元できます。",
+              "permanent": "ゴミ箱に移動せず、完全に削除する"
             },
             "createFile": {
               "title": "ファイルを作成"
@@ -7062,13 +7252,17 @@
               "title": "ファイルを削除",
               "description": "ファイルまたはフォルダーを削除します。",
               "form": {
-                "filesToDelete": "削除するファイル"
+                "filesToDelete": "削除するファイル",
+                "trash": "ゴミ箱へ移動",
+                "trashDescription": "ファイルを完全に削除せず、ゴミ箱に移動します。この操作には、このサーバーでゴミ箱が有効になっている必要があります。"
               },
               "renderer": {
                 "compact": "{files} を削除",
+                "compactTrash": "{files} をゴミ箱に移動",
                 "detail": {
                   "root": "ルート: {root}",
-                  "files": "ファイル: {files}"
+                  "files": "ファイル: {files}",
+                  "trash": "ゴミ箱へ移動: {value}"
                 }
               }
             },
@@ -7737,6 +7931,12 @@
             },
             "toast": {
               "updated": "サーバーの自動強制終了設定を更新しました。"
+            }
+          },
+          "trash": {
+            "title": "ゴミ箱",
+            "toast": {
+              "updated": "サーバーのゴミ箱設定を更新しました。"
             }
           },
           "autostart": {
