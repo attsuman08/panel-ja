@@ -10,7 +10,8 @@ Writes RESULT.json in the shape `ja_sync.py apply` expects:
 Environment:
   GEMINI_API_KEY   required
   GEMINI_MODEL     model id (default: gemini-flash-latest)
-  BATCH_SIZE       keys per request (default: 60)
+  BATCH_SIZE       keys per request (default: 30)
+  REQUEST_TIMEOUT  seconds to wait for one response (default: 180)
   --dry-run        print the first prompt instead of calling the API
 """
 
@@ -20,6 +21,7 @@ import json
 import os
 import re
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -29,6 +31,18 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 PLACEHOLDER_RE = re.compile(r"\{\{.*?\}\}|\{[^{}]+\}")
 MAX_EXAMPLES_PER_KEY = 6
+MAX_ATTEMPTS = 5
+HEARTBEAT_SECONDS = 30
+START = time.monotonic()
+
+
+def log(message: str) -> None:
+    elapsed = int(time.monotonic() - START)
+    print(f"[{time.strftime('%H:%M:%S')} +{elapsed // 60}m{elapsed % 60:02d}s] {message}", flush=True)
+
+
+class BatchFailed(Exception):
+    pass
 
 INSTRUCTIONS = """\
 You are translating the UI of a game-server management panel (a web control panel for
@@ -111,7 +125,25 @@ def build_prompt(file: str, batch: list[tuple[str, dict]], en: dict, ja: dict) -
     )
 
 
-def call_gemini(prompt: str, api_key: str, model: str) -> list[dict]:
+def post_with_heartbeat(request: urllib.request.Request, timeout: int) -> dict:
+    """POST and return the JSON body, logging every HEARTBEAT_SECONDS while waiting."""
+    done = threading.Event()
+    started = time.monotonic()
+
+    def heartbeat() -> None:
+        while not done.wait(HEARTBEAT_SECONDS):
+            log(f"    still waiting for Gemini ({int(time.monotonic() - started)}s / timeout {timeout}s)")
+
+    thread = threading.Thread(target=heartbeat, daemon=True)
+    thread.start()
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            return json.load(response)
+    finally:
+        done.set()
+
+
+def call_gemini(prompt: str, api_key: str, model: str, timeout: int) -> list[dict]:
     body = json.dumps(
         {
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
@@ -129,28 +161,42 @@ def call_gemini(prompt: str, api_key: str, model: str) -> list[dict]:
         method="POST",
     )
     delay = 10
-    for attempt in range(1, 6):
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        log(f"  request attempt {attempt}/{MAX_ATTEMPTS} ({len(body) // 1024} KB)")
+        started = time.monotonic()
         try:
-            with urllib.request.urlopen(request, timeout=300) as response:
-                data = json.load(response)
-            text = "".join(p.get("text", "") for p in data["candidates"][0]["content"]["parts"])
+            data = post_with_heartbeat(request, timeout)
+            took = time.monotonic() - started
+            candidate = data["candidates"][0]
+            usage = data.get("usageMetadata", {})
+            log(
+                f"  response in {took:.1f}s: finishReason={candidate.get('finishReason')}"
+                f" tokens(prompt={usage.get('promptTokenCount')}, output={usage.get('candidatesTokenCount')},"
+                f" thinking={usage.get('thoughtsTokenCount', 0)})"
+            )
+            text = "".join(p.get("text", "") for p in candidate["content"]["parts"])
             return json.loads(text)
         except urllib.error.HTTPError as e:
-            detail = e.read().decode(errors="replace")[:500]
-            if e.code not in (429, 500, 502, 503, 504) or attempt == 5:
-                raise SystemExit(f"Gemini API error {e.code}: {detail}")
-            print(f"  HTTP {e.code}, retrying in {delay}s", file=sys.stderr)
-        except (KeyError, IndexError, json.JSONDecodeError, urllib.error.URLError, TimeoutError) as e:
-            if attempt == 5:
-                raise SystemExit(f"Gemini API returned an unusable response: {e!r}")
-            print(f"  {e!r}, retrying in {delay}s", file=sys.stderr)
+            detail = " ".join(e.read().decode(errors="replace").split())[:300]
+            log(f"  HTTP {e.code} after {time.monotonic() - started:.1f}s: {detail}")
+            if e.code not in (429, 500, 502, 503, 504):
+                raise BatchFailed(f"HTTP {e.code} (not retryable)")
+        except (KeyError, IndexError, json.JSONDecodeError, urllib.error.URLError, TimeoutError, OSError) as e:
+            log(f"  {e!r} after {time.monotonic() - started:.1f}s")
+        if attempt == MAX_ATTEMPTS:
+            break
+        log(f"  retrying in {delay}s")
         time.sleep(delay)
         delay *= 2
-    raise AssertionError("unreachable")
+    raise BatchFailed(f"gave up after {MAX_ATTEMPTS} attempts")
 
 
 def placeholders(text: object) -> list[str]:
     return sorted(set(PLACEHOLDER_RE.findall(text))) if isinstance(text, str) else []
+
+
+def write_result(path: str, result: dict) -> None:
+    Path(path).write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def main(argv: list[str]) -> int:
@@ -166,11 +212,17 @@ def main(argv: list[str]) -> int:
         print("error: GEMINI_API_KEY is not set", file=sys.stderr)
         return 1
     model = os.environ.get("GEMINI_MODEL") or "gemini-flash-latest"
-    batch_size = int(os.environ.get("BATCH_SIZE") or 60)
+    batch_size = int(os.environ.get("BATCH_SIZE") or 30)
+    timeout = int(os.environ.get("REQUEST_TIMEOUT") or 180)
 
     todo: dict[str, dict[str, dict]] = json.loads(Path(todo_path).read_text(encoding="utf-8"))
     result: dict[str, dict[str, str]] = {}
     skipped = 0
+    failed_batches = 0
+    total = sum(len(v) for v in todo.values())
+    batches = sum((len(v) + batch_size - 1) // batch_size for v in todo.values())
+    log(f"{total} key(s) in {batches} request(s), model={model}, batch_size={batch_size}, timeout={timeout}s")
+    batch_no = 0
 
     for file, entries in todo.items():
         en = load_flat(str(Path(file).with_name("en.json")))
@@ -182,23 +234,38 @@ def main(argv: list[str]) -> int:
             if dry_run:
                 print(prompt)
                 return 0
-            print(f"{file}: translating {start + 1}-{start + len(batch)} of {len(pending)} ({model})")
+            batch_no += 1
+            log(f"[{batch_no}/{batches}] {file}: keys {start + 1}-{start + len(batch)} of {len(pending)}")
             wanted = dict(batch)
-            for item in call_gemini(prompt, api_key, model):
+            try:
+                items = call_gemini(prompt, api_key, model, timeout)
+            except BatchFailed as e:
+                print(f"::warning::batch {batch_no}/{batches} failed: {e}; these keys stay untranslated", flush=True)
+                failed_batches += 1
+                continue
+            got = 0
+            for item in items:
                 key, value = item.get("key"), item.get("ja")
                 if item.get("file") != file or key not in wanted or not isinstance(value, str):
                     continue
                 if placeholders(value) != placeholders(wanted[key]["en"]):
-                    print(f"  skip {key}: placeholder mismatch ({value!r})", file=sys.stderr)
+                    log(f"  skip {key}: placeholder mismatch ({value!r})")
                     skipped += 1
                     continue
                 result.setdefault(file, {})[key] = value
+                got += 1
+            log(f"  accepted {got}/{len(batch)}")
+            # Save after every batch so a cancelled/timed-out step keeps what it has.
+            write_result(result_path, result)
 
-    Path(result_path).write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    write_result(result_path, result)
     done = sum(len(v) for v in result.values())
-    total = sum(len(v) for v in todo.values())
-    print(f"translated {done}/{total} key(s), {skipped} skipped for placeholder mismatch")
-    return 0
+    log(
+        f"translated {done}/{total} key(s); {skipped} skipped for placeholder mismatch;"
+        f" {failed_batches}/{batches} request(s) failed"
+    )
+    # Partial results are still worth applying; fail only when nothing came back.
+    return 1 if failed_batches == batches else 0
 
 
 if __name__ == "__main__":
