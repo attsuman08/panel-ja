@@ -8,7 +8,8 @@
 #   GEMINI_API_KEY           Gemini API key from Google AI Studio.
 #                            Without it, the merge still runs and translation is skipped.
 # Optional variable (Settings > Secrets and variables > Actions > Variables):
-#   GEMINI_MODEL             Model id to use (default: gemini-flash-latest).
+#   GEMINI_MODEL             Comma-separated model ids, tried in order when one is overloaded
+#                            (default: gemini-3.8-flash,gemini-3.6-flash,gemini-3.5-flash-lite).
 name: Sync upstream
 
 on:

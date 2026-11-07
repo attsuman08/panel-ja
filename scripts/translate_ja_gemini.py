@@ -9,9 +9,10 @@ Writes RESULT.json in the shape `ja_sync.py apply` expects:
 
 Environment:
   GEMINI_API_KEY   required
-  GEMINI_MODEL     model id (default: gemini-flash-latest)
+  GEMINI_MODEL     comma-separated model ids, tried in order; on overload (429/5xx/timeout)
+                   the next one is used (default: gemini-3.6-flash,gemini-flash-latest,gemini-3.5-flash-lite)
   BATCH_SIZE       keys per request (default: 30)
-  REQUEST_TIMEOUT  seconds to wait for one response (default: 180)
+  REQUEST_TIMEOUT  seconds to wait for one response (default: 120)
   --dry-run        print the first prompt instead of calling the API
 """
 
@@ -31,7 +32,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 PLACEHOLDER_RE = re.compile(r"\{\{.*?\}\}|\{[^{}]+\}")
 MAX_EXAMPLES_PER_KEY = 6
-MAX_ATTEMPTS = 5
+DEFAULT_MODELS = "gemini-3.8-flash,gemini-3.6-flash,gemini-3.5-flash-lite"
+MAX_ATTEMPTS = 6
+ATTEMPTS_PER_MODEL = 1
 HEARTBEAT_SECONDS = 30
 START = time.monotonic()
 
@@ -143,7 +146,43 @@ def post_with_heartbeat(request: urllib.request.Request, timeout: int) -> dict:
         done.set()
 
 
-def call_gemini(prompt: str, api_key: str, model: str, timeout: int) -> list[dict]:
+class ModelPool:
+    """Rotates through models: a model that keeps failing is swapped for the next one,
+    a model the API rejects (400/404) is dropped, and the last model that worked is
+    reused for the next batch."""
+
+    def __init__(self, models: list[str]):
+        self.models = models
+        self.index = 0
+        self.failures = 0
+
+    @property
+    def current(self) -> str:
+        if not self.models:
+            raise BatchFailed("no usable model left")
+        return self.models[self.index % len(self.models)]
+
+    def failed(self) -> None:
+        self.failures += 1
+        if self.failures >= ATTEMPTS_PER_MODEL and len(self.models) > 1:
+            old = self.current
+            self.index = (self.index + 1) % len(self.models)
+            self.failures = 0
+            log(f"  switching model: {old} -> {self.current}")
+
+    def drop(self) -> None:
+        old = self.current
+        self.models.remove(old)
+        self.failures = 0
+        if self.models:
+            self.index %= len(self.models)
+            log(f"  dropping model {old}; next: {self.current}")
+
+    def succeeded(self) -> None:
+        self.failures = 0
+
+
+def call_gemini(prompt: str, api_key: str, pool: ModelPool, timeout: int) -> list[dict]:
     body = json.dumps(
         {
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
@@ -154,15 +193,16 @@ def call_gemini(prompt: str, api_key: str, model: str, timeout: int) -> list[dic
             },
         }
     ).encode()
-    request = urllib.request.Request(
-        API_URL.format(model=model),
-        data=body,
-        headers={"Content-Type": "application/json", "x-goog-api-key": api_key},
-        method="POST",
-    )
     delay = 10
     for attempt in range(1, MAX_ATTEMPTS + 1):
-        log(f"  request attempt {attempt}/{MAX_ATTEMPTS} ({len(body) // 1024} KB)")
+        model = pool.current
+        request = urllib.request.Request(
+            API_URL.format(model=model),
+            data=body,
+            headers={"Content-Type": "application/json", "x-goog-api-key": api_key},
+            method="POST",
+        )
+        log(f"  request attempt {attempt}/{MAX_ATTEMPTS} model={model} ({len(body) // 1024} KB)")
         started = time.monotonic()
         try:
             data = post_with_heartbeat(request, timeout)
@@ -175,19 +215,27 @@ def call_gemini(prompt: str, api_key: str, model: str, timeout: int) -> list[dic
                 f" thinking={usage.get('thoughtsTokenCount', 0)})"
             )
             text = "".join(p.get("text", "") for p in candidate["content"]["parts"])
-            return json.loads(text)
+            items = json.loads(text)
+            pool.succeeded()
+            return items
         except urllib.error.HTTPError as e:
             detail = " ".join(e.read().decode(errors="replace").split())[:300]
             log(f"  HTTP {e.code} after {time.monotonic() - started:.1f}s: {detail}")
+            if e.code in (400, 404):
+                # Unknown model id, or a model that rejects this request: try the next one now.
+                pool.drop()
+                continue
             if e.code not in (429, 500, 502, 503, 504):
                 raise BatchFailed(f"HTTP {e.code} (not retryable)")
+            pool.failed()
         except (KeyError, IndexError, json.JSONDecodeError, urllib.error.URLError, TimeoutError, OSError) as e:
             log(f"  {e!r} after {time.monotonic() - started:.1f}s")
+            pool.failed()
         if attempt == MAX_ATTEMPTS:
             break
         log(f"  retrying in {delay}s")
         time.sleep(delay)
-        delay *= 2
+        delay = min(delay * 2, 60)
     raise BatchFailed(f"gave up after {MAX_ATTEMPTS} attempts")
 
 
@@ -211,9 +259,10 @@ def main(argv: list[str]) -> int:
     if not api_key and not dry_run:
         print("error: GEMINI_API_KEY is not set", file=sys.stderr)
         return 1
-    model = os.environ.get("GEMINI_MODEL") or "gemini-flash-latest"
+    models = [m.strip() for m in (os.environ.get("GEMINI_MODEL") or DEFAULT_MODELS).split(",") if m.strip()]
+    pool = ModelPool(models)
     batch_size = int(os.environ.get("BATCH_SIZE") or 30)
-    timeout = int(os.environ.get("REQUEST_TIMEOUT") or 180)
+    timeout = int(os.environ.get("REQUEST_TIMEOUT") or 120)
 
     todo: dict[str, dict[str, dict]] = json.loads(Path(todo_path).read_text(encoding="utf-8"))
     result: dict[str, dict[str, str]] = {}
@@ -221,7 +270,7 @@ def main(argv: list[str]) -> int:
     failed_batches = 0
     total = sum(len(v) for v in todo.values())
     batches = sum((len(v) + batch_size - 1) // batch_size for v in todo.values())
-    log(f"{total} key(s) in {batches} request(s), model={model}, batch_size={batch_size}, timeout={timeout}s")
+    log(f"{total} key(s) in {batches} request(s), models={",".join(models)}, batch_size={batch_size}, timeout={timeout}s")
     batch_no = 0
 
     for file, entries in todo.items():
@@ -238,7 +287,7 @@ def main(argv: list[str]) -> int:
             log(f"[{batch_no}/{batches}] {file}: keys {start + 1}-{start + len(batch)} of {len(pending)}")
             wanted = dict(batch)
             try:
-                items = call_gemini(prompt, api_key, model, timeout)
+                items = call_gemini(prompt, api_key, pool, timeout)
             except BatchFailed as e:
                 print(f"::warning::batch {batch_no}/{batches} failed: {e}; these keys stay untranslated", flush=True)
                 failed_batches += 1
