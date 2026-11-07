@@ -289,7 +289,8 @@
         "viewDocumentation": "ドキュメントを表示",
         "undo": "元に戻す",
         "clearUserFilter": "ユーザーフィルターをクリア",
-        "deleteFailedBackups": "失敗したバックアップ（{count}件）を削除"
+        "deleteFailedBackups": "失敗したバックアップ（{count}件）を削除",
+        "retryFailedDeletions": "{count}件の失敗した削除を再試行"
       },
       "alert": {
         "error": "エラー",
@@ -359,6 +360,7 @@
           "defaultIcon": "既定のアイコン",
           "searchPlaceholder": "アイコンを検索…",
           "noResults": "検索条件に一致するアイコンがありません。",
+          "moreResults": "最初の {count} 件の一致を表示しています。詳細を見るには検索条件を絞り込んでください。",
           "button": {
             "reset": "既定のアイコンを使用"
           }
@@ -425,11 +427,19 @@
           "alert": {
             "forceWarning": "強制削除を実行すると、設定が存在しない場合やリモートストレージに接続できない場合でもバックアップが削除されます。バックアップファイル自体が完全にクリーンアップされず、孤立したデータが残る可能性があります。"
           }
+        },
+        "retryFailedDeletions": {
+          "title": "失敗した削除の再試行の確認",
+          "content": "削除に失敗した `{count}` 件のバックアップの削除を再試行してもよろしいですか？設定がメンテナンス中のバックアップはスキップされます。削除はバックグラウンドで実行され、完了までに時間がかかる場合があります。"
         }
       },
       "toast": {
         "duplicated": "{resource} を複製しました。",
+        "preparingDownload": "ダウンロードを準備中...",
+        "downloadFailed": "ダウンロードを開始できませんでした。",
+        "importing": "{file} をインポート中...",
         "failedBackupDeletionStarted": "{count}件の失敗したバックアップをバックグラウンドで削除しています。",
+        "failedDeletionRetryStarted": "{count}件の失敗したバックアップ削除をバックグラウンドで再試行しています。",
         "requestBlockedByExtension": "このリクエストは拡張機能によってブロックされました。"
       },
       "settingScope": {
@@ -610,6 +620,10 @@
           "server": "サーバー",
           "address": "アドレス",
           "eggs": "Egg",
+          "nodes": "ノード",
+          "servers": "サーバー",
+          "users": "ユーザー",
+          "databases": "データベース",
           "template": "テンプレート",
           "version": "バージョン",
           "host": "ホスト"
@@ -719,6 +733,26 @@
           "resourcesUnavailable": "リソース使用量を取得できません"
         }
       },
+      "systemBackupPolicyRun": {
+        "state": {
+          "running": "実行中",
+          "cancelling": "キャンセル中",
+          "cancelled": "キャンセル済み",
+          "succeeded": "成功",
+          "partiallySucceeded": "一部成功",
+          "failed": "失敗",
+          "nothingToBackUp": "バックアップ対象なし"
+        }
+      },
+      "systemBackupPolicyRunTarget": {
+        "state": {
+          "pending": "保留中",
+          "running": "実行中",
+          "successful": "成功",
+          "failed": "失敗",
+          "skipped": "スキップ"
+        }
+      },
       "enum": {
         "userToastPosition": {
           "topLeft": "左上",
@@ -757,6 +791,27 @@
         "serverBackupKind": {
           "server": "サーバー",
           "databaseInstance": "データベース"
+        },
+        "systemBackupPolicyRunTargetStatus": {
+          "pending": "保留中",
+          "dispatched": "送信済み",
+          "skipped": "スキップ",
+          "failed": "失敗"
+        },
+        "systemBackupPolicyRunTargetReason": {
+          "nodeMaintenance": "ノードがメンテナンス中",
+          "backupConfigurationMaintenance": "バックアップ設定がメンテナンス中",
+          "databaseAgentHostMaintenance": "データベースエージェントホストがメンテナンス中",
+          "databaseInstanceStopped": "データベースインスタンスが実行されていません",
+          "serverBusy": "サーバーがビジー状態 (インストール中、復元中、または転送中)",
+          "metadataFailed": "バックアップメタデータを取得できませんでした",
+          "noBackupConfiguration": "バックアップ設定がありません",
+          "unsupportedBackupDisk": "バックアップ設定がデータベースバックアップに対応していません",
+          "targetRemoved": "バックアップ前に削除されました",
+          "createFailed": "バックアップを作成できませんでした",
+          "policyDisabled": "ポリシーが無効化されています",
+          "superseded": "次のスケジュール実行が先に開始されました",
+          "cancelled": "実行がキャンセルされました"
         },
         "serverFirewallRuleAction": {
           "allow": "許可",
@@ -1170,6 +1225,7 @@
         },
         "toast": {
           "uploading": "{files} のアップロードを開始しました...",
+          "checkingConflicts": "{files} の既存ファイルを確認中...",
           "conflictCheckFailed": "既存ファイルを確認できませんでした。そのままアップロードします。",
           "failed": "アップロード失敗: {error}",
           "cancelledFile": "`{file}` のアップロードをキャンセルしました。",
@@ -1884,7 +1940,10 @@
             "deleteFiles": "選択したファイルを削除",
             "closeEditorTab": "アクティブなエディタタブを閉じる",
             "nextEditorTab": "次のエディタタブ",
-            "previousEditorTab": "前のエディタタブ"
+            "previousEditorTab": "前のエディタタブ",
+            "increaseEditorFontSize": "エディタのフォントサイズを拡大",
+            "decreaseEditorFontSize": "エディタのフォントサイズを縮小",
+            "resetEditorFontSize": "エディタのフォントサイズをリセット"
           },
           "table": {
             "title": "テーブルナビゲーション",
@@ -1899,7 +1958,10 @@
             "title": "サーバーコンソール",
             "searchContent": "コンソール出力内を検索",
             "previousCommand": "履歴内の前のコマンド",
-            "nextCommand": "履歴内の次のコマンド"
+            "nextCommand": "履歴内の次のコマンド",
+            "increaseFontSize": "コンソールのフォントサイズを拡大",
+            "decreaseFontSize": "コンソールのフォントサイズを縮小",
+            "resetFontSize": "コンソールのフォントサイズをリセット"
           },
           "serverList": {
             "selectServer": "Sキーを押しながらクリックでサーバーを選択 / 解除"
@@ -2225,6 +2287,10 @@
                 "nodesUpToDate": "すべてのノードが最新のようです。（確認失敗: {failed} 件）",
                 "nodesOutdatedSummary": "いくつかのノードが古くなっています。({outdated} が古くなっています。 {failed} はチェックに失敗しました)",
                 "databaseAgentHostsUpToDate": "すべてのデータベースエージェントホストが最新のようです。（確認失敗: {failed} 件）",
+                "databaseAgentHostsOutdatedSummary": "一部のデータベースエージェントホストが古くなっています。({outdated} 件が古い、{failed} 件の確認に失敗)",
+                "badge": {
+                  "latestVersion": "最新 {version}"
+                },
                 "table": {
                   "version": "バージョン",
                   "installed": "インストール済み",
@@ -2701,6 +2767,20 @@
                   "updated": "レート制限設定を更新しました。"
                 }
               }
+            },
+            "updates": {
+              "title": "アップデート",
+              "page": {
+                "title": "アップデート設定",
+                "alert": "リリートークンは任意です。ノードやデータベースエージェントホストをプライベートフォークからアップグレードする場合や、GitHub APIのレート制限により未認証ダウンロードが制限される場合にのみ必要です。リリースポジトリに対する読み取り専用の **Contents** アクセス権限のみを持つ Fine-grained トークンを使用し、有効期限を設定してください。トークンは、アップグレードを開始した管理者がパネル設定の参照権限を持つ場合にのみ、アップグレード対象のすべてのノードやデータベースエージェントホストに送信されます。",
+                "form": {
+                  "wingsReleaseToken": "Wings リリートークン",
+                  "dbAgentReleaseToken": "データベースエージェント リリートークン"
+                },
+                "toast": {
+                  "updated": "リリートークンを更新しました。"
+                }
+              }
             }
           }
         },
@@ -2861,7 +2941,8 @@
           },
           "card": {
             "version": "バージョン",
-            "authors": "作成者"
+            "authors": "作成者",
+            "panelVersion": "パネルバージョン"
           },
           "section": {
             "pendingExtensions": "保留中の拡張機能",
@@ -3166,7 +3247,8 @@
                   "unavailable": "利用不可"
                 },
                 "badge": {
-                  "updateAvailable": "アップデート利用可能"
+                  "updateAvailable": "アップデート利用可能",
+                  "latestVersionUnknown": "最新バージョン不明"
                 }
               }
             },
@@ -3176,6 +3258,7 @@
                   "allInOneNode": "All-in-One ノード",
                   "errorWhileFetchingVersion": "バージョン取得エラー",
                   "updateAvailable": "{version} (アップデート利用可能)",
+                  "latestVersionUnknown": "{version} (最新バージョン不明)",
                   "useWingsProxyUrl": "WingsプロキシURLを使用"
                 },
                 "form": {
@@ -3697,6 +3780,18 @@
               },
               "error": {
                 "invalidYaml": "無効なYAMLです: {error}"
+              }
+            },
+            "upgrade": {
+              "title": "Wingsのアップグレード - {name}",
+              "content": "Wings は `{repository}` ({provider}) からリリースをダウンロードし、バイナリを置き換えて再起動します。再起動中の数秒間、ノードにアクセスできなくなります。",
+              "form": {
+                "version": "バージョン",
+                "versionDescription": "1.2.8 のようなリリースバージョン、または最新の安定リリースの場合は latest を指定します。"
+              },
+              "toast": {
+                "scheduled": "{name} の {version} へのアップグレードがスケジュールされました。ノードを再起動しています。",
+                "ignored": "{name} はアップグレードを無視しました。ローカル設定によりパネルからのアップグレードが無効化されています。"
               }
             }
           }
@@ -4483,7 +4578,10 @@
           },
           "card": {
             "repository": "リポジトリ",
-            "installedIn": "インストール先"
+            "path": "パス",
+            "installedIn": "インストール先",
+            "dockerImages": "Docker イメージ",
+            "features": "機能"
           },
           "badge": {
             "manual": "手動"
@@ -4619,6 +4717,38 @@
                 }
               }
             },
+            "overview": {
+              "title": "概要",
+              "page": {
+                "title": "データベースホストの概要",
+                "status": {
+                  "deploymentEnabled": "デプロイ有効",
+                  "deploymentDisabled": "デプロイ無効",
+                  "maintenanceEnabled": "メンテナンス有効",
+                  "maintenanceDisabled": "メンテナンス無効"
+                },
+                "card": {
+                  "hostDetails": "ホストの詳細",
+                  "systemInfo": "システム情報",
+                  "sizes": "サイズ別データベース"
+                },
+                "label": {
+                  "address": "アドレス",
+                  "publicAddress": "パブリックアドレス",
+                  "createdAt": "作成日時",
+                  "version": "バージョン",
+                  "unavailable": "利用不可",
+                  "databases": "データベース",
+                  "totalSize": "合計サイズ",
+                  "share": "割合",
+                  "other": "その他 ({databases})",
+                  "noDatabases": "このホスト上のデータベースには、まだデータが保存されていません。"
+                },
+                "alert": {
+                  "maintenance": "ホストがメンテナンスモードの間は、データベースのサイズを確認できません。"
+                }
+              }
+            },
             "databases": {
               "title": "データベース",
               "page": {
@@ -4648,7 +4778,8 @@
                 "titleUpdate": "データベースエージェントホストを更新",
                 "tooltip": {
                   "errorWhileFetchingVersion": "バージョンの取得中にエラーが発生しました",
-                  "updateAvailable": "{version} (アップデート利用可能)"
+                  "updateAvailable": "{version} (アップデート利用可能)",
+                  "latestVersionUnknown": "{version} (最新バージョン不明)"
                 },
                 "form": {
                   "typePublicHost": "公開ホスト",
@@ -4796,7 +4927,8 @@
                   "noAllocations": "このリソースを割り当てているインスタンスはありません。"
                 },
                 "badge": {
-                  "updateAvailable": "アップデート利用可能"
+                  "updateAvailable": "アップデート利用可能",
+                  "latestVersionUnknown": "最新バージョン不明"
                 }
               }
             },
@@ -4840,6 +4972,18 @@
               },
               "error": {
                 "invalidYaml": "無効なYAMLです: {error}"
+              }
+            },
+            "upgrade": {
+              "title": "データベースエージェントのアップグレード - {name}",
+              "content": "データベースエージェントは `{repository}` ({provider}) からリリースをダウンロードし、バイナリを置き換えて再起動します。再起動中、ホストは数秒間アクセスできなくなります。",
+              "form": {
+                "version": "バージョン",
+                "versionDescription": "1.2.3 などのリリースバージョン、または最新の安定したリリースの場合は latest を指定します。"
+              },
+              "toast": {
+                "scheduled": "{name} の {version} へのアップグレードがスケジュールされました。ホストを再起動しています。",
+                "ignored": "{name} はアップグレードを無視しました。ローカル設定でパネルからのアップグレードが無効化されています。"
               }
             }
           }
@@ -4980,8 +5124,12 @@
                   "loginBypassTwoFactorDescription": "このプロバイダーでログインするユーザーに対して、パネルの2要素認証のバイパスを許可します。",
                   "linkViewable": "連携情報をユーザーに表示",
                   "linkViewableDescription": "クライアントUIでユーザーが連携とその識別子を確認できるようにします。",
+                  "apiLinkable": "APIキーでの連携を許可",
+                  "apiLinkableDescription": "users.oauth-links および users.impersonate 権限を持つAPIキーが、なりすまし可能なアカウントをこのプロバイダーに連携できるようにします（請求連携など）。統合によって割り当てられる識別子を信頼できるプロバイダーのみで有効にしてください。",
                   "userManageable": "連携をユーザーが管理可能",
-                  "userManageableDescription": "ユーザーがこのプロバイダーの連携・解除を行えるようにします。"
+                  "userManageableDescription": "ユーザーがこのプロバイダーの連携・解除を行えるようにします。",
+                  "loginViewable": "ログイン画面に表示",
+                  "loginViewableDescription": "ログインページにこのプロバイダーを表示します。オフにしてもプロバイダーは有効のままであり、アカウントページから接続したり、直接のリダイレクトURL経由でログインしたりすることができます。"
                 },
                 "button": {
                   "discover": "OpenID Discovery からインポート"
@@ -5267,7 +5415,8 @@
           "table": {
             "columns": {
               "cron": "スケジュール",
-              "backups": "バックアップ"
+              "backups": "バックアップ",
+              "lastRun": "最終実行"
             }
           },
           "form": {
@@ -5316,6 +5465,45 @@
                 "title": "システムバックアップポリシーのバックアップ",
                 "toast": {
                   "downloadStarted": "ダウンロードを開始しました。"
+                }
+              }
+            },
+            "runs": {
+              "title": "実行履歴",
+              "page": {
+                "title": "システムバックアップポリシーの実行履歴",
+                "table": {
+                  "columns": {
+                    "started": "開始日時",
+                    "trigger": "トリガー",
+                    "progress": "進捗",
+                    "completed": "完了日時",
+                    "reason": "理由"
+                  }
+                },
+                "badge": {
+                  "manual": "手動",
+                  "scheduled": "スケジュール"
+                },
+                "button": {
+                  "viewTargets": "ターゲットを表示",
+                  "cancelRun": "実行をキャンセル"
+                },
+                "toast": {
+                  "cancelled": "実行をキャンセルしました。"
+                },
+                "progress": {
+                  "summary": "{total} 件中 {done} 件完了"
+                },
+                "modal": {
+                  "targets": {
+                    "title": "実行ターゲット",
+                    "allStatuses": "すべてのステータス"
+                  },
+                  "cancel": {
+                    "title": "実行キャンセルの確認",
+                    "content": "この実行をキャンセルしてもよろしいですか？保留中の `{pending}` 件のターゲットはスキップされます。すでに開始されているバックアップは完了するまで実行され続けます。"
+                  }
                 }
               }
             },
@@ -5698,6 +5886,40 @@
             "offline": "サーバーはオフラインです",
             "connecting": "接続中…"
           },
+          "history": {
+            "title": "リソース履歴",
+            "loading": "読み込み中...",
+            "noData": "この期間のデータは記録されていません",
+            "timeframeStart": "開始",
+            "timeframeEnd": "終了",
+            "timeframeTo": "から",
+            "uptime": "{percent} 実行中",
+            "range": {
+              "hours": "{hours}時間",
+              "days": "{days}日",
+              "years": "{years}年"
+            },
+            "tooltip": {
+              "earlier": "前へ",
+              "later": "次へ",
+              "latest": "現在へジャンプ"
+            },
+            "block": {
+              "states": "サーバーの状態"
+            },
+            "series": {
+              "average": "平均",
+              "peak": "ピーク",
+              "limit": "制限"
+            },
+            "summary": {
+              "peak": "ピーク {value}"
+            },
+            "unavailable": {
+              "title": "リソース履歴を利用できません",
+              "description": "このサーバーが稼働しているノードはリソース履歴を記録していません。ノードがオフであるか、ノードのアップデートが必要です。"
+            }
+          },
           "socketConnected": "接続済み (Ping: {ping}ms)",
           "socketDisconnected": "切断済み"
         },
@@ -5769,7 +5991,11 @@
             }
           },
           "diskUsage": {
-            "details": "{total} 中 {used} を使用 ({percentage}%)"
+            "details": "{total} 中 {used} を使用 ({percentage}%)",
+            "section": {
+              "files": "ファイル",
+              "trash": "ゴミ箱"
+            }
           },
           "button": {
             "new": "新規作成",
@@ -5792,6 +6018,7 @@
             "trash": "ゴミ箱",
             "emptyTrash": "ゴミ箱を空にする",
             "backToFiles": "ファイルに戻る",
+            "backToTrash": "ゴミ箱に戻る",
             "restoreTo": "復元先を指定...",
             "remoteCopy": "リモートコピー",
             "search": "検索",
@@ -5922,6 +6149,7 @@
             "archiveCreationStarted": "アーカイブの作成を開始しました。",
             "decompressionStarted": "アーカイブの展開を開始しました。",
             "fileCopyingStarted": "ファイルのコピーを開始しました。",
+            "duplicating": "ファイルを複製しています...",
             "fileCopyingStartedMany": "{servers} へのファイルのコピーを開始しました。",
             "fileCopyingStartedPartial": "{successfulServers} へのファイルのコピーを開始しました。{failedServers} は失敗しました:",
             "fileInfoRetrieved": "ファイル情報を取得しました。",
@@ -6878,7 +7106,9 @@
               }
             },
             "badge": {
-              "running": "実行中"
+              "running": "実行中",
+              "waits": "待機",
+              "background": "バックグラウンド"
             },
             "tooltip": {
               "cannotRun": "無効化されたスケジュールは実行できません"
@@ -6913,6 +7143,8 @@
             "rootPath": "ルートパス",
             "outputInto": "出力先",
             "ignoreFailure": "失敗を無視",
+            "waitForCompletion": "完了を待つ",
+            "waitForCompletionDescription": "スケジュールはこのステップが完了してから次に進みます。失敗した場合は失敗したステップとしてカウントされます。オフの場合、バックグラウンドで実行され、次のステップがすぐに開始され、失敗は報告されません。",
             "sourceDatabaseInstance": "バックアップ対象の限定",
             "sourceDatabaseInstanceDescription": "このマネージドデータベースから取得されたデータベースバックアップのみを対象とします。このサーバー上の任意のマネージドデータベースからのバックアップを対象とする場合は空欄にしてください。",
             "sourceDatabaseInstanceAny": "任意のマネージドデータベース"
@@ -6957,6 +7189,8 @@
                 "time": "時刻",
                 "weekday": "曜日",
                 "dayOfMonth": "指定日",
+                "weekInterval": "間隔（週）",
+                "weekAnchor": "基準とする週",
                 "advanced": "Cron式として編集"
               },
               "frequency": {
@@ -6966,6 +7200,7 @@
                 "weekly": "毎週",
                 "monthly": "毎月"
               },
+              "everyWeeks": "{weeks}週間ごと",
               "timezoneHint": "時刻はサーバーのタイムゾーン ({timezone}) を使用します。",
               "card": {
                 "content": "Cron間隔 {schedule} で実行、次回: {timestamp} - 前回: {lastTimestamp}。"
@@ -7038,6 +7273,8 @@
             "noActionSelected": "設定するアクションタイプを選択してください",
             "noActionDetails": "アクション詳細を利用できません",
             "ignoreFailure": "失敗を無視: {value}",
+            "waitsForCompletion": "このステップが完了してから次に進みます",
+            "runsInBackground": "バックグラウンドで実行され、次のステップがすぐに開始され、失敗は報告されません",
             "sourceDatabaseInstance": "指定マネージドDBのみ: {uuid}",
             "sourceDatabaseInstanceAny": "指定マネージドDBのみ: すべて",
             "backupSelector": {
@@ -7516,7 +7753,9 @@
             "createSubuser": {
               "title": "サブユーザーを作成",
               "toast": {
-                "created": "サブユーザーを作成しました。"
+                "created": "サブユーザーを作成しました。",
+                "userMustSignIn": "このメールアドレスを使用しているアカウントはありません。正確なメールアドレスを使用してパネルに一度サインインしてから、追加してください。",
+                "userMustBeCreatedByAdmin": "このメールアドレスを使用しているアカウントはありません。管理者にアカウントを事前に作成してもらってから、追加してください。"
               },
               "form": {
                 "emailPlaceholder": "このサブユーザーとして登録するメールアドレスを入力してください。",
