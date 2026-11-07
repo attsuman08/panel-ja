@@ -1,0 +1,186 @@
+# Fork-only workflow: merge the latest calagopus/panel release tag (release-*)
+# into main on a schedule, auto-resolve ja.json conflicts, and translate new
+# strings with Gemini.
+#
+# Required secrets:
+#   SYNC_TOKEN               Fine-grained PAT for this repo with
+#                            "Contents: Read and write" and "Workflows: Read and write".
+#                            (GITHUB_TOKEN cannot push upstream changes to .github/workflows.)
+#   GEMINI_API_KEY           Gemini API key from Google AI Studio.
+#                            Without it, the merge still runs and translation is skipped.
+# Optional variable (Settings > Secrets and variables > Actions > Variables):
+#   GEMINI_MODEL             Comma-separated model ids, tried in order when one is overloaded
+#                            (default: gemini-3.8-flash,gemini-3.6-flash,gemini-3.5-flash-lite).
+name: Sync upstream
+
+on:
+  schedule:
+    - cron: '0 1 * * *' # 10:00 JST daily
+  workflow_dispatch:
+    inputs:
+      translate:
+        description: 'Translate missing ja.json keys with Gemini'
+        type: boolean
+        default: true
+      include_prerelease:
+        description: 'Also consider pre-release tags (release-x.y.z-pre.n)'
+        type: boolean
+        default: false
+      tag:
+        description: 'Merge this upstream tag instead of the latest one (e.g. release-1.2.8)'
+        type: string
+        default: ''
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  UPSTREAM_REPO: https://github.com/calagopus/panel.git
+  UPSTREAM_TAG_PREFIX: release-
+  TARGET_BRANCH: main
+  JA_FILES: frontend/public/translations/ja.json shared/mails/variables/ja.json
+  TODO_FILE: .ja-todo.json
+  RESULT_FILE: .ja-result.json
+  HAS_GEMINI_KEY: ${{ secrets.GEMINI_API_KEY != '' }}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TARGET_BRANCH }}
+          fetch-depth: 0
+          token: ${{ secrets.SYNC_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+      - name: Merge upstream
+        id: merge
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+          INCLUDE_PRERELEASE: ${{ github.event.inputs.include_prerelease }}
+        run: |
+          echo "before=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          git remote add upstream "$UPSTREAM_REPO"
+
+          tag="$INPUT_TAG"
+          if [ -n "$tag" ] && ! [[ "$tag" =~ ^${UPSTREAM_TAG_PREFIX}[0-9]+\.[0-9]+\.[0-9]+(-pre\.[0-9]+)?$ ]]; then
+            echo "::error::Invalid tag '$tag' (expected ${UPSTREAM_TAG_PREFIX}x.y.z or ${UPSTREAM_TAG_PREFIX}x.y.z-pre.n)."
+            exit 1
+          fi
+          if [ -z "$tag" ]; then
+            versions=$(git ls-remote --tags --refs upstream "refs/tags/${UPSTREAM_TAG_PREFIX}*" \
+              | sed "s#.*refs/tags/${UPSTREAM_TAG_PREFIX}##")
+            if [ "$INCLUDE_PRERELEASE" != "true" ]; then
+              versions=$(echo "$versions" | grep -vF -- '-' || true)
+            fi
+            # Same ordering as release.yml: x.y.z-pre.n sorts before x.y.z.
+            latest=$(echo "$versions" | sed 's/-/~/' | sort -V | sed 's/~/-/' | tail -n1)
+            if [ -z "$latest" ]; then
+              echo "::error::No upstream ${UPSTREAM_TAG_PREFIX}* tag found."
+              exit 1
+            fi
+            tag="${UPSTREAM_TAG_PREFIX}${latest}"
+          fi
+          echo "Upstream release: $tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+          git fetch --no-tags upstream "refs/tags/$tag:refs/upstream-tags/$tag"
+          target="refs/upstream-tags/$tag"
+
+          if git merge-base --is-ancestor "$target" HEAD; then
+            echo "Already up to date with $tag."
+            exit 0
+          fi
+
+          if ! git merge --no-ff --no-edit -m "Upstream $tag" "$target"; then
+            conflicts=$(git diff --name-only --diff-filter=U)
+            echo "Conflicted files:"; echo "$conflicts"
+
+            others=$(echo "$conflicts" | grep -vxF $(printf -- '-e %s ' $JA_FILES) || true)
+            if [ -n "$others" ]; then
+              echo "::error::Conflicts outside ja.json need manual resolution:%0A${others//$'\n'/%0A}"
+              git merge --abort
+              exit 1
+            fi
+
+            python3 scripts/ja_sync.py resolve $conflicts
+            git commit --no-edit
+          fi
+          echo "merged=true" >> "$GITHUB_OUTPUT"
+
+      - name: Find strings to translate
+        id: todo
+        run: |
+          python3 scripts/ja_sync.py normalize
+          count=$(python3 scripts/ja_sync.py todo --old-ref "${{ steps.merge.outputs.before }}" --output "$TODO_FILE")
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          echo "$count key(s) need translation."
+
+      - name: Translate with Gemini
+        id: translate
+        if: >-
+          steps.todo.outputs.count != '0'
+          && github.event.inputs.translate != 'false'
+          && env.HAS_GEMINI_KEY == 'true'
+        continue-on-error: true
+        timeout-minutes: 40
+        env:
+          PYTHONUNBUFFERED: '1'
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+        run: python3 scripts/translate_ja_gemini.py "$TODO_FILE" "$RESULT_FILE"
+
+      - name: Apply translations
+        if: steps.translate.outcome == 'success' || steps.translate.outcome == 'failure'
+        run: |
+          if [ ! -f "$RESULT_FILE" ]; then
+            echo "::warning::No translation result ($RESULT_FILE)"
+            exit 0
+          fi
+          python3 scripts/ja_sync.py apply "$RESULT_FILE"
+          python3 scripts/ja_sync.py check > /tmp/check.log || true
+          if grep -q '^PLACEHOLDER' /tmp/check.log; then
+            grep '^PLACEHOLDER' /tmp/check.log
+            echo "::error::Placeholder mismatch in translations; discarding them."
+            git checkout -- $JA_FILES
+            python3 scripts/ja_sync.py normalize
+            exit 1
+          fi
+
+      # Skipped when the run is cancelled, so nothing is pushed.
+      - name: Commit and push
+        if: "!cancelled() && steps.merge.outcome == 'success'"
+        run: |
+          rm -f "$TODO_FILE" "$RESULT_FILE"
+          git add -- $JA_FILES
+          if ! git diff --cached --quiet; then
+            if [ "${{ steps.merge.outputs.merged }}" = "true" ]; then
+              # Fold translations into this run's (still unpushed) merge commit.
+              git commit --amend -m "Upstream ${{ steps.merge.outputs.tag }} + Japanese Translations"
+            else
+              git commit -m "Japanese Translations"
+            fi
+          fi
+
+          if [ "$(git rev-parse HEAD)" = "${{ steps.merge.outputs.before }}" ]; then
+            echo "Nothing to push."
+            exit 0
+          fi
+          git log --oneline "${{ steps.merge.outputs.before }}..HEAD" --first-parent
+          git push origin "HEAD:$TARGET_BRANCH"
+
+      - name: Report untranslated keys
+        if: "!cancelled() && steps.merge.outcome == 'success'"
+        run: |
+          python3 scripts/find_missing_ja_keys.py --missing-only --keys-only >> "$GITHUB_STEP_SUMMARY" 2>&1 || true
