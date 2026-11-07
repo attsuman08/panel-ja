@@ -131,9 +131,9 @@ jobs:
           if ! git diff --cached --quiet; then
             if [ "${{ steps.merge.outputs.merged }}" = "true" ]; then
               # Fold translations into this run's (still unpushed) merge commit.
-              git commit --amend -m "Upstream (with japanese translations)"
+              git commit --amend -m "Upstream + Japanese Translations"
             else
-              git commit -m "update japanese translations"
+              git commit -m "Japanese Translations"
             fi
           fi
 
