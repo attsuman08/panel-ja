@@ -32,9 +32,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 PLACEHOLDER_RE = re.compile(r"\{\{.*?\}\}|\{[^{}]+\}")
 MAX_EXAMPLES_PER_KEY = 6
-DEFAULT_MODELS = "gemini-3.6-flash,gemini-flash-latest,gemini-3.5-flash-lite"
+DEFAULT_MODELS = "gemini-3.8-flash,gemini-3.6-flash,gemini-3.5-flash-lite"
 MAX_ATTEMPTS = 6
-ATTEMPTS_PER_MODEL = 2
+ATTEMPTS_PER_MODEL = 1
 HEARTBEAT_SECONDS = 30
 START = time.monotonic()
 
