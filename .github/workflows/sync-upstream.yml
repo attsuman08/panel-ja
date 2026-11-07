@@ -67,8 +67,7 @@ jobs:
             exit 0
           fi
 
-          msg="Merge branch '$UPSTREAM_BRANCH' of $UPSTREAM_REPO"
-          if ! git merge --no-ff --no-edit -m "$msg" "upstream/$UPSTREAM_BRANCH"; then
+          if ! git merge --no-ff --no-edit -m "Upstream" "upstream/$UPSTREAM_BRANCH"; then
             conflicts=$(git diff --name-only --diff-filter=U)
             echo "Conflicted files:"; echo "$conflicts"
 
@@ -132,7 +131,7 @@ jobs:
           if ! git diff --cached --quiet; then
             if [ "${{ steps.merge.outputs.merged }}" = "true" ]; then
               # Fold translations into this run's (still unpushed) merge commit.
-              git commit --amend --no-edit
+              git commit --amend -m "Upstream (with japanese translations)"
             else
               git commit -m "update japanese translations"
             fi
