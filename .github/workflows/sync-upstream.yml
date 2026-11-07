@@ -13,7 +13,7 @@ name: Sync upstream
 
 on:
   schedule:
-    - cron: '23 18 * * *' # 03:23 JST daily
+    - cron: '0 1 * * *' # 10:00 JST daily
   workflow_dispatch:
     inputs:
       translate:
