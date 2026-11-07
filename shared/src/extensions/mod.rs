@@ -14,6 +14,7 @@ pub mod background_tasks;
 pub mod commands;
 pub mod distr;
 pub mod email_templates;
+pub mod index_html;
 pub mod manager;
 pub mod settings;
 pub mod shutdown_handlers;
@@ -145,6 +146,7 @@ impl ExtensionRouteBuilder {
 }
 
 type RawPermissionMap = IndexMap<&'static str, PermissionGroup>;
+#[derive(Clone)]
 pub struct ExtensionPermissionsBuilder {
     pub user_permissions: RawPermissionMap,
     pub admin_permissions: RawPermissionMap,
@@ -338,6 +340,16 @@ pub trait Extension: Send + Sync {
         state: State,
         builder: shutdown_handlers::ShutdownHandlerBuilder,
     ) -> shutdown_handlers::ShutdownHandlerBuilder {
+        builder
+    }
+
+    /// Your extension index.html entrypoint, this runs as soon as the database is migrated and before the webserver starts.
+    /// Variables added here are rendered into index.html and readable in your frontend with `this.getIndexVariable(name)`
+    async fn initialize_index_html(
+        &mut self,
+        state: State,
+        builder: index_html::IndexHtmlBuilder,
+    ) -> index_html::IndexHtmlBuilder {
         builder
     }
 

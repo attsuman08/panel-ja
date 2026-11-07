@@ -1,0 +1,315 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "dc207ba1-ab9a-4906-8fb0-beea737b7364",
+  "prevIds": [
+    "50bfbf14-0046-46ce-b103-6df47ec2682a"
+  ],
+  "footprints": [
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "node_allocations",
+        "allocations_node_uuid_idx"
+      ],
+      "writes": [
+        "s|idx|public.allocations_node_uuid_idx",
+        "n|idx|public.allocations_node_uuid_idx",
+        "e|idx|public.allocations_node_uuid_idx",
+        "n|rel|public.allocations_node_uuid_idx"
+      ],
+      "reads": [
+        "e|tbl|public.node_allocations",
+        "n|sch|public",
+        "e|col|public.node_allocations.node_uuid"
+      ],
+      "sharedWrites": []
+    },
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "server_activities",
+        "server_activities_server_uuid_idx"
+      ],
+      "writes": [
+        "s|idx|public.server_activities_server_uuid_idx",
+        "n|idx|public.server_activities_server_uuid_idx",
+        "e|idx|public.server_activities_server_uuid_idx",
+        "n|rel|public.server_activities_server_uuid_idx"
+      ],
+      "reads": [
+        "e|tbl|public.server_activities",
+        "n|sch|public",
+        "e|col|public.server_activities.server_uuid"
+      ],
+      "sharedWrites": []
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "node_allocations",
+        "allocations_node_uuid_ip_inet_port_idx"
+      ],
+      "writes": [
+        "s|idx|public.allocations_node_uuid_ip_inet_port_idx",
+        "n|idx|public.allocations_node_uuid_ip_inet_port_idx",
+        "e|idx|public.allocations_node_uuid_ip_inet_port_idx",
+        "n|rel|public.allocations_node_uuid_ip_inet_port_idx"
+      ],
+      "reads": [
+        "n|tbl|public.node_allocations",
+        "n|sch|public",
+        "n|col|public.node_allocations.node_uuid",
+        "n|col|public.node_allocations.ip",
+        "n|col|public.node_allocations.port"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "server_activities",
+        "server_activities_server_uuid_created_idx"
+      ],
+      "writes": [
+        "s|idx|public.server_activities_server_uuid_created_idx",
+        "n|idx|public.server_activities_server_uuid_created_idx",
+        "e|idx|public.server_activities_server_uuid_created_idx",
+        "n|rel|public.server_activities_server_uuid_created_idx"
+      ],
+      "reads": [
+        "n|tbl|public.server_activities",
+        "n|sch|public",
+        "n|col|public.server_activities.server_uuid",
+        "n|col|public.server_activities.created"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "server_backups",
+        "server_backups_node_uuid_created_idx"
+      ],
+      "writes": [
+        "s|idx|public.server_backups_node_uuid_created_idx",
+        "n|idx|public.server_backups_node_uuid_created_idx",
+        "e|idx|public.server_backups_node_uuid_created_idx",
+        "n|rel|public.server_backups_node_uuid_created_idx"
+      ],
+      "reads": [
+        "n|tbl|public.server_backups",
+        "n|sch|public",
+        "n|col|public.server_backups.node_uuid",
+        "n|col|public.server_backups.created"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "servers",
+        "servers_created_idx"
+      ],
+      "writes": [
+        "s|idx|public.servers_created_idx",
+        "n|idx|public.servers_created_idx",
+        "e|idx|public.servers_created_idx",
+        "n|rel|public.servers_created_idx"
+      ],
+      "reads": [
+        "n|tbl|public.servers",
+        "n|sch|public",
+        "n|col|public.servers.created"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "users",
+        "users_created_idx"
+      ],
+      "writes": [
+        "s|idx|public.users_created_idx",
+        "n|idx|public.users_created_idx",
+        "e|idx|public.users_created_idx",
+        "n|rel|public.users_created_idx"
+      ],
+      "reads": [
+        "n|tbl|public.users",
+        "n|sch|public",
+        "n|col|public.users.created"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "node_allocations",
+        "name": "allocations_node_uuid_ip_inet_port_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "node_uuid",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "ip",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "port",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "server_activities",
+        "name": "server_activities_server_uuid_created_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "server_uuid",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "created",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "server_backups",
+        "name": "server_backups_node_uuid_created_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "node_uuid",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "created",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"deleted\" IS NULL",
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "servers",
+        "name": "servers_created_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "created",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "users",
+        "name": "users_created_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "created",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"allocations_node_uuid_idx\"]"
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"server_activities_server_uuid_idx\"]"
+    }
+  ]
+}

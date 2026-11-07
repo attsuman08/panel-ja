@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT server_schedule_steps.uuid, server_schedule_steps.schedule_uuid, server_schedule_steps.action\n                    FROM server_schedule_steps\n                    WHERE server_schedule_steps.schedule_uuid = $1\n                    ORDER BY server_schedule_steps.order_, server_schedule_steps.created, server_schedule_steps.uuid",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "uuid",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "server_schedule_steps",
+            "name": "uuid"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "schedule_uuid",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "server_schedule_steps",
+            "name": "schedule_uuid"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "action",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "server_schedule_steps",
+            "name": "action"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "b2979106728586374c07df434137166cf0b576813e37a578cedaa0c335226cdb"
+}

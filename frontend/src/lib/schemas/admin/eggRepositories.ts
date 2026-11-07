@@ -29,7 +29,7 @@ export const adminEggRepositorySchema = z.looseObject({
   uuid: z.string(),
   name: z.string().min(1).max(255),
   description: z.preprocess(nullableString, z.string().max(1024).nullable()),
-  gitRepository: z.url({ protocol: /^(https?|ssh)$/ }),
+  gitRepository: z.union([z.url({ protocol: /^(https?|ssh)$/ }), z.string().regex(/^[^/:]+:(?!\/\/).+$/)]),
   credentials: adminEggRepositoryCredentialsSchema,
   defaultNest: adminNestSchema.nullable(),
   autoSync: z.boolean(),
@@ -104,3 +104,10 @@ export const adminEggRepositoryCatalogEggSchema = z.object({
   egg: adminEggEggRepositoryEggSchema,
   installedEggs: z.array(adminEggRepositoryEggInstalledEggSchema),
 });
+
+export const adminEggRepositoryCountsSchema = z.record(
+  z.string(),
+  z.object({
+    eggRepositoryEggs: z.number(),
+  }),
+);

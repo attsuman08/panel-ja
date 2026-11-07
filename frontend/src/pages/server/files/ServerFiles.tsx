@@ -15,14 +15,13 @@ import {
 } from 'react';
 import { createSearchParams, useNavigate, useSearchParams } from 'react-router';
 import { FileOpenMode } from 'shared/src/registries/pages/server/files';
-import { httpErrorToHuman } from '@/api/axios.ts';
-import copyFile from '@/api/server/files/copyFile.ts';
 import ActionIcon from '@/elements/buttons/ActionIcon.tsx';
 import ServerContentContainer from '@/elements/containers/ServerContentContainer.tsx';
 import { useNavbarPageHeader } from '@/elements/containers/useNavbarPageHeader.ts';
 import Card from '@/elements/data-display/Card.tsx';
 import Table, { TableData, TableHeaderProps, TableRow } from '@/elements/data-display/Table.tsx';
 import SelectionArea from '@/elements/dnd/SelectionArea.tsx';
+import EmptyState from '@/elements/feedback/EmptyState.tsx';
 import Spinner from '@/elements/feedback/Spinner.tsx';
 import Group from '@/elements/layout/Group.tsx';
 import SegmentedControl from '@/elements/layout/SegmentedControl.tsx';
@@ -30,8 +29,10 @@ import ConfirmationModal from '@/elements/modals/ConfirmationModal.tsx';
 import Tooltip from '@/elements/overlays/Tooltip.tsx';
 import Title from '@/elements/typography/Title.tsx';
 import { isOpenableFile } from '@/lib/files/files.ts';
+import { isVirtualRoot } from '@/lib/files/virtualRoot.ts';
 import { CORE_QUICK_ACTION_CATEGORIES } from '@/lib/quickActions/coreQuickActions.tsx';
 import FileBreadcrumbs from '@/pages/server/files/FileBreadcrumbs.tsx';
+import { useDuplicateFile } from '@/pages/server/files/hooks/useDuplicateFile.ts';
 import { useFileBrowserQuickActions } from '@/pages/server/files/hooks/useFileBrowserQuickActions.tsx';
 import useFileUploadSocket from '@/pages/server/files/hooks/useFileUploadSocket.ts';
 import IncompleteUploadsBanner from '@/pages/server/files/IncompleteUploadsBanner.tsx';
@@ -79,6 +80,7 @@ function FileBrowser() {
   const { t } = useTranslations();
   const server = useServerStore((state) => state.server);
   const { addToast } = useToast();
+  const duplicateFile = useDuplicateFile();
   const [_, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const typeAheadBuffer = useRef('');
@@ -90,7 +92,6 @@ function FileBrowser() {
   const browsingError = useFileManagerStore((state) => state.browsingError);
   const anyActing = useFileManagerStore((state) => state.actingFiles.size > 0);
   const browsingDirectory = useFileManagerStore((state) => state.browsingDirectory);
-  const browsingBackup = useFileManagerStore((state) => state.browsingBackup);
   const searchInfo = useFileManagerStore((state) => state.searchInfo);
   const collapsedSearchPreviews = useFileManagerStore((state) => state.collapsedSearchPreviews);
   const sortMode = useFileManagerStore((state) => state.sortMode);
@@ -240,15 +241,7 @@ function FileBrowser() {
         callback: () => {
           const state = store.getState();
           if (canCreate && state.selectedFiles.size === 1 && state.browsingWritableDirectory) {
-            const file = state.selectedFiles.values()[0];
-
-            copyFile(server.uuid, join(state.browsingDirectory, file.name), null)
-              .then(() => {
-                addToast(t('pages.server.files.toast.fileCopyingStarted', {}), 'success');
-              })
-              .catch((msg) => {
-                addToast(httpErrorToHuman(msg), 'error');
-              });
+            duplicateFile(join(state.browsingDirectory, state.selectedFiles.values()[0].name));
           }
         },
       },
@@ -309,9 +302,8 @@ function FileBrowser() {
   }, [t, sortMode, preferPhysicalSize, wide]);
 
   const normalizedBrowsingDirectory = join('/', browsingDirectory);
-  const backupRootDirectory = browsingBackup ? `/.backups/${browsingBackup.uuid}` : null;
   const showParentDirectoryRow =
-    normalizedBrowsingDirectory !== '/' && normalizedBrowsingDirectory !== backupRootDirectory && !searchInfo;
+    normalizedBrowsingDirectory !== '/' && !isVirtualRoot(normalizedBrowsingDirectory) && !searchInfo;
 
   const tableAnchorRef = useRef<HTMLDivElement>(null);
   const [scrollMargin, setScrollMargin] = useState(0);
@@ -372,8 +364,6 @@ function FileBrowser() {
 
   return (
     <div className='h-fit relative'>
-      <FileDiskUsageBar />
-
       <Card mb='sm'>
         <FileBreadcrumbs path={browsingDirectory} />
       </Card>
@@ -397,6 +387,20 @@ function FileBrowser() {
                 pagination={browsingEntries}
                 error={browsingError}
                 allowSelect={false}
+                empty={
+                  searchInfo ? undefined : (
+                    <EmptyState
+                      flush
+                      icon={faFolderOpen}
+                      title={t('pages.server.files.empty.title', {})}
+                      description={
+                        canCreate
+                          ? t('pages.server.files.empty.description', {})
+                          : t('pages.server.files.empty.descriptionReadOnly', {})
+                      }
+                    />
+                  )
+                }
               >
                 {showParentDirectoryRow && <FileParentDirectoryRow />}
 
@@ -610,6 +614,7 @@ function ServerFilesComponent() {
       </Group>
 
       <IncompleteUploadsBanner />
+      <FileDiskUsageBar />
 
       {view === 'list' ? (
         <FileBrowser />

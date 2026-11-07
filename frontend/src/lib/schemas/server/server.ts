@@ -99,6 +99,7 @@ export const serverResourceUsageSchema = z.object({
   memoryBytes: z.number(),
   memoryLimitBytes: z.number(),
   diskBytes: z.number(),
+  trashBytes: z.number().optional(),
   state: z.lazy(() => serverPowerState),
   network: z.object({
     rxBytes: z.number(),
@@ -109,4 +110,36 @@ export const serverResourceUsageSchema = z.object({
   cpuAbsolute: z.number(),
   cpuLimitAbsolute: z.number(),
   uptime: z.number(),
+});
+
+export const serverResourceHistoryStatesSchema = z.object({
+  offline: z.number(),
+  starting: z.number(),
+  stopping: z.number(),
+  running: z.number(),
+});
+
+export const serverResourceHistoryPointSchema = z.object({
+  start: z.coerce.date(),
+  states: serverResourceHistoryStatesSchema.nullable(),
+  sampledSeconds: z.number().nullable(),
+  cpuAverage: z.number().nullable(),
+  cpuMax: z.number().nullable(),
+  memoryAverageBytes: z.number().nullable(),
+  memoryMaxBytes: z.number().nullable(),
+  diskBytes: z.number().nullable(),
+  networkRxBytes: z.number().nullable(),
+  networkTxBytes: z.number().nullable(),
+});
+
+export const serverResourceHistoryLimitsSchema = z.object({
+  since: z.coerce.date(),
+  memoryLimitBytes: z.number(),
+  cpuLimit: z.number(),
+});
+
+export const serverResourceHistorySchema = z.object({
+  resolution: z.number(),
+  points: z.array(serverResourceHistoryPointSchema),
+  limits: z.array(serverResourceHistoryLimitsSchema),
 });

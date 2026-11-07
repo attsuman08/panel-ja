@@ -1,7 +1,7 @@
 import { faFile, faFolder } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { ModalProps } from '@mantine/core';
-import { basename, dirname, join } from 'pathe';
+import { basename, dirname, resolve } from 'pathe';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
 import { httpErrorToHuman } from '@/api/axios.ts';
@@ -54,7 +54,7 @@ export function collectRestoreConflicts(
   });
 }
 
-function EntryMeta({
+export function EntryMeta({
   label,
   size,
   timestampLabel,
@@ -136,7 +136,7 @@ export default function TrashRestoreConflictModal({ conflicts, onResolved, onUnd
       } else if (resolution === 'rename') {
         rename.push({
           entry: conflict.entry,
-          path: join(dirname(conflict.target), renames[conflict.entry.uuid].trim()),
+          path: resolve('/', dirname(conflict.target), renames[conflict.entry.uuid].trim()),
         });
       }
     }
@@ -202,7 +202,7 @@ export default function TrashRestoreConflictModal({ conflicts, onResolved, onUnd
                       label={t('pages.server.files.trash.title', {})}
                       size={conflict.entry.size}
                       timestampLabel={t('pages.server.files.trash.table.columns.deletedAt', {})}
-                      timestamp={<FormattedTimestamp timestamp={conflict.entry.deletedAt} />}
+                      timestamp={<FormattedTimestamp timestamp={conflict.entry.deleted} />}
                     />
                     <EntryMeta
                       label={t('pages.server.files.modal.copyConflict.destination', {})}

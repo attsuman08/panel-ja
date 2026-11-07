@@ -32,9 +32,11 @@ export default function AdminEggDevices({
     search,
     setSearch,
     setPage,
+    setPerPage,
   } = useSearchablePaginatedTable({
     queryKey: queryKeys.admin.deviceAssignments.devicesByEgg(contextEgg.uuid),
-    fetcher: (page, search) => getEggDevices(contextNest.uuid, contextEgg.uuid, page, search),
+    fetcher: (page, search, perPage) => getEggDevices(contextNest.uuid, contextEgg.uuid, page, search, perPage),
+    backgroundRefetch: true,
   });
 
   return (
@@ -62,6 +64,7 @@ export default function AdminEggDevices({
         error={error}
         pagination={eggDevices}
         onPageSelect={setPage}
+        onPerPageSelect={setPerPage}
       >
         {eggDevices?.data.map((device) => (
           <EggDeviceRow key={device.device.uuid} nest={contextNest} egg={contextEgg} device={device} />

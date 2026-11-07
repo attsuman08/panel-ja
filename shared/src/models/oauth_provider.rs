@@ -15,12 +15,18 @@ use std::{
 };
 use utoipa::ToSchema;
 
+#[inline]
+fn default_true() -> bool {
+    true
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct OAuthProvider {
     pub uuid: uuid::Uuid,
 
     pub name: compact_str::CompactString,
     pub description: Option<compact_str::CompactString>,
+    pub icon: Option<compact_str::CompactString>,
 
     pub client_id: compact_str::CompactString,
     pub client_secret: Option<EncryptedString>,
@@ -39,9 +45,11 @@ pub struct OAuthProvider {
     pub avatar_overwrite: bool,
 
     pub enabled: bool,
+    pub login_viewable: bool,
     pub login_only: bool,
     pub login_bypass_two_factor: bool,
     pub link_viewable: bool,
+    pub api_linkable: bool,
     pub user_manageable: bool,
     pub basic_auth: bool,
     pub pkce: bool,
@@ -81,6 +89,10 @@ impl BaseModel for OAuthProvider {
             (
                 "oauth_providers.description",
                 compact_str::format_compact!("{prefix}description"),
+            ),
+            (
+                "oauth_providers.icon",
+                compact_str::format_compact!("{prefix}icon"),
             ),
             (
                 "oauth_providers.client_id",
@@ -143,6 +155,10 @@ impl BaseModel for OAuthProvider {
                 compact_str::format_compact!("{prefix}enabled"),
             ),
             (
+                "oauth_providers.login_viewable",
+                compact_str::format_compact!("{prefix}login_viewable"),
+            ),
+            (
                 "oauth_providers.login_only",
                 compact_str::format_compact!("{prefix}login_only"),
             ),
@@ -153,6 +169,10 @@ impl BaseModel for OAuthProvider {
             (
                 "oauth_providers.link_viewable",
                 compact_str::format_compact!("{prefix}link_viewable"),
+            ),
+            (
+                "oauth_providers.api_linkable",
+                compact_str::format_compact!("{prefix}api_linkable"),
             ),
             (
                 "oauth_providers.user_manageable",
@@ -182,6 +202,7 @@ impl BaseModel for OAuthProvider {
             name: row.try_get(compact_str::format_compact!("{prefix}name").as_str())?,
             description: row
                 .try_get(compact_str::format_compact!("{prefix}description").as_str())?,
+            icon: row.try_get(compact_str::format_compact!("{prefix}icon").as_str())?,
             client_id: row.try_get(compact_str::format_compact!("{prefix}client_id").as_str())?,
             client_secret: row
                 .try_get(compact_str::format_compact!("{prefix}client_secret").as_str())?,
@@ -206,12 +227,16 @@ impl BaseModel for OAuthProvider {
             avatar_overwrite: row
                 .try_get(compact_str::format_compact!("{prefix}avatar_overwrite").as_str())?,
             enabled: row.try_get(compact_str::format_compact!("{prefix}enabled").as_str())?,
+            login_viewable: row
+                .try_get(compact_str::format_compact!("{prefix}login_viewable").as_str())?,
             login_only: row.try_get(compact_str::format_compact!("{prefix}login_only").as_str())?,
             login_bypass_two_factor: row.try_get(
                 compact_str::format_compact!("{prefix}login_bypass_two_factor").as_str(),
             )?,
             link_viewable: row
                 .try_get(compact_str::format_compact!("{prefix}link_viewable").as_str())?,
+            api_linkable: row
+                .try_get(compact_str::format_compact!("{prefix}api_linkable").as_str())?,
             user_manageable: row
                 .try_get(compact_str::format_compact!("{prefix}user_manageable").as_str())?,
             basic_auth: row.try_get(compact_str::format_compact!("{prefix}basic_auth").as_str())?,
@@ -225,6 +250,7 @@ impl BaseModel for OAuthProvider {
         vec![
             compact_str::format_compact!("{}::{}", Self::NAME, self.uuid),
             compact_str::CompactString::const_new("oauth_providers::usable"),
+            crate::icons::REFERENCED_ICONS_CACHE_KEY.into(),
         ]
     }
 }
@@ -365,36 +391,20 @@ impl OAuthProvider {
         per_page: i64,
         search: Option<&str>,
     ) -> Result<super::Pagination<Self>, crate::database::DatabaseError> {
-        let offset = (page - 1) * per_page;
-
-        let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-            r#"
-            SELECT {}, COUNT(*) OVER() AS total_count
-            FROM oauth_providers
-            WHERE {search}
-            ORDER BY oauth_providers.created
-            LIMIT $2 OFFSET $3
-            "#,
+        super::PaginatedQueryBuilder::new(
             Self::columns_sql(None),
-            search = super::search_sql(1, &["oauth_providers.name"], &["oauth_providers.uuid"])
-        )))
+            format!(
+                r#"
+                FROM oauth_providers
+                WHERE {search}
+                "#,
+                search = super::search_sql(1, &["oauth_providers.name"], &["oauth_providers.uuid"]),
+            ),
+            "oauth_providers.created, oauth_providers.uuid",
+        )
         .bind(search)
-        .bind(per_page)
-        .bind(offset)
-        .fetch_all(database.read())
-        .await?;
-
-        Ok(super::Pagination {
-            total: rows
-                .first()
-                .map_or(Ok(0), |row| row.try_get("total_count"))?,
-            per_page,
-            page,
-            data: rows
-                .into_iter()
-                .map(|row| Self::map(None, &row))
-                .try_collect_vec()?,
-        })
+        .fetch(database, page, per_page)
+        .await
     }
 
     pub async fn exists_usable_except(
@@ -416,6 +426,22 @@ impl OAuthProvider {
         .await
     }
 
+    pub async fn exists_registrable(
+        database: &crate::database::Database,
+    ) -> Result<bool, sqlx::Error> {
+        sqlx::query_scalar!(
+            r#"
+            SELECT EXISTS (
+                SELECT 1
+                FROM oauth_providers
+                WHERE oauth_providers.enabled = true AND oauth_providers.login_only = false
+            ) AS "exists!"
+            "#
+        )
+        .fetch_one(database.read())
+        .await
+    }
+
     pub async fn all_by_usable(
         database: &crate::database::Database,
     ) -> Result<Vec<Self>, crate::database::DatabaseError> {
@@ -424,7 +450,7 @@ impl OAuthProvider {
             SELECT {}
             FROM oauth_providers
             WHERE oauth_providers.enabled = true
-            ORDER BY oauth_providers.created
+            ORDER BY oauth_providers.created, oauth_providers.uuid
             "#,
             Self::columns_sql(None)
         )))
@@ -799,6 +825,7 @@ impl IntoAdminApiObject for OAuthProvider {
                 uuid: self.uuid,
                 name: self.name,
                 description: self.description,
+                icon: self.icon,
                 client_id: self.client_id,
                 client_secret: match self.client_secret {
                     Some(client_secret) => Some(client_secret.decrypt(&state.database).await?),
@@ -817,9 +844,11 @@ impl IntoAdminApiObject for OAuthProvider {
                 avatar_url_template: self.avatar_url_template,
                 avatar_overwrite: self.avatar_overwrite,
                 enabled: self.enabled,
+                login_viewable: self.login_viewable,
                 login_only: self.login_only,
                 login_bypass_two_factor: self.login_bypass_two_factor,
                 link_viewable: self.link_viewable,
+                api_linkable: self.api_linkable,
                 user_manageable: self.user_manageable,
                 basic_auth: self.basic_auth,
                 pkce: self.pkce,
@@ -849,6 +878,7 @@ impl IntoApiObject for OAuthProvider {
             ApiOAuthProvider {
                 uuid: self.uuid,
                 name: self.name,
+                icon: self.icon,
                 link_viewable: self.link_viewable,
                 user_manageable: self.user_manageable,
             },
@@ -950,14 +980,27 @@ pub struct CreateOAuthProviderOptions {
     #[garde(length(chars, min = 1, max = 1024))]
     #[schema(min_length = 1, max_length = 1024)]
     pub description: Option<compact_str::CompactString>,
+    #[garde(
+        length(chars, min = 1, max = 128),
+        inner(custom(crate::icons::validate_icon))
+    )]
+    #[schema(min_length = 1, max_length = 128)]
+    #[serde(default)]
+    pub icon: Option<compact_str::CompactString>,
     #[garde(skip)]
     pub enabled: bool,
+    #[garde(skip)]
+    #[serde(default = "default_true")]
+    pub login_viewable: bool,
     #[garde(skip)]
     pub login_only: bool,
     #[garde(skip)]
     pub login_bypass_two_factor: bool,
     #[garde(skip)]
     pub link_viewable: bool,
+    #[garde(skip)]
+    #[serde(default)]
+    pub api_linkable: bool,
     #[garde(skip)]
     pub user_manageable: bool,
     #[garde(skip)]
@@ -1066,6 +1109,7 @@ impl CreatableModel for OAuthProvider {
         query_builder
             .set("name", &options.name)
             .set("description", &options.description)
+            .set("icon", &options.icon)
             .set("client_id", &options.client_id)
             .set("client_secret", encrypted_client_secret)
             .set("auth_url", &options.auth_url)
@@ -1081,9 +1125,11 @@ impl CreatableModel for OAuthProvider {
             .set("avatar_url_template", &options.avatar_url_template)
             .set("avatar_overwrite", options.avatar_overwrite)
             .set("enabled", options.enabled)
+            .set("login_viewable", options.login_viewable)
             .set("login_only", options.login_only)
             .set("login_bypass_two_factor", options.login_bypass_two_factor)
             .set("link_viewable", options.link_viewable)
+            .set("api_linkable", options.api_linkable)
             .set("user_manageable", options.user_manageable)
             .set("basic_auth", options.basic_auth)
             .set("pkce", options.pkce);
@@ -1113,14 +1159,29 @@ pub struct UpdateOAuthProviderOptions {
         with = "::serde_with::rust::double_option"
     )]
     pub description: Option<Option<compact_str::CompactString>>,
+    #[garde(
+        length(chars, min = 1, max = 128),
+        inner(inner(custom(crate::icons::validate_icon)))
+    )]
+    #[schema(min_length = 1, max_length = 128)]
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        with = "::serde_with::rust::double_option"
+    )]
+    pub icon: Option<Option<compact_str::CompactString>>,
     #[garde(skip)]
     pub enabled: Option<bool>,
+    #[garde(skip)]
+    pub login_viewable: Option<bool>,
     #[garde(skip)]
     pub login_only: Option<bool>,
     #[garde(skip)]
     pub login_bypass_two_factor: Option<bool>,
     #[garde(skip)]
     pub link_viewable: Option<bool>,
+    #[garde(skip)]
+    pub api_linkable: Option<bool>,
     #[garde(skip)]
     pub user_manageable: Option<bool>,
     #[garde(skip)]
@@ -1220,6 +1281,31 @@ pub struct UpdateOAuthProviderOptions {
     pub avatar_overwrite: Option<bool>,
 }
 
+impl UpdateOAuthProviderOptions {
+    /// Whether this changes how the provider identifies users, how they may sign in with it or
+    /// who may link accounts to it, which amounts to taking over every linked account.
+    pub fn changes_identity(&self, oauth_provider: &OAuthProvider) -> bool {
+        fn differs<T: PartialEq>(new: &Option<T>, current: &T) -> bool {
+            new.as_ref().is_some_and(|new| new != current)
+        }
+
+        differs(&self.client_id, &oauth_provider.client_id)
+            || differs(&self.auth_url, &oauth_provider.auth_url)
+            || differs(&self.token_url, &oauth_provider.token_url)
+            || differs(&self.info_url, &oauth_provider.info_url)
+            || differs(&self.info_urls, &oauth_provider.info_urls)
+            || differs(&self.scopes, &oauth_provider.scopes)
+            || differs(&self.identifier_path, &oauth_provider.identifier_path)
+            || differs(&self.login_only, &oauth_provider.login_only)
+            || differs(
+                &self.login_bypass_two_factor,
+                &oauth_provider.login_bypass_two_factor,
+            )
+            || differs(&self.user_manageable, &oauth_provider.user_manageable)
+            || differs(&self.api_linkable, &oauth_provider.api_linkable)
+    }
+}
+
 #[async_trait::async_trait]
 impl UpdatableModel for OAuthProvider {
     type UpdateOptions = UpdateOAuthProviderOptions;
@@ -1260,6 +1346,7 @@ impl UpdatableModel for OAuthProvider {
                 "description",
                 options.description.as_ref().map(|d| d.as_ref()),
             )
+            .set("icon", options.icon.as_ref().map(|i| i.as_ref()))
             .set("client_id", options.client_id.as_ref())
             .set("client_secret", encrypted_client_secret.clone())
             .set("auth_url", options.auth_url.as_ref())
@@ -1290,9 +1377,11 @@ impl UpdatableModel for OAuthProvider {
             )
             .set("avatar_overwrite", options.avatar_overwrite)
             .set("enabled", options.enabled)
+            .set("login_viewable", options.login_viewable)
             .set("login_only", options.login_only)
             .set("login_bypass_two_factor", options.login_bypass_two_factor)
             .set("link_viewable", options.link_viewable)
+            .set("api_linkable", options.api_linkable)
             .set("user_manageable", options.user_manageable)
             .set("basic_auth", options.basic_auth)
             .set("pkce", options.pkce)
@@ -1306,8 +1395,14 @@ impl UpdatableModel for OAuthProvider {
         if let Some(description) = options.description {
             self.description = description;
         }
+        if let Some(icon) = options.icon {
+            self.icon = icon;
+        }
         if let Some(enabled) = options.enabled {
             self.enabled = enabled;
+        }
+        if let Some(login_viewable) = options.login_viewable {
+            self.login_viewable = login_viewable;
         }
         if let Some(login_only) = options.login_only {
             self.login_only = login_only;
@@ -1317,6 +1412,9 @@ impl UpdatableModel for OAuthProvider {
         }
         if let Some(link_viewable) = options.link_viewable {
             self.link_viewable = link_viewable;
+        }
+        if let Some(api_linkable) = options.api_linkable {
+            self.api_linkable = api_linkable;
         }
         if let Some(user_manageable) = options.user_manageable {
             self.user_manageable = user_manageable;
@@ -1447,6 +1545,7 @@ impl DuplicableModel for OAuthProvider {
         query_builder
             .set("name", &options.name)
             .set("description", &self.description)
+            .set("icon", &self.icon)
             .set("client_id", &self.client_id)
             .set("client_secret", self.client_secret.clone())
             .set("auth_url", &self.auth_url)
@@ -1462,9 +1561,11 @@ impl DuplicableModel for OAuthProvider {
             .set("avatar_url_template", &self.avatar_url_template)
             .set("avatar_overwrite", self.avatar_overwrite)
             .set("enabled", self.enabled)
+            .set("login_viewable", self.login_viewable)
             .set("login_only", self.login_only)
             .set("login_bypass_two_factor", self.login_bypass_two_factor)
             .set("link_viewable", self.link_viewable)
+            .set("api_linkable", self.api_linkable)
             .set("user_manageable", self.user_manageable)
             .set("basic_auth", self.basic_auth)
             .set("pkce", self.pkce);
@@ -1503,6 +1604,7 @@ pub struct AdminApiOAuthProvider {
 
     pub name: compact_str::CompactString,
     pub description: Option<compact_str::CompactString>,
+    pub icon: Option<compact_str::CompactString>,
 
     pub client_id: compact_str::CompactString,
     pub client_secret: Option<compact_str::CompactString>,
@@ -1521,9 +1623,11 @@ pub struct AdminApiOAuthProvider {
     pub avatar_overwrite: bool,
 
     pub enabled: bool,
+    pub login_viewable: bool,
     pub login_only: bool,
     pub login_bypass_two_factor: bool,
     pub link_viewable: bool,
+    pub api_linkable: bool,
     pub user_manageable: bool,
     pub basic_auth: bool,
     pub pkce: bool,
@@ -1540,6 +1644,7 @@ pub struct ApiOAuthProvider {
     pub uuid: uuid::Uuid,
 
     pub name: compact_str::CompactString,
+    pub icon: Option<compact_str::CompactString>,
 
     pub link_viewable: bool,
     pub user_manageable: bool,

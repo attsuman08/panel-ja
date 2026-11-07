@@ -18,9 +18,11 @@ export default function AdminMountServers({ mount }: { mount: z.infer<typeof adm
     search,
     setSearch,
     setPage,
+    setPerPage,
   } = useSearchablePaginatedTable({
     queryKey: queryKeys.admin.mountAssignments.serversByMount(mount.uuid),
-    fetcher: (page, search) => getMountServers(mount.uuid, page, search),
+    fetcher: (page, search, perPage) => getMountServers(mount.uuid, page, search, perPage),
+    backgroundRefetch: true,
   });
 
   return (
@@ -37,6 +39,7 @@ export default function AdminMountServers({ mount }: { mount: z.infer<typeof adm
         loading={loading}
         pagination={mountServers}
         onPageSelect={setPage}
+        onPerPageSelect={setPerPage}
         error={error}
       >
         {mountServers?.data.map((serverMount) => (

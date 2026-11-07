@@ -28,6 +28,7 @@ pub mod app;
 pub mod metadata;
 pub mod ratelimits;
 pub mod server;
+pub mod updates;
 pub mod user;
 pub mod webauthn;
 
@@ -42,21 +43,50 @@ pub const OOBE_STEPS: &[&str] = &[
     "finished",
 ];
 
-#[derive(ToSchema, Serialize, Deserialize, Clone)]
+#[derive(ToSchema, Validate, Serialize, Deserialize, Clone)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum RouteOrderItem {
     Route {
+        #[garde(skip)]
         path: compact_str::CompactString,
+        #[garde(
+            length(chars, min = 1, max = 128),
+            inner(custom(crate::icons::validate_icon))
+        )]
+        #[schema(min_length = 1, max_length = 128)]
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        icon: Option<compact_str::CompactString>,
     },
     Divider {
+        #[garde(skip)]
         name: Option<compact_str::CompactString>,
+        #[garde(skip)]
         name_translations: BTreeMap<compact_str::CompactString, compact_str::CompactString>,
     },
     Redirect {
+        #[garde(skip)]
         name: compact_str::CompactString,
+        #[garde(skip)]
         name_translations: BTreeMap<compact_str::CompactString, compact_str::CompactString>,
+        #[garde(skip)]
         destination: compact_str::CompactString,
+        #[garde(
+            length(chars, min = 1, max = 128),
+            inner(custom(crate::icons::validate_icon))
+        )]
+        #[schema(min_length = 1, max_length = 128)]
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        icon: Option<compact_str::CompactString>,
     },
+}
+
+impl RouteOrderItem {
+    pub fn icon(&self) -> Option<&str> {
+        match self {
+            Self::Route { icon, .. } | Self::Redirect { icon, .. } => icon.as_deref(),
+            Self::Divider { .. } => None,
+        }
+    }
 }
 
 #[derive(ToSchema, Validate, Serialize, Deserialize, Clone, Copy)]
@@ -374,6 +404,8 @@ pub struct AppSettings {
     pub activity: activity::AppSettingsActivity,
     #[schema(inline)]
     pub ratelimits: ratelimits::AppSettingsRatelimits,
+    #[schema(inline)]
+    pub updates: updates::AppSettingsUpdates,
 
     #[serde(skip)]
     pub disabled_extensions: Vec<compact_str::CompactString>,
@@ -658,6 +690,8 @@ impl SettingsSerializeExt for AppSettings {
             .nest("activity", &self.activity)
             .await?
             .nest("ratelimits", &self.ratelimits)
+            .await?
+            .nest("updates", &self.updates)
             .await?;
 
         for (ext_identifier, ext_settings) in self.extensions.iter() {
@@ -698,10 +732,18 @@ impl SettingsDeserializeExt for AppSettingsDeserializer {
                 deserializer.settings,
             );
 
-            let ext_settings = ext_deserializer
+            match ext_deserializer
                 .deserialize_boxed(settings_deserializer)
-                .await?;
-            extensions.insert(ext_identifier, ext_settings);
+                .await
+            {
+                Ok(ext_settings) => {
+                    extensions.insert(ext_identifier, ext_settings);
+                }
+                Err(err) => tracing::error!(
+                    extension = %ext_identifier,
+                    "failed to deserialize extension settings, skipping: {err:#}"
+                ),
+            }
         }
 
         Ok(Box::new(AppSettings {
@@ -927,6 +969,9 @@ impl SettingsDeserializeExt for AppSettingsDeserializer {
             ratelimits: deserializer
                 .nest("ratelimits", &ratelimits::AppSettingsRatelimitsDeserializer)
                 .await?,
+            updates: deserializer
+                .nest("updates", &updates::AppSettingsUpdatesDeserializer)
+                .await?,
             disabled_extensions: deserializer
                 .take_raw_setting("disabled_extensions")
                 .map(|s| parse_disabled_extensions(&s))
@@ -976,20 +1021,58 @@ impl Deref for SettingsReadGuard<'_> {
     }
 }
 
-fn render_index_html(settings: &AppSettings) -> Result<String, anyhow::Error> {
+fn render_index_html(
+    settings: &AppSettings,
+    inactive_extensions: &[compact_str::CompactString],
+    variables: &crate::extensions::index_html::IndexHtmlVariables,
+) -> Result<String, anyhow::Error> {
     let mut environment = minijinja::Environment::new();
     environment.set_auto_escape_callback(|_| minijinja::AutoEscape::Html);
-    environment.add_global("settings", minijinja::Value::from_serialize(settings));
+    environment.add_global(
+        "settings",
+        minijinja::Value::from(minijinja::value::Serde(settings)),
+    );
     environment.add_global(
         "metadata",
-        minijinja::Value::from_serialize(settings.metadata.resolve(&settings.app)),
+        minijinja::Value::from(minijinja::value::Serde(
+            settings.metadata.resolve(&settings.app),
+        )),
     );
 
     let index_html = crate::frontend_index_html().ok_or_else(|| {
         anyhow::anyhow!("no frontend registered, call shared::register_frontend first")
     })?;
 
-    Ok(environment.render_str(index_html, minijinja::context! {})?)
+    render_index_template(
+        environment,
+        index_html,
+        inactive_extensions,
+        &variables.evaluate(settings),
+    )
+}
+
+fn render_index_template(
+    mut environment: minijinja::Environment<'_>,
+    index_html: &str,
+    inactive_extensions: &[compact_str::CompactString],
+    variables: &crate::extensions::index_html::EvaluatedIndexHtmlVariables,
+) -> Result<String, anyhow::Error> {
+    environment.add_global(
+        "inactive_extensions",
+        minijinja::Value::from(minijinja::value::Serde(inactive_extensions)),
+    );
+
+    let boot_variables = variables.clone();
+    environment.add_filter(
+        "boot_template",
+        move |source: String, identifier: String| {
+            boot_variables.render_boot_template(&source, &identifier)
+        },
+    );
+
+    let rendered = environment.render_str(index_html, minijinja::context! {})?;
+
+    Ok(rendered.replacen("</head>", &format!("{}</head>", variables.json_block()?), 1))
 }
 
 #[derive(Clone)]
@@ -1059,10 +1142,7 @@ impl<'a> SettingsWriteGuard<'a> {
         .execute(self.parent.database.write())
         .await?;
 
-        let rendered_index_html = render_index_html(&settings_guard.settings)?;
-        self.parent
-            .rendered_index_html
-            .store(ArcedIndexHtml(Arc::new(rendered_index_html)));
+        self.parent.rerender_index_html(&settings_guard.settings)?;
 
         settings_guard.expires = std::time::Instant::now() + std::time::Duration::from_secs(60);
 
@@ -1071,6 +1151,12 @@ impl<'a> SettingsWriteGuard<'a> {
         self.parent
             .cached_index
             .store(buffer_index, Ordering::Release);
+
+        crate::models::invalidate_cache_keys(
+            &self.parent.database,
+            &[crate::icons::REFERENCED_ICONS_CACHE_KEY.into()],
+        )
+        .await;
 
         crate::models::node::Node::invalidate_permissions_everywhere(
             &self.parent.database,
@@ -1102,6 +1188,7 @@ impl<'a> SettingsWriteGuard<'a> {
         json["mail_mode"] = serde_json::to_value(settings.mail_mode.clone().censored()).unwrap();
         json["captcha_provider"] =
             serde_json::to_value(settings.captcha_provider.clone().censored()).unwrap();
+        json["updates"] = serde_json::to_value(settings.updates.clone().censored()).unwrap();
 
         json
     }
@@ -1145,14 +1232,17 @@ pub struct Settings {
     write_serializing: Semaphore,
 
     rendered_index_html: arc_swap::ArcSwapAny<ArcedIndexHtml>,
+    inactive_extensions: arc_swap::ArcSwap<Vec<compact_str::CompactString>>,
+    index_html_variables: arc_swap::ArcSwap<crate::extensions::index_html::IndexHtmlVariables>,
 
     database: Arc<crate::database::Database>,
 }
 
 impl Settings {
-    async fn fetch_settings(
+    pub(crate) async fn fetch_settings_map(
         database: &Arc<crate::database::Database>,
-    ) -> Result<AppSettings, anyhow::Error> {
+    ) -> Result<HashMap<compact_str::CompactString, compact_str::CompactString>, anyhow::Error>
+    {
         let rows = sqlx::query!("SELECT * FROM settings")
             .fetch_all(database.read())
             .await?;
@@ -1161,6 +1251,14 @@ impl Settings {
         for row in rows {
             map.insert(row.key.into(), row.value.into());
         }
+
+        Ok(map)
+    }
+
+    async fn fetch_settings(
+        database: &Arc<crate::database::Database>,
+    ) -> Result<AppSettings, anyhow::Error> {
+        let mut map = Self::fetch_settings_map(database).await?;
 
         let boxed = SettingsDeserializeExt::deserialize_boxed(
             &AppSettingsDeserializer,
@@ -1179,7 +1277,7 @@ impl Settings {
             Self::fetch_settings(&database)
         )?;
 
-        let rendered_index_html = render_index_html(&s1)?;
+        let rendered_index_html = render_index_html(&s1, &[], &Default::default())?;
         let rendered_index_html =
             arc_swap::ArcSwapAny::new(ArcedIndexHtml(Arc::new(rendered_index_html)));
 
@@ -1197,6 +1295,8 @@ impl Settings {
             cached_index: AtomicUsize::new(0),
             write_serializing: Semaphore::new(1),
             rendered_index_html,
+            inactive_extensions: arc_swap::ArcSwap::from_pointee(Vec::new()),
+            index_html_variables: arc_swap::ArcSwap::from_pointee(Default::default()),
             database,
         })
     }
@@ -1204,6 +1304,45 @@ impl Settings {
     #[inline]
     pub fn get_rendered_index_html(&self) -> ArcedIndexHtml {
         self.rendered_index_html.load_full()
+    }
+
+    /// Package names are stored as frontend identifiers (`.` replaced by `_`).
+    pub async fn set_inactive_extensions(
+        &self,
+        package_names: &[compact_str::CompactString],
+    ) -> Result<(), anyhow::Error> {
+        self.inactive_extensions.store(Arc::new(
+            package_names
+                .iter()
+                .map(|package_name| package_name.replace('.', "_").into())
+                .collect(),
+        ));
+
+        let settings = self.get().await?;
+        self.rerender_index_html(&settings)?;
+
+        Ok(())
+    }
+
+    /// Only stores the variables, they are rendered by the following `set_inactive_extensions`.
+    pub(crate) fn set_index_html_variables(
+        &self,
+        variables: crate::extensions::index_html::IndexHtmlVariables,
+    ) {
+        self.index_html_variables.store(Arc::new(variables));
+    }
+
+    fn rerender_index_html(&self, settings: &AppSettings) -> Result<(), anyhow::Error> {
+        let rendered_index_html = render_index_html(
+            settings,
+            &self.inactive_extensions.load(),
+            &self.index_html_variables.load(),
+        )?;
+
+        self.rendered_index_html
+            .store(ArcedIndexHtml(Arc::new(rendered_index_html)));
+
+        Ok(())
     }
 
     pub async fn get(&self) -> Result<SettingsReadGuard<'_>, anyhow::Error> {
@@ -1237,6 +1376,10 @@ impl Settings {
             let mut guard = self.cached[inactive_index].write().await;
             guard.settings = settings;
             guard.expires = now + std::time::Duration::from_secs(60);
+
+            if let Err(err) = self.rerender_index_html(&guard.settings) {
+                tracing::error!("failed to re-render index.html after settings reload: {err:#}");
+            }
         }
 
         self.cached_index.store(inactive_index, Ordering::Release);
@@ -1600,5 +1743,61 @@ mod tests {
         let value = serde_json::to_value(CaptchaProvider::None.censored()).unwrap();
 
         assert_eq!(value["type"], "none");
+    }
+
+    // render_index_html
+    #[test]
+    fn render_index_template_renders_extension_boot_templates() {
+        const SPINNER: &str = "<i>SPINNER</i>";
+        static INDEX_HTML: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
+            let wrap = |id: &str, boot: &str| {
+                format!(
+                    r#"{{% if "{id}" not in inactive_extensions %}}{{% set boot %}}{{% filter boot_template("{id}") %}}{{% raw %}}{boot}{{% endraw %}}{{% endfilter %}}{{% endset %}}{{% if boot %}}{{{{ boot }}}}{{% else %}}{SPINNER}{{% endif %}}{{% else %}}{SPINNER}{{% endif %}}"#
+                )
+            };
+            format!(
+                "<html><head><title>t</title></head><body>[{}][{}]</body></html>",
+                wrap("good_ext", "<p>{{ variables.x }}</p>"),
+                wrap("bad_ext", "<p>{{ unclosed</p>"),
+            )
+        });
+        let render = |inactive_extensions: &[compact_str::CompactString]| {
+            let mut environment = minijinja::Environment::new();
+            environment.set_auto_escape_callback(|_| minijinja::AutoEscape::Html);
+
+            render_index_template(
+                environment,
+                &INDEX_HTML,
+                inactive_extensions,
+                &crate::extensions::index_html::EvaluatedIndexHtmlVariables(Arc::new(
+                    BTreeMap::from([
+                        (
+                            "good.ext",
+                            serde_json::Map::from_iter([("x".into(), serde_json::json!("hello"))]),
+                        ),
+                        (
+                            "bad.ext",
+                            serde_json::Map::from_iter([("x".into(), serde_json::json!("unused"))]),
+                        ),
+                    ]),
+                )),
+            )
+            .unwrap()
+        };
+
+        let active = render(&[]);
+        assert!(
+            active.contains(&format!("[<p>hello</p>][{SPINNER}]")),
+            "{active}"
+        );
+        let block_start = active.find(r#"<script type="application/json""#).unwrap();
+        assert!(block_start < active.find("</head>").unwrap());
+        assert_eq!(active.matches("</head>").count(), 1);
+
+        let inactive = render(&["good_ext".into()]);
+        assert!(
+            inactive.contains(&format!("[{SPINNER}][{SPINNER}]")),
+            "{inactive}"
+        );
     }
 }

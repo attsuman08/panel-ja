@@ -17,6 +17,7 @@ import {
   serverDirectoryUploadSchema,
   serverFilesContentMatchesSchema,
   serverFilesSearchSchema,
+  serverTrashEntrySchema,
 } from '@/lib/schemas/server/files.ts';
 import {
   DEVICE_ONLY_SETTING_KEYS,
@@ -26,6 +27,7 @@ import {
   subscribeUserSetting,
 } from '@/lib/userSettings.ts';
 import type { FileMoveGroup } from '@/pages/server/files/list/fileMove.ts';
+import type { TrashItemConflict } from '@/pages/server/files/trash/entry/trashItems.ts';
 import { FileUploader } from '@/stores/uploads.ts';
 
 export type ModalType =
@@ -46,6 +48,8 @@ export type ModalType =
   | 'largestDirectories'
   | 'incompleteUploads'
   | 'sftp'
+  | 'trashRestoreTo'
+  | 'trashRestoreConflict'
   | null;
 
 export interface SearchInfo {
@@ -90,6 +94,7 @@ export interface FileManagerStore {
   draggingTarget: string | null;
   selectedFiles: ObjectSet<z.infer<typeof serverDirectoryEntrySchema>, 'name'>;
   browsingBackup: z.infer<typeof serverBackupSchema> | null;
+  browsingTrashEntry: z.infer<typeof serverTrashEntrySchema> | null;
   browsingDirectory: string;
   setBrowsingDirectory: (directory: string) => void;
   setBrowsingContext: (context: FileManagerBrowsingContext) => void;
@@ -115,7 +120,11 @@ export interface FileManagerStore {
   setOpenModal: (modal: ModalType) => void;
   modalDirectoryEntries: z.infer<typeof serverDirectoryEntrySchema>[];
   setModalDirectoryEntries: (files: z.infer<typeof serverDirectoryEntrySchema>[]) => void;
+  trashRestoreConflicts: TrashItemConflict[];
+  setTrashRestoreConflicts: (conflicts: TrashItemConflict[]) => void;
   searchInfo: SearchInfo | null;
+  searchModalQuery: string | null;
+  setSearchModalQuery: (query: string | null) => void;
   collapsedSearchPreviews: Set<string>;
   toggleSearchPreview: (path: string) => void;
   setSearchInfo: (info: SearchInfo | null) => void;
@@ -171,6 +180,7 @@ export interface FileManagerStore {
   selectFile: (file: z.infer<typeof serverDirectoryEntrySchema>) => void;
   toggleSelectedFile: (file: z.infer<typeof serverDirectoryEntrySchema>) => void;
   selectFileRange: (file: z.infer<typeof serverDirectoryEntrySchema>) => void;
+  setFileRangeSelected: (file: z.infer<typeof serverDirectoryEntrySchema>, selected: boolean) => void;
   addSelectedFile: (file: z.infer<typeof serverDirectoryEntrySchema>) => void;
   removeSelectedFile: (file: z.infer<typeof serverDirectoryEntrySchema>) => void;
   doOpenModal: (modal: ModalType, entries?: z.infer<typeof serverDirectoryEntrySchema>[]) => void;
@@ -211,6 +221,10 @@ export type FileManagerSettingField =
   | 'imageViewerSmoothing'
   | 'audioPlayerVolume';
 
+export const EDITOR_FONT_SIZE_DEFAULT = 14;
+export const EDITOR_FONT_SIZE_MIN = 6;
+export const EDITOR_FONT_SIZE_MAX = 72;
+
 const userSettingFields: {
   [K in FileManagerSettingField]: {
     key: string;
@@ -227,7 +241,11 @@ const userSettingFields: {
     schema: booleanSchema,
     fallback: () => window.matchMedia('(pointer: coarse)').matches,
   },
-  editorFontSize: { key: 'file_manager::editor_font_size', schema: numberSchema, fallback: () => 14 },
+  editorFontSize: {
+    key: 'file_manager::editor_font_size',
+    schema: numberSchema,
+    fallback: () => EDITOR_FONT_SIZE_DEFAULT,
+  },
   editorEngine: {
     key: 'file_manager::editor_engine',
     schema: z.enum(['monaco', 'pierre']),
@@ -342,6 +360,7 @@ export const createFileManagerStore = (
       draggingTarget: null,
       selectedFiles: new ObjectSet<z.infer<typeof serverDirectoryEntrySchema>, 'name'>('name'),
       browsingBackup: null,
+      browsingTrashEntry: null,
       browsingDirectory: initial.browsingDirectory,
       setBrowsingDirectory: (directory) =>
         set((state) => {
@@ -408,7 +427,11 @@ export const createFileManagerStore = (
       setOpenModal: (modal) => set({ openModal: modal }),
       modalDirectoryEntries: [],
       setModalDirectoryEntries: (files) => set({ modalDirectoryEntries: files }),
+      trashRestoreConflicts: [],
+      setTrashRestoreConflicts: (conflicts) => set({ trashRestoreConflicts: conflicts }),
       searchInfo: null,
+      searchModalQuery: null,
+      setSearchModalQuery: (query) => set({ searchModalQuery: query }),
       collapsedSearchPreviews: new Set<string>(),
       toggleSearchPreview: (path) =>
         set((state) => {
@@ -705,6 +728,28 @@ export const createFileManagerStore = (
 
         const [start, end] = anchorIndex < targetIndex ? [anchorIndex, targetIndex] : [targetIndex, anchorIndex];
         set({ selectedFiles: new ObjectSet('name', entries.slice(start, end + 1)) });
+      },
+      setFileRangeSelected: (file, selected) => {
+        const entries = get().browsingEntries.data;
+        const targetIndex = entries.findIndex((entry) => entry.name === file.name);
+        if (targetIndex === -1) return;
+
+        const anchorIndex = selectionAnchor ? entries.findIndex((entry) => entry.name === selectionAnchor!.name) : -1;
+        const fromIndex = anchorIndex === -1 ? targetIndex : anchorIndex;
+        const [start, end] = fromIndex < targetIndex ? [fromIndex, targetIndex] : [targetIndex, fromIndex];
+        selectionAnchor = file;
+
+        set((state) => {
+          const next = state.selectedFiles.clone();
+          for (const entry of entries.slice(start, end + 1)) {
+            if (selected) {
+              next.add(entry);
+            } else {
+              next.delete(entry);
+            }
+          }
+          return { selectedFiles: next };
+        });
       },
       addSelectedFile: (file) => set((state) => ({ selectedFiles: state.selectedFiles.clone().add(file) })),
       removeSelectedFile: (file) =>

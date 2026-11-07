@@ -33,7 +33,7 @@ import EggImportUrlModal from './modals/EggImportUrlModal.tsx';
 
 function EggsContainer({ contextNest }: { contextNest: z.infer<typeof adminNestSchema> }) {
   const navigate = useNavigate();
-  const { addToast } = useToast();
+  const { addToast, addPendingToast } = useToast();
   const { t } = useTranslations();
 
   const canCreate = useAdminCan('eggs.create');
@@ -51,15 +51,15 @@ function EggsContainer({ contextNest }: { contextNest: z.infer<typeof adminNestS
     search,
     setSearch,
     setPage,
+    setPerPage,
   } = useSearchablePaginatedTable({
     queryKey: queryKeys.admin.nests.eggs(contextNest.uuid),
-    fetcher: (page, search) => getEggs(contextNest.uuid, page, search),
+    fetcher: (page, search, perPage) => getEggs(contextNest.uuid, page, search, perPage),
   });
 
   const {
     selected: selectedEggs,
-    add: addSelectedEgg,
-    remove: removeSelectedEgg,
+    toggle: toggleEgg,
     clear: clearSelectedEggs,
     selectAll,
     allSelected,
@@ -75,13 +75,15 @@ function EggsContainer({ contextNest }: { contextNest: z.infer<typeof adminNestS
       return;
     }
 
+    const pendingToast = addPendingToast(t('common.toast.importing', { file: file.name }));
+
     importEgg(contextNest.uuid, data)
       .then(() => {
         refetch();
-        addToast(t('pages.admin.nests.tabs.eggs.page.toast.imported', {}), 'success');
+        pendingToast.settle(t('pages.admin.nests.tabs.eggs.page.toast.imported', {}), 'success');
       })
       .catch((msg) => {
-        addToast(httpErrorToHuman(msg), 'error');
+        pendingToast.settle(httpErrorToHuman(msg), 'error');
       });
   };
 
@@ -203,7 +205,14 @@ function EggsContainer({ contextNest }: { contextNest: z.infer<typeof adminNestS
       />
 
       <SelectionArea {...selectionAreaProps}>
-        <Table columns={columns} loading={loading} pagination={eggs} onPageSelect={setPage} error={error}>
+        <Table
+          columns={columns}
+          loading={loading}
+          pagination={eggs}
+          onPageSelect={setPage}
+          onPerPageSelect={setPerPage}
+          error={error}
+        >
           {eggs?.data.map((egg) => (
             <SelectionArea.Selectable key={egg.uuid} item={egg}>
               {(innerRef: Ref<HTMLElement>) => (
@@ -212,7 +221,7 @@ function EggsContainer({ contextNest }: { contextNest: z.infer<typeof adminNestS
                   nest={contextNest}
                   egg={egg}
                   isSelected={selectedEggs.has(egg.uuid)}
-                  onSelectionChange={(selected) => (selected ? addSelectedEgg(egg) : removeSelectedEgg(egg))}
+                  onSelectionChange={(selected, range) => toggleEgg(egg, selected, range)}
                   ref={innerRef as Ref<HTMLTableRowElement>}
                 />
               )}

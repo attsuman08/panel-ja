@@ -33,7 +33,7 @@ const ScheduleCalendarModal = lazy(() => import('./modals/ScheduleCalendarModal.
 
 export default function ServerSchedules() {
   const { t } = useTranslations();
-  const { addToast } = useToast();
+  const { addToast, addPendingToast } = useToast();
   const server = useServerStore((state) => state.server);
   const serverStoreApi = useServerStoreApi();
 
@@ -54,11 +54,12 @@ export default function ServerSchedules() {
     debouncedSearch,
     setSearch,
     setPage,
+    setPerPage,
     refetch,
   } = useSearchablePaginatedTable({
     queryKey: queryKeys.server(server.uuid).schedules.all(),
-    fetcher: (page, search) =>
-      getSchedules(server.uuid, page, search).then((schedules) => ({
+    fetcher: (page, search, perPage) =>
+      getSchedules(server.uuid, page, search, perPage).then((schedules) => ({
         ...schedules,
         data: schedules.data.map((schedule) =>
           applyScheduleCompletion(schedule, serverStoreApi.getState().scheduleCompletions),
@@ -76,10 +77,10 @@ export default function ServerSchedules() {
   } = useTableSelection({ items: schedules?.data, shortcuts: canSelect });
 
   const handleScheduleClick = (schedule: z.infer<typeof serverScheduleSchema>, event: React.MouseEvent) => {
-    if (canSelect && (event.ctrlKey || event.metaKey)) {
+    if (canSelect && (event.ctrlKey || event.metaKey || event.shiftKey)) {
       event.preventDefault();
       event.stopPropagation();
-      toggleSchedule(schedule, !selectedSchedules.has(schedule.uuid));
+      toggleSchedule(schedule, !selectedSchedules.has(schedule.uuid), event.shiftKey);
     }
   };
 
@@ -97,13 +98,15 @@ export default function ServerSchedules() {
       return;
     }
 
+    const pendingToast = addPendingToast(t('common.toast.importing', { file: file.name }));
+
     importSchedule(server.uuid, data)
       .then(() => {
         refetch();
-        addToast(t('pages.server.schedules.toast.imported', {}), 'success');
+        pendingToast.settle(t('pages.server.schedules.toast.imported', {}), 'success');
       })
       .catch((msg) => {
-        addToast(httpErrorToHuman(msg), 'error');
+        pendingToast.settle(httpErrorToHuman(msg), 'error');
       });
   };
 
@@ -129,7 +132,7 @@ export default function ServerSchedules() {
       title={t('pages.server.schedules.title', {})}
       registry={window.extensionContext.extensionRegistry.pages.server.schedules.container}
       subtitle={t('pages.server.schedules.subtitle', {
-        current: schedules?.total ?? 0,
+        current: schedules?.total ?? '…',
         max: server.featureLimits.schedules,
       })}
       search={search}
@@ -149,7 +152,7 @@ export default function ServerSchedules() {
                 enabled={atLimit}
                 label={t('pages.server.schedules.tooltip.limitReached', { max: server.featureLimits.schedules })}
               >
-                <Button onClick={() => fileInputRef.current?.click()} color='blue' disabled={atLimit}>
+                <Button onClick={() => fileInputRef.current?.click()} color='blue' disabled={!schedules || atLimit}>
                   <FontAwesomeIcon icon={faUpload} className='mr-2' />
                   {t('common.button.import', {})}
                 </Button>
@@ -159,7 +162,7 @@ export default function ServerSchedules() {
                 label={t('pages.server.schedules.tooltip.limitReached', { max: server.featureLimits.schedules })}
               >
                 <Button
-                  disabled={atLimit}
+                  disabled={!schedules || atLimit}
                   onClick={() => setOpenModal('create')}
                   color='blue'
                   leftSection={<FontAwesomeIcon icon={faPlus} />}
@@ -211,6 +214,7 @@ export default function ServerSchedules() {
           error={error}
           pagination={schedules}
           onPageSelect={setPage}
+          onPerPageSelect={setPerPage}
           empty={
             debouncedSearch ? undefined : (
               <EmptyState
@@ -232,7 +236,7 @@ export default function ServerSchedules() {
                       <Button
                         variant='default'
                         onClick={() => fileInputRef.current?.click()}
-                        disabled={atLimit}
+                        disabled={!schedules || atLimit}
                         leftSection={<FontAwesomeIcon icon={faUpload} />}
                       >
                         {t('common.button.import', {})}
@@ -243,7 +247,7 @@ export default function ServerSchedules() {
                       label={t('pages.server.schedules.tooltip.limitReached', { max: server.featureLimits.schedules })}
                     >
                       <Button
-                        disabled={atLimit}
+                        disabled={!schedules || atLimit}
                         onClick={() => setOpenModal('create')}
                         color='blue'
                         leftSection={<FontAwesomeIcon icon={faPlus} />}
@@ -265,7 +269,9 @@ export default function ServerSchedules() {
                   atLimit={atLimit}
                   ref={innerRef as Ref<HTMLTableRowElement>}
                   isSelected={selectedSchedules.has(schedule.uuid)}
-                  onSelectionChange={canSelect ? (selected) => toggleSchedule(schedule, selected) : undefined}
+                  onSelectionChange={
+                    canSelect ? (selected, range) => toggleSchedule(schedule, selected, range) : undefined
+                  }
                   onClick={(e) => handleScheduleClick(schedule, e)}
                 />
               )}

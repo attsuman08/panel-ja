@@ -26,9 +26,11 @@ function MountsContainer() {
     search,
     setSearch,
     setPage,
+    setPerPage,
   } = useSearchablePaginatedTable({
     queryKey: queryKeys.admin.mounts.all(),
     fetcher: getMounts,
+    backgroundRefetch: true,
   });
 
   return (
@@ -49,7 +51,14 @@ function MountsContainer() {
         </AdminCan>
       }
     >
-      <Table columns={mountTableColumns()} loading={loading} pagination={mounts} onPageSelect={setPage} error={error}>
+      <Table
+        columns={mountTableColumns()}
+        loading={loading}
+        pagination={mounts}
+        onPageSelect={setPage}
+        onPerPageSelect={setPerPage}
+        error={error}
+      >
         {mounts?.data.map((m) => (
           <MountRow key={m.uuid} mount={m} />
         ))}

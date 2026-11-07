@@ -1,4 +1,4 @@
-import { type OnMount } from '@monaco-editor/react';
+import { useMergedRef } from '@mantine/hooks';
 import { RefObject, useId } from 'react';
 import { FileEditorActionContext } from 'shared/src/registries/pages/server/files';
 import { useShallow } from 'zustand/react/shallow';
@@ -10,6 +10,8 @@ import PierreEditor, {
 } from '@/elements/editors/PierreEditor.tsx';
 import { fileModelUri } from '@/lib/editor/fileModelUri.ts';
 import { registerHoconLanguage, registerTomlLanguage } from '@/lib/editor/monaco.ts';
+import { type OnMount } from '@/lib/editor/monacoLoader.ts';
+import useEditorFontSizeZoom from '@/pages/server/files/hooks/useEditorFontSizeZoom.ts';
 import { useFileManager } from '@/providers/FileManagerProvider.tsx';
 import { useServerStore } from '@/stores/server.ts';
 import { FileAudioPreview, FileImagePreview } from './FileMediaPreview.tsx';
@@ -72,9 +74,10 @@ export default function FileEditorContent({
       editorMinimap: state.editorMinimap,
     })),
   );
+  const mergedContainerRef = useMergedRef(containerRef, useEditorFontSizeZoom());
 
   return (
-    <div ref={containerRef} className='flex max-w-full w-full z-1 absolute'>
+    <div ref={mergedContainerRef} className='flex max-w-full w-full z-1 absolute'>
       {matchedFileEditorAction?.contentType === 'string' ? (
         <matchedFileEditorAction.content
           content={content}

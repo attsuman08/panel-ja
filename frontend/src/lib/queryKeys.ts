@@ -15,6 +15,7 @@ const admin = {
     all: () => ['admin', 'roles'] as const,
     detail: (uuid: string) => ['admin', 'roles', { uuid }] as const,
     users: (roleUuid: string) => ['admin', 'roles', roleUuid, 'users'] as const,
+    counts: () => ['admin', 'roles', 'counts'] as const,
   },
 
   nodes: {
@@ -25,8 +26,10 @@ const admin = {
     bandwidth: (nodeUuid: string) => ['admin', 'nodes', nodeUuid, 'bandwidth'] as const,
     capacities: () => ['admin', 'nodes', 'capacities'] as const,
     systemOverview: (nodeUuid: string) => ['admin', 'nodes', nodeUuid, 'system', 'overview'] as const,
+    systemStats: (nodeUuid: string) => ['admin', 'nodes', nodeUuid, 'system', 'stats'] as const,
     systemDirect: (nodeUuid: string) => ['admin', 'nodes', nodeUuid, 'system', 'direct'] as const,
     systemIps: (nodeUuid: string) => ['admin', 'nodes', nodeUuid, 'system', 'ips'] as const,
+    upgradeStatus: (nodeUuid: string) => ['admin', 'nodes', nodeUuid, 'upgrade'] as const,
     config: (nodeUuid: string) => ['admin', 'nodes', nodeUuid, 'config'] as const,
     mountAllowed: (nodeUuid: string, mountUuid: string) =>
       ['admin', 'nodes', nodeUuid, 'mounts', mountUuid, 'allowed'] as const,
@@ -62,6 +65,7 @@ const admin = {
     all: () => ['admin', 'nests'] as const,
     detail: (uuid: string) => ['admin', 'nests', { uuid }] as const,
     eggs: (nestUuid: string) => ['admin', 'nests', nestUuid, 'eggs'] as const,
+    counts: () => ['admin', 'nests', 'counts'] as const,
   },
 
   eggs: {
@@ -69,6 +73,7 @@ const admin = {
     list: (nestUuid?: string | null) =>
       nestUuid ? (['admin', 'eggs', 'list', nestUuid] as const) : (['admin', 'eggs', 'list'] as const),
     grouped: () => ['admin', 'eggs', 'grouped'] as const,
+    counts: () => ['admin', 'eggs', 'counts'] as const,
     detail: (uuid: string) => ['admin', 'eggs', { uuid }] as const,
     servers: (eggUuid: string) => ['admin', 'eggs', eggUuid, 'servers'] as const,
   },
@@ -79,6 +84,7 @@ const admin = {
     databaseHosts: (locationUuid: string) => ['admin', 'locations', locationUuid, 'database-hosts'] as const,
     databaseAgentHosts: (locationUuid: string) => ['admin', 'locations', locationUuid, 'database-agent-hosts'] as const,
     nodes: (locationUuid: string) => ['admin', 'locations', locationUuid, 'nodes'] as const,
+    counts: () => ['admin', 'locations', 'counts'] as const,
   },
 
   mounts: {
@@ -116,7 +122,10 @@ const admin = {
   databaseHosts: {
     all: () => ['admin', 'database-hosts'] as const,
     detail: (uuid: string) => ['admin', 'database-hosts', { uuid }] as const,
+    counts: () => ['admin', 'database-hosts', 'counts'] as const,
     databases: (hostUuid: string) => ['admin', 'database-hosts', hostUuid, 'databases'] as const,
+    databaseSizes: (hostUuid: string) => ['admin', 'database-hosts', hostUuid, 'databases', 'sizes'] as const,
+    version: (hostUuid: string) => ['admin', 'database-hosts', hostUuid, 'version'] as const,
   },
 
   databaseAgentHosts: {
@@ -126,6 +135,8 @@ const admin = {
     capacity: (uuid: string) => ['admin', 'database-agent-hosts', uuid, 'capacity'] as const,
     capacities: () => ['admin', 'database-agent-hosts', 'capacities'] as const,
     systemOverview: (uuid: string) => ['admin', 'database-agent-hosts', uuid, 'system', 'overview'] as const,
+    systemStats: (uuid: string) => ['admin', 'database-agent-hosts', uuid, 'system', 'stats'] as const,
+    upgradeStatus: (uuid: string) => ['admin', 'database-agent-hosts', uuid, 'upgrade'] as const,
   },
 
   databaseAgentTemplates: {
@@ -165,6 +176,10 @@ const admin = {
     databaseAgentHosts: (uuid: string) => ['admin', 'system-backup-policies', uuid, 'database-agent-hosts'] as const,
     locations: (uuid: string) => ['admin', 'system-backup-policies', uuid, 'locations'] as const,
     servers: (uuid: string) => ['admin', 'system-backup-policies', uuid, 'servers'] as const,
+    runs: (uuid: string) => ['admin', 'system-backup-policies', uuid, 'runs'] as const,
+    runTargets: (uuid: string, runUuid: string) =>
+      ['admin', 'system-backup-policies', uuid, 'runs', runUuid, 'targets'] as const,
+    latestRuns: () => ['admin', 'system-backup-policies', 'latest-runs'] as const,
   },
 
   oAuthProviders: {
@@ -179,6 +194,7 @@ const admin = {
     detail: (uuid: string) => ['admin', 'egg-repositories', { uuid }] as const,
     eggs: (repoUuid: string) => ['admin', 'egg-repositories', repoUuid, 'eggs'] as const,
     eggsUnscoped: () => ['admin', 'egg-repositories', 'eggs'] as const,
+    counts: () => ['admin', 'egg-repositories', 'counts'] as const,
   },
 
   eggConfigurations: {
@@ -251,7 +267,7 @@ const server = (serverUuid: string) => ({
     all: () => ['server', serverUuid, 'databases'] as const,
     hosts: () => ['server', serverUuid, 'databases', 'hosts'] as const,
     detail: (databaseUuid: string) => ['server', serverUuid, 'databases', { uuid: databaseUuid }] as const,
-    size: (databaseUuid: string) => ['server', serverUuid, 'databases', databaseUuid, 'size'] as const,
+    hostSizes: (hostUuid: string) => ['server', serverUuid, 'databases', 'hosts', hostUuid, 'sizes'] as const,
     schema: (databaseUuid: string) => ['server', serverUuid, 'databases', databaseUuid, 'schema'] as const,
     rows: (databaseUuid: string) => ['server', serverUuid, 'databases', databaseUuid, 'rows'] as const,
     columnTypes: (databaseUuid: string) => ['server', serverUuid, 'databases', databaseUuid, 'column-types'] as const,
@@ -294,6 +310,7 @@ const server = (serverUuid: string) => ({
     pathStat: (directory: string, names: string[]) =>
       ['server', serverUuid, 'files', 'path-stat', directory, names] as const,
     trash: () => ['server', serverUuid, 'files', 'trash'] as const,
+    trashEntry: (uuid: string) => ['server', serverUuid, 'files', 'trash', { uuid }] as const,
   },
   firewall: {
     all: () => ['server', serverUuid, 'firewall'] as const,
@@ -306,6 +323,10 @@ const server = (serverUuid: string) => ({
   },
   network: {
     all: () => ['server', serverUuid, 'network'] as const,
+  },
+  resources: {
+    history: (start: number, end: number, points: number) =>
+      ['server', serverUuid, 'resources', 'history', { start, end, points }] as const,
   },
   schedules: {
     all: () => ['server', serverUuid, 'schedules'] as const,
@@ -355,4 +376,13 @@ const user = {
   },
 };
 
-export const queryKeys = { admin, server, user };
+const global = {
+  iconManifest: {
+    all: () => ['global', 'iconManifest'] as const,
+  },
+  timezones: {
+    all: () => ['global', 'timezones'] as const,
+  },
+};
+
+export const queryKeys = { admin, global, server, user };

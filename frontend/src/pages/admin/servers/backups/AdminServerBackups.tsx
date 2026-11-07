@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import deleteFailedServerBackups from '@/api/admin/servers/backups/deleteFailedServerBackups.ts';
 import getServerBackups from '@/api/admin/servers/backups/getServerBackups.ts';
+import retryFailedServerBackupDeletions from '@/api/admin/servers/backups/retryFailedServerBackupDeletions.ts';
 import AdminSubContentContainer from '@/elements/containers/AdminSubContentContainer.tsx';
 import Table from '@/elements/data-display/Table.tsx';
 import Switch from '@/elements/input/Switch.tsx';
@@ -11,6 +12,7 @@ import { serverBackupTableColumns } from '@/lib/tableColumns.ts';
 import { useSearchablePaginatedTable } from '@/plugins/resource/useSearchablePaginatedTable.ts';
 import { useTranslations } from '@/providers/TranslationProvider.tsx';
 import DeleteFailedBackupsButton from '../../nodes/backups/DeleteFailedBackupsButton.tsx';
+import RetryFailedDeletionsButton from '../../nodes/backups/RetryFailedDeletionsButton.tsx';
 import AdminServerBackupRow from './AdminServerBackupRow.tsx';
 
 export default function AdminServerBackups({ server }: { server: AdminServer }) {
@@ -24,9 +26,11 @@ export default function AdminServerBackups({ server }: { server: AdminServer }) 
     search,
     setSearch,
     setPage,
+    setPerPage,
   } = useSearchablePaginatedTable({
     queryKey: queryKeys.admin.backups.byServer(server.uuid),
-    fetcher: (page, search) => getServerBackups(server.uuid, page, search, showPartiallyDetachedServerBackups),
+    fetcher: (page, search, perPage) =>
+      getServerBackups(server.uuid, page, search, showPartiallyDetachedServerBackups, perPage),
     paginationKey: 'backups',
     deps: [showPartiallyDetachedServerBackups],
     refetchInterval: (data) =>
@@ -56,6 +60,16 @@ export default function AdminServerBackups({ server }: { server: AdminServer }) 
               })
             }
           />
+
+          <RetryFailedDeletionsButton
+            failedDeletions={serverBackups?.failedDeletions ?? 0}
+            onRetry={(force) =>
+              retryFailedServerBackupDeletions(server.uuid, {
+                partiallyDetached: showPartiallyDetachedServerBackups,
+                force,
+              })
+            }
+          />
         </Group>
       }
       registry={window.extensionContext.extensionRegistry.pages.admin.servers.view.backups.subContainer}
@@ -67,6 +81,7 @@ export default function AdminServerBackups({ server }: { server: AdminServer }) 
         error={error}
         pagination={serverBackups?.backups}
         onPageSelect={setPage}
+        onPerPageSelect={setPerPage}
       >
         {serverBackups?.backups.data.map((backup) => (
           <AdminServerBackupRow key={backup.uuid} server={server} backup={backup} />

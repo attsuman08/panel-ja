@@ -90,7 +90,7 @@ export default function EggVariableContainer({
 
   const doRemove = () => {
     if (contextVariable?.uuid) {
-      deleteEggVariable(contextNest.uuid, contextEgg.uuid, contextVariable.uuid)
+      return deleteEggVariable(contextNest.uuid, contextEgg.uuid, contextVariable.uuid)
         .then(() => {
           removeEggVariable(contextVariable);
           addToast(t('pages.admin.nests.tabs.eggs.page.tabs.variables.page.toast.deleted', {}), 'success');
@@ -205,7 +205,7 @@ export default function EggVariableContainer({
               variant='subtle'
               color='gray'
               style={{ cursor: 'grab', flexShrink: 0 }}
-              className='text-gray-400! light:text-gray-500!'
+              className='text-(--mantine-color-dimmed)!'
               aria-label={t('pages.admin.nests.tabs.eggs.page.tabs.variables.page.aria.reorder', {})}
               {...dragHandleProps}
             >

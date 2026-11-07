@@ -86,10 +86,8 @@ mod post {
     use shared::{
         ApiError, GetState,
         models::{
-            ByUuid, CreatableModel, IntoApiObject,
-            admin_activity::GetAdminActivityLogger,
-            oauth_provider::OAuthProvider,
-            user::{GetPermissionManager, GetUser},
+            ByUuid, CreatableModel, IntoApiObject, admin_activity::GetAdminActivityLogger,
+            oauth_provider::OAuthProvider, user::GetPermissionManager,
         },
         response::{ApiResponse, ApiResponseResult},
     };
@@ -124,7 +122,6 @@ mod post {
     pub async fn route(
         state: GetState,
         permissions: GetPermissionManager,
-        caller: GetUser,
         user: GetParamUser,
         activity_logger: GetAdminActivityLogger,
         shared::Payload(data): shared::Payload<Payload>,
@@ -138,37 +135,6 @@ mod post {
         permissions.has_admin_permission("users.oauth-links")?;
         permissions.can_modify_user(&user)?;
 
-        if !caller.admin {
-            let caller_admin = caller
-                .role
-                .as_ref()
-                .map(|r| r.admin_permissions.as_slice())
-                .unwrap_or(&[]);
-            let caller_server = caller
-                .role
-                .as_ref()
-                .map(|r| r.server_permissions.as_slice())
-                .unwrap_or(&[]);
-            let target_admin = user
-                .role
-                .as_ref()
-                .map(|r| r.admin_permissions.as_slice())
-                .unwrap_or(&[]);
-            let target_server = user
-                .role
-                .as_ref()
-                .map(|r| r.server_permissions.as_slice())
-                .unwrap_or(&[]);
-
-            if !target_admin.iter().all(|p| caller_admin.contains(p))
-                || !target_server.iter().all(|p| caller_server.contains(p))
-            {
-                return ApiResponse::error("permissions: more permissions than self")
-                    .with_status(StatusCode::FORBIDDEN)
-                    .ok();
-            }
-        }
-
         let oauth_provider =
             match OAuthProvider::by_uuid_optional(&state.database, data.oauth_provider_uuid).await?
             {
@@ -179,6 +145,14 @@ mod post {
                         .ok();
                 }
             };
+
+        if !permissions.can_link_identity(&user, oauth_provider.api_linkable) {
+            return ApiResponse::error(
+                "you can only link identities to your own account from a session, or with an api key holding users.impersonate through an api-linkable oauth provider",
+            )
+            .with_status(StatusCode::FORBIDDEN)
+            .ok();
+        }
 
         let options = shared::models::user_oauth_link::CreateUserOAuthLinkOptions {
             user_uuid: user.uuid,

@@ -24,9 +24,11 @@ export default function AdminServerDevices({ server }: { server: AdminServer }) 
     search,
     setSearch,
     setPage,
+    setPerPage,
   } = useSearchablePaginatedTable({
     queryKey: queryKeys.admin.deviceAssignments.devicesByServer(server.uuid),
-    fetcher: (page, search) => getServerDevices(server.uuid, page, search),
+    fetcher: (page, search, perPage) => getServerDevices(server.uuid, page, search, perPage),
+    backgroundRefetch: true,
   });
 
   return (
@@ -50,6 +52,7 @@ export default function AdminServerDevices({ server }: { server: AdminServer }) 
         loading={loading}
         pagination={serverDevices}
         onPageSelect={setPage}
+        onPerPageSelect={setPerPage}
         error={error}
       >
         {serverDevices?.data.map((device) => (

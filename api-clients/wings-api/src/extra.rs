@@ -2,7 +2,15 @@ use garde::Validate;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-pub type Config = super::system_config::get::Response200;
+#[derive(Debug, ToSchema, Deserialize, Serialize, Clone)]
+#[serde(transparent)]
+pub struct Config(pub serde_json::Value);
+
+impl Config {
+    pub fn view<T: serde::de::DeserializeOwned>(&self) -> Result<T, serde_json::Error> {
+        T::deserialize(&self.0)
+    }
+}
 
 #[derive(Debug, ToSchema, Deserialize, Serialize, Clone)]
 #[serde(tag = "type", rename_all = "snake_case")]
@@ -680,6 +688,13 @@ pub enum ScheduleTrigger {
         #[garde(skip)]
         #[schema(value_type = String, example = "* * * * * *")]
         schedule: Box<croner::Cron>,
+        #[garde(range(min = 1, max = 52))]
+        #[schema(minimum = 1, maximum = 52)]
+        #[serde(default = "default_week_interval")]
+        week_interval: u32,
+        #[garde(skip)]
+        #[serde(default)]
+        week_anchor: Option<chrono::NaiveDate>,
     },
     PowerAction {
         #[garde(skip)]
@@ -726,6 +741,64 @@ pub enum ScheduleTrigger {
         output_into: Option<ScheduleVariable>,
     },
     Crash,
+}
+
+fn default_week_interval() -> u32 {
+    1
+}
+
+pub fn next_cron_occurrence<Tz: chrono::TimeZone>(
+    schedule: &croner::Cron,
+    week_interval: u32,
+    week_anchor: Option<chrono::NaiveDate>,
+    after: chrono::DateTime<Tz>,
+) -> Option<chrono::DateTime<Tz>> {
+    let mut candidate = schedule.find_next_occurrence(&after, false).ok()?;
+    if week_interval <= 1 {
+        return Some(candidate);
+    }
+
+    let interval = i64::from(week_interval);
+    let anchor = match week_anchor {
+        Some(anchor) => anchor,
+        None => chrono::NaiveDate::from_ymd_opt(1970, 1, 5)?,
+    };
+
+    loop {
+        let week = (candidate.date_naive() - anchor).num_days().div_euclid(7);
+        let phase = week.rem_euclid(interval);
+        if phase == 0 {
+            return Some(candidate);
+        }
+
+        let window_start = anchor.checked_add_signed(chrono::TimeDelta::try_weeks(
+            week.checked_add(interval - phase)?,
+        )?)?;
+        let timezone = candidate.timezone();
+        let window_start = (0..24).find_map(|hour| {
+            timezone
+                .from_local_datetime(&window_start.and_hms_opt(hour, 0, 0)?)
+                .earliest()
+        })?;
+
+        candidate = schedule.find_next_occurrence(&window_start, true).ok()?;
+    }
+}
+
+impl ScheduleTrigger {
+    pub fn permissions(&self) -> &'static [&'static str] {
+        match self {
+            ScheduleTrigger::Cron { .. } => &[],
+            ScheduleTrigger::PowerAction { .. } => &[],
+            ScheduleTrigger::ServerState { .. } => &[],
+            ScheduleTrigger::BackupStatus { .. } => &[],
+            ScheduleTrigger::DatabaseBackupStatus { .. } => &[],
+            ScheduleTrigger::ScheduleCompletion { .. } => &[],
+            ScheduleTrigger::ResourceUsage { .. } => &[],
+            ScheduleTrigger::ConsoleLine { .. } => &["control.read-console"],
+            ScheduleTrigger::Crash => &[],
+        }
+    }
 }
 
 #[derive(ToSchema, Deserialize, Serialize, Clone, Copy)]
@@ -869,11 +942,13 @@ pub const FORBIDDEN_CONFIG_PATHS: &[&str] = &[
     "system.passwd.directory",
     "system.backups.restic.repository",
     "system.backups.restic.password_file",
+    "system.backups.restic.environment",
     "system.backups.mounting.path",
     "system.username",
     "system.user",
     "system.passwd",
     "docker.socket",
+    "docker.lxcfs.directory",
     "tundra.data_directory",
     "tundra.binary",
     "tundra.image",
@@ -889,6 +964,16 @@ pub const FORBIDDEN_CONFIG_PATHS: &[&str] = &[
     "api.disable_remote_download",
     "api.remote_download_blocked_cidrs",
     "api.schedule.steps.http_request",
+];
+
+/// Config paths holding secrets, `*` matching every key of a map.
+pub const SECRET_CONFIG_PATHS: &[&str] = &[
+    "token",
+    "token_id",
+    "remote_headers.*",
+    "docker.registries.*.password",
+    "docker.log_config.config.*",
+    "system.backups.restic.environment.*",
 ];
 
 pub fn strip_config_paths(value: &mut serde_json::Value) -> Vec<&'static str> {

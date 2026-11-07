@@ -1,0 +1,44 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT\n                    COUNT(*) as instances,\n                    COALESCE(SUM(COALESCE(server_database_instances.cpu, t.cpu)), 0)::int8 as cpu,\n                    COALESCE(SUM(COALESCE(server_database_instances.memory, t.memory)), 0)::int8 as memory,\n                    COALESCE(SUM(COALESCE(server_database_instances.disk, t.disk)), 0)::int8 as disk\n                FROM server_database_instances\n                LEFT JOIN database_agent_templates t ON t.uuid = server_database_instances.database_agent_template_uuid\n                WHERE server_database_instances.database_agent_host_uuid = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "instances",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "cpu",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "memory",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "disk",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "6bed0ff9d96a085a519656a41639e02bcf89b51828e4bdb0660211569ad5d014"
+}

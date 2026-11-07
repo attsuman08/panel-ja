@@ -17,6 +17,7 @@ import { z } from 'zod';
 import { httpErrorToHuman } from '@/api/axios.ts';
 import deleteBackup from '@/api/server/backups/deleteBackup.ts';
 import downloadBackup from '@/api/server/backups/downloadBackup.ts';
+import updateBackup from '@/api/server/backups/updateBackup.ts';
 import Button from '@/elements/buttons/Button.tsx';
 import BackupRetentionStatusBadge from '@/elements/data-display/BackupRetentionStatusBadge.tsx';
 import BackupSourceLabel from '@/elements/data-display/BackupSourceLabel.tsx';
@@ -36,6 +37,7 @@ import { downloadUrl } from '@/lib/network/url.ts';
 import { queryKeys } from '@/lib/queryKeys.ts';
 import { streamingArchiveFormat } from '@/lib/schemas/generic.ts';
 import { serverBackupSchema } from '@/lib/schemas/server/backups.ts';
+import { applyBackupUpdate } from '@/pages/server/backups/backupCache.ts';
 import DatabaseInstanceBackupRestoreModal from '@/pages/server/databases/instances/modals/DatabaseInstanceBackupRestoreModal.tsx';
 import { useServerCan } from '@/plugins/usePermissions.ts';
 import { SocketEvent } from '@/plugins/websocket/useWebsocketEvent.ts';
@@ -55,7 +57,7 @@ interface BackupRowProps {
   columns: BackupColumns;
   readOnly?: boolean;
   isSelected?: boolean;
-  onSelectionChange?: (selected: boolean) => void;
+  onSelectionChange?: (selected: boolean, range?: boolean) => void;
 }
 
 const BackupRow = forwardRef<HTMLTableRowElement, BackupRowProps>(function BackupRow(
@@ -63,11 +65,11 @@ const BackupRow = forwardRef<HTMLTableRowElement, BackupRowProps>(function Backu
   ref,
 ) {
   const { t, tItem } = useTranslations();
-  const { addToast } = useToast();
+  const { addToast, addPendingToast } = useToast();
 
   const server = useServerStore((state) => state.server);
   const socketInstance = useServerStore((state) => state.socketInstance);
-  const updateBackup = useServerStore((state) => state.updateBackup);
+  const updateStoreBackup = useServerStore((state) => state.updateBackup);
   const progress = useServerStore((state) => state.backupProgress.get(backup.uuid));
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -79,13 +81,15 @@ const BackupRow = forwardRef<HTMLTableRowElement, BackupRowProps>(function Backu
   const metadataJson = useMemo(() => JSON.stringify(backup.metadata, null, 2), [backup.metadata]);
 
   const doDownload = (archiveFormat: z.infer<typeof streamingArchiveFormat>) => {
-    downloadBackup(server.uuid, backup.uuid, archiveFormat)
+    const pendingToast = addPendingToast(t('common.toast.preparingDownload', {}));
+
+    return downloadBackup(server.uuid, backup.uuid, archiveFormat)
       .then(({ url }) => {
-        addToast(t('pages.server.backups.toast.downloadStarted', {}), 'success');
-        downloadUrl(url);
+        pendingToast.settle(t('pages.server.backups.toast.downloadStarted', {}), 'success');
+        downloadUrl(url, () => addToast(t('common.toast.downloadFailed', {}), 'error'));
       })
       .catch((msg) => {
-        addToast(httpErrorToHuman(msg), 'error');
+        pendingToast.settle(httpErrorToHuman(msg), 'error');
       });
   };
 
@@ -113,6 +117,19 @@ const BackupRow = forwardRef<HTMLTableRowElement, BackupRowProps>(function Backu
       socketInstance.addListener(SocketEvent.BACKUP_DELETED, listener);
     });
 
+  const doSetLocked = (locked: boolean) =>
+    updateBackup(server.uuid, backup.uuid, { name: backup.name, locked, backupGroupUuid: backup.backupGroupUuid })
+      .then(() => {
+        addToast(
+          locked ? t('pages.server.backups.toast.locked', {}) : t('pages.server.backups.toast.unlocked', {}),
+          'success',
+        );
+        applyBackupUpdate(queryClient, server.uuid, [backup], { locked });
+      })
+      .catch((msg) => {
+        addToast(httpErrorToHuman(msg), 'error');
+      });
+
   const doDelete = async () => {
     try {
       await deleteBackup(server.uuid, backup.uuid);
@@ -128,7 +145,7 @@ const BackupRow = forwardRef<HTMLTableRowElement, BackupRowProps>(function Backu
       addToast(t('pages.server.backups.modal.deleteBackup.toast.deleted', {}), 'success');
     } else {
       addToast(t('pages.server.backups.modal.deleteBackup.toast.started', {}), 'success');
-      updateBackup(backup.uuid, { deletionStatus: 'deleting' });
+      updateStoreBackup(backup.uuid, { deletionStatus: 'deleting' });
     }
 
     queryClient.invalidateQueries({ queryKey: queryKeys.server(server.uuid).backups.all() });
@@ -187,6 +204,17 @@ const BackupRow = forwardRef<HTMLTableRowElement, BackupRowProps>(function Backu
             label: t('common.button.edit', {}),
             hidden: readOnly || isDeleting || isDeleteFailed,
             onClick: () => setOpenModal('edit'),
+            color: 'gray',
+            canAccess: useServerCan('backups.update'),
+          },
+          {
+            type: 'action',
+            icon: backup.isLocked ? faLockOpen : faLock,
+            label: backup.isLocked
+              ? t('pages.server.backups.button.unlock', {})
+              : t('pages.server.backups.button.lock', {}),
+            hidden: readOnly || isDeleting || isDeleteFailed,
+            onClick: () => doSetLocked(!backup.isLocked),
             color: 'gray',
             canAccess: useServerCan('backups.update'),
           },
@@ -375,9 +403,9 @@ const BackupRow = forwardRef<HTMLTableRowElement, BackupRowProps>(function Backu
             {columns.locked && (
               <TableData>
                 {backup.isLocked ? (
-                  <FontAwesomeIcon className='text-green-500' icon={faLock} />
+                  <FontAwesomeIcon className='text-(--mantine-color-green-text)' icon={faLock} />
                 ) : (
-                  <FontAwesomeIcon className='text-red-500' icon={faLockOpen} />
+                  <FontAwesomeIcon className='text-(--mantine-color-red-text)' icon={faLockOpen} />
                 )}
               </TableData>
             )}

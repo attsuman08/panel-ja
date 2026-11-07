@@ -11,6 +11,7 @@ import ActionIcon from '@/elements/buttons/ActionIcon.tsx';
 import Button from '@/elements/buttons/Button.tsx';
 import { AdminCan } from '@/elements/Can.tsx';
 import Badge from '@/elements/data-display/Badge.tsx';
+import Spinner from '@/elements/feedback/Spinner.tsx';
 import LocalizedTextArea from '@/elements/input/LocalizedTextArea.tsx';
 import Divider from '@/elements/layout/Divider.tsx';
 import Group from '@/elements/layout/Group.tsx';
@@ -194,10 +195,10 @@ export default function EmailVariablesSection({
 
   const doRemove = () => {
     if (!removing) return;
-    setRemoving(null);
 
-    deleteEmailVariable(templateIdentifier, removing.name)
+    return deleteEmailVariable(templateIdentifier, removing.name)
       .then(() => {
+        setRemoving(null);
         addToast(
           t(
             removing.system
@@ -209,7 +210,9 @@ export default function EmailVariablesSection({
         );
         invalidate();
       })
-      .catch((err) => addToast(httpErrorToHuman(err), 'error'));
+      .catch((err) => {
+        addToast(httpErrorToHuman(err), 'error');
+      });
   };
 
   return (
@@ -268,9 +271,7 @@ export default function EmailVariablesSection({
           </Text>
 
           {variables === undefined ? (
-            <Text size='sm' c='dimmed'>
-              {t('pages.admin.settings.tabs.mailTemplates.page.variables.loading', {})}
-            </Text>
+            <Spinner.Centered />
           ) : variables.length > 0 ? (
             variables.map((variable) => (
               <EmailVariableRow

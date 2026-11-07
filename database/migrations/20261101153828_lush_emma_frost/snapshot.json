@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "286c27ce-2c60-436a-8a8a-2a4148b5bdf3",
+  "prevIds": [
+    "4d2c9c65-7b85-4379-a2b1-63b2037c4436"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "user_password_resets",
+        "account_created"
+      ],
+      "writes": [
+        "s|col|public.user_password_resets.account_created",
+        "n|col|public.user_password_resets.account_created",
+        "e|col|public.user_password_resets.account_created"
+      ],
+      "reads": [
+        "n|tbl|public.user_password_resets",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "user_password_resets",
+        "name": "account_created",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "false",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

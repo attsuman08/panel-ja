@@ -67,6 +67,10 @@ import {
 import { processConfigurationConfigParser } from '@/lib/schemas/admin/eggs.ts';
 import { AdminOAuthProviderMappingMatcher } from '@/lib/schemas/admin/oauthProviders.ts';
 import { adminSettingsEmailSchema, adminSettingsStorageSchema } from '@/lib/schemas/admin/settings.ts';
+import {
+  systemBackupPolicyRunTargetReason,
+  systemBackupPolicyRunTargetStatus,
+} from '@/lib/schemas/admin/systemBackupPolicies.ts';
 import { backupRetentionRule } from '@/lib/schemas/backupRetention.ts';
 import {
   compressionType,
@@ -512,6 +516,40 @@ export const serverBackupKindLabelMapping: Record<z.infer<typeof serverBackupKin
   database_instance: () => getTranslations().t('common.enum.serverBackupKind.databaseInstance', {}),
 };
 
+export const systemBackupPolicyRunTargetStatusLabelMapping: Record<
+  z.infer<typeof systemBackupPolicyRunTargetStatus>,
+  () => string
+> = {
+  pending: () => getTranslations().t('common.enum.systemBackupPolicyRunTargetStatus.pending', {}),
+  dispatched: () => getTranslations().t('common.enum.systemBackupPolicyRunTargetStatus.dispatched', {}),
+  skipped: () => getTranslations().t('common.enum.systemBackupPolicyRunTargetStatus.skipped', {}),
+  failed: () => getTranslations().t('common.enum.systemBackupPolicyRunTargetStatus.failed', {}),
+};
+
+export const systemBackupPolicyRunTargetReasonLabelMapping: Record<
+  z.infer<typeof systemBackupPolicyRunTargetReason>,
+  () => string
+> = {
+  node_maintenance: () => getTranslations().t('common.enum.systemBackupPolicyRunTargetReason.nodeMaintenance', {}),
+  backup_configuration_maintenance: () =>
+    getTranslations().t('common.enum.systemBackupPolicyRunTargetReason.backupConfigurationMaintenance', {}),
+  database_agent_host_maintenance: () =>
+    getTranslations().t('common.enum.systemBackupPolicyRunTargetReason.databaseAgentHostMaintenance', {}),
+  database_instance_stopped: () =>
+    getTranslations().t('common.enum.systemBackupPolicyRunTargetReason.databaseInstanceStopped', {}),
+  server_busy: () => getTranslations().t('common.enum.systemBackupPolicyRunTargetReason.serverBusy', {}),
+  metadata_failed: () => getTranslations().t('common.enum.systemBackupPolicyRunTargetReason.metadataFailed', {}),
+  no_backup_configuration: () =>
+    getTranslations().t('common.enum.systemBackupPolicyRunTargetReason.noBackupConfiguration', {}),
+  unsupported_backup_disk: () =>
+    getTranslations().t('common.enum.systemBackupPolicyRunTargetReason.unsupportedBackupDisk', {}),
+  target_removed: () => getTranslations().t('common.enum.systemBackupPolicyRunTargetReason.targetRemoved', {}),
+  create_failed: () => getTranslations().t('common.enum.systemBackupPolicyRunTargetReason.createFailed', {}),
+  policy_disabled: () => getTranslations().t('common.enum.systemBackupPolicyRunTargetReason.policyDisabled', {}),
+  superseded: () => getTranslations().t('common.enum.systemBackupPolicyRunTargetReason.superseded', {}),
+  cancelled: () => getTranslations().t('common.enum.systemBackupPolicyRunTargetReason.cancelled', {}),
+};
+
 export const serverFirewallRuleActionLabelMapping: Record<z.infer<typeof serverFirewallRuleAction>, () => string> = {
   allow: () => getTranslations().t('common.enum.serverFirewallRuleAction.allow', {}),
   deny: () => getTranslations().t('common.enum.serverFirewallRuleAction.deny', {}),
@@ -771,7 +809,7 @@ export const scheduleStepDefaultMapping: Record<
   create_backup: {
     type: 'create_backup',
     ignoreFailure: false,
-    foreground: false,
+    foreground: true,
     name: null,
     ignoredFiles: [],
     outputInto: null,
@@ -779,7 +817,7 @@ export const scheduleStepDefaultMapping: Record<
   create_database_backup: {
     type: 'create_database_backup',
     ignoreFailure: false,
-    foreground: false,
+    foreground: true,
     name: null,
     databaseInstanceUuid: '',
     outputInto: null,
@@ -838,7 +876,7 @@ export const scheduleStepDefaultMapping: Record<
   copy_file: {
     type: 'copy_file',
     ignoreFailure: false,
-    foreground: false,
+    foreground: true,
     file: '',
     destination: '',
   },
@@ -858,7 +896,7 @@ export const scheduleStepDefaultMapping: Record<
   compress_files: {
     type: 'compress_files',
     ignoreFailure: false,
-    foreground: false,
+    foreground: true,
     root: '/',
     files: [],
     format: 'tar_gz',
@@ -867,14 +905,14 @@ export const scheduleStepDefaultMapping: Record<
   decompress_file: {
     type: 'decompress_file',
     ignoreFailure: false,
-    foreground: false,
+    foreground: true,
     root: '/',
     file: '',
   },
   pull_file: {
     type: 'pull_file',
     ignoreFailure: false,
-    foreground: false,
+    foreground: true,
     root: '/',
     url: '',
     fileName: null,
@@ -1038,7 +1076,7 @@ export const scheduleTriggerDefaultMapping: Record<
   z.infer<typeof serverScheduleTriggerSchema>['type'],
   z.infer<typeof serverScheduleTriggerSchema>
 > = {
-  cron: { type: 'cron', schedule: '0 0 0 * * *' },
+  cron: { type: 'cron', schedule: '0 0 0 * * *', weekInterval: 1, weekAnchor: null },
   power_action: { type: 'power_action', action: 'start' },
   server_state: { type: 'server_state', state: 'running' },
   backup_status: { type: 'backup_status', status: 'starting' },

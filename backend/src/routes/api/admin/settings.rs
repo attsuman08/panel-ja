@@ -197,7 +197,7 @@ mod put {
         #[garde(skip)]
         allow_changing_avatar: Option<bool>,
 
-        #[garde(length(max = 100))]
+        #[garde(length(max = 100), dive)]
         #[schema(max_items = 100)]
         #[serde(default, with = "::serde_with::rust::double_option")]
         route_order: Option<Option<Vec<shared::settings::RouteOrderItem>>>,
@@ -266,6 +266,9 @@ mod put {
         client_servers_files_pull_query:
             Option<shared::settings::ratelimits::RatelimitConfiguration>,
         #[garde(dive)]
+        client_servers_subusers_create:
+            Option<shared::settings::ratelimits::RatelimitConfiguration>,
+        #[garde(dive)]
         remote: Option<shared::settings::ratelimits::RatelimitConfiguration>,
         #[garde(dive)]
         remote_sftp_auth: Option<shared::settings::ratelimits::RatelimitConfiguration>,
@@ -276,6 +279,16 @@ mod put {
         exempt_ips: Option<Vec<sqlx::types::ipnetwork::IpNetwork>>,
         #[garde(length(max = 256))]
         exempt_api_keys: Option<Vec<uuid::Uuid>>,
+    }
+
+    #[derive(ToSchema, Validate, Deserialize)]
+    pub struct PayloadUpdates {
+        #[garde(length(chars, min = 1, max = 1024))]
+        #[serde(default, with = "::serde_with::rust::double_option")]
+        wings_release_token: Option<Option<compact_str::CompactString>>,
+        #[garde(length(chars, min = 1, max = 1024))]
+        #[serde(default, with = "::serde_with::rust::double_option")]
+        db_agent_release_token: Option<Option<compact_str::CompactString>>,
     }
 
     #[derive(ToSchema, Validate, Deserialize)]
@@ -312,6 +325,9 @@ mod put {
         #[schema(inline)]
         #[garde(dive)]
         ratelimits: Option<PayloadRatelimits>,
+        #[schema(inline)]
+        #[garde(dive)]
+        updates: Option<PayloadUpdates>,
     }
 
     #[derive(ToSchema, Serialize)]
@@ -635,6 +651,10 @@ mod put {
                 settings.ratelimits.client_servers_files_pull_query =
                     client_servers_files_pull_query;
             }
+            if let Some(client_servers_subusers_create) = ratelimits.client_servers_subusers_create
+            {
+                settings.ratelimits.client_servers_subusers_create = client_servers_subusers_create;
+            }
             if let Some(remote) = ratelimits.remote {
                 settings.ratelimits.remote = remote;
             }
@@ -662,6 +682,14 @@ mod put {
                 }
 
                 settings.ratelimits.exempt_api_keys = exempt_api_keys;
+            }
+        }
+        if let Some(updates) = data.updates {
+            if let Some(wings_release_token) = updates.wings_release_token {
+                settings.updates.wings_release_token = wings_release_token;
+            }
+            if let Some(db_agent_release_token) = updates.db_agent_release_token {
+                settings.updates.db_agent_release_token = db_agent_release_token;
             }
         }
 

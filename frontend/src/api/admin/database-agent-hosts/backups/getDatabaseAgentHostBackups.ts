@@ -7,12 +7,18 @@ export default async (
   databaseAgentHostUuid: string,
   page: number,
   search?: string,
-): Promise<{ backups: Pagination<z.infer<typeof adminNodeServerBackupSchema>>; failed: number }> => {
+  perPage?: number,
+): Promise<{
+  backups: Pagination<z.infer<typeof adminNodeServerBackupSchema>>;
+  failed: number;
+  failedDeletions: number;
+}> => {
   const { data } = await axiosInstance.get(`/api/admin/database-agent-hosts/${databaseAgentHostUuid}/backups`, {
-    params: { page, search },
+    params: { page, per_page: perPage, search },
   });
   return {
     backups: parsePaginationFromApi(adminNodeServerBackupSchema, data.backups),
     failed: data.failed,
+    failedDeletions: data.failed_deletions,
   };
 };

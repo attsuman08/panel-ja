@@ -25,9 +25,11 @@ export default function AdminNodeDevices({ node }: { node: z.infer<typeof adminN
     search,
     setSearch,
     setPage,
+    setPerPage,
   } = useSearchablePaginatedTable({
     queryKey: queryKeys.admin.deviceAssignments.devicesByNode(node.uuid),
-    fetcher: (page, search) => getNodeDevices(node.uuid, page, search),
+    fetcher: (page, search, perPage) => getNodeDevices(node.uuid, page, search, perPage),
+    backgroundRefetch: true,
   });
 
   return (
@@ -52,6 +54,7 @@ export default function AdminNodeDevices({ node }: { node: z.infer<typeof adminN
         error={error}
         pagination={nodeDevices}
         onPageSelect={setPage}
+        onPerPageSelect={setPerPage}
       >
         {nodeDevices?.data.map((device) => (
           <NodeDeviceRow key={device.device.uuid} node={node} device={device} />

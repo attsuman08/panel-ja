@@ -130,6 +130,7 @@ mod post {
         }
 
         permissions.has_user_permission("security-keys.create")?;
+        permissions.deny_while_impersonating()?;
 
         let settings = state.settings.get().await?;
         if !settings.webauthn.enabled {
@@ -168,7 +169,7 @@ mod post {
             Some(
                 credential_ids
                     .into_iter()
-                    .map(|id| id.credential_id.into())
+                    .map(|id| id.credential_id)
                     .collect(),
             ),
         )?;

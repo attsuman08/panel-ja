@@ -2,6 +2,7 @@ use super::State;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 mod _role_;
+mod counts;
 
 mod get {
     use axum::{extract::Query, http::StatusCode};
@@ -79,7 +80,7 @@ mod post {
             CreatableModel, IntoAdminApiObject,
             admin_activity::GetAdminActivityLogger,
             role::{CreateRoleOptions, Role},
-            user::{GetPermissionManager, GetUser},
+            user::GetPermissionManager,
         },
         response::{ApiResponse, ApiResponseResult},
     };
@@ -98,37 +99,15 @@ mod post {
     pub async fn route(
         state: GetState,
         permissions: GetPermissionManager,
-        caller: GetUser,
         activity_logger: GetAdminActivityLogger,
         shared::Payload(data): shared::Payload<CreateRoleOptions>,
     ) -> ApiResponseResult {
         permissions.has_admin_permission("roles.create")?;
 
-        if !caller.admin {
-            let caller_admin = caller
-                .role
-                .as_ref()
-                .map(|r| r.admin_permissions.as_slice())
-                .unwrap_or(&[]);
-            let caller_server = caller
-                .role
-                .as_ref()
-                .map(|r| r.server_permissions.as_slice())
-                .unwrap_or(&[]);
-
-            if !data
-                .admin_permissions
-                .iter()
-                .all(|p| caller_admin.contains(p))
-                || !data
-                    .server_permissions
-                    .iter()
-                    .all(|p| caller_server.contains(p))
-            {
-                return ApiResponse::error("permissions: more permissions than self")
-                    .with_status(StatusCode::FORBIDDEN)
-                    .ok();
-            }
+        if !permissions.can_grant(&data.admin_permissions, &data.server_permissions) {
+            return ApiResponse::error("permissions: more permissions than self")
+                .with_status(StatusCode::FORBIDDEN)
+                .ok();
         }
 
         let role = match Role::create(&state, data).await {
@@ -167,5 +146,6 @@ pub fn router(state: &State) -> OpenApiRouter<State> {
         .routes(routes!(get::route))
         .routes(routes!(post::route))
         .nest("/{role}", _role_::router(state))
+        .nest("/counts", counts::router(state))
         .with_state(state.clone())
 }

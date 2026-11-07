@@ -312,8 +312,7 @@
       },
       "table": {
         "pagination": {
-          "results": "Affiche {start} à {end} de {total} résultats.",
-          "empty": "Pas d'éléments trouvés, c'est comme s'ils se cachaient."
+          "results": "Affiche {start} à {end} de {total} résultats."
         },
         "columns": {
           "id": "Identifiant",
@@ -1045,8 +1044,7 @@
                   "toast": {
                     "moved": "Serveur déplacé vers {group}."
                   }
-                },
-                "noGroups": "Pas de groupes trouvés, créez-en un."
+                }
               }
             },
             "allServers": {
@@ -1073,8 +1071,7 @@
             "success": "{action} {servers} avec succès.",
             "partial": "{action} {successfulServers} avec succès. {failedServers} ont échoué.",
             "groupActions": "Actions de groupe"
-          },
-          "noServers": "Pas de serveurs trouvés, est-il temps d'en ajouter un ?"
+          }
         },
         "admin": {
           "title": "Administrateur"
@@ -1499,7 +1496,6 @@
                 "extensionsOutdated": "Certaines extensions sont obsolètes ou ont rencontré des erreurs lors de la vérification des mises à jour.",
                 "noChangelog": "Aucun journal des modifications",
                 "nodesUpToDate": "Il semble que tous les nœuds soient à jour. ({failed} échec(s) de vérification)",
-                "nodesOutdated": "Certains nœuds sont obsolètes, la dernière version disponible est `{latest}`. ({outdated} obsolète(s), {failed} échec(s) de vérification)",
                 "table": {
                   "installed": "Installée",
                   "packageName": "Nom du paquet",
@@ -1665,7 +1661,6 @@
                 "title": "Paramètres des modèles d'e-mail",
                 "sidebar": {
                   "templates": "Modèles",
-                  "loading": "Chargement...",
                   "availableVariables": "Variables disponibles"
                 },
                 "alert": {
@@ -1675,7 +1670,6 @@
                   "syntaxOr": "et",
                   "syntaxAfter": "sont prises en charge."
                 },
-                "loadingTemplate": "Chargement du modèle...",
                 "form": {
                   "subject": "Objet"
                 },
@@ -1872,7 +1866,6 @@
         "extensions": {
           "unknownExtension": "Extension inconnue",
           "alert": {
-            "noExtensions": "Aucune extension installée.",
             "heavyImageMissing": "Il semble que vous n'utilisiez pas l'image heavy requise pour installer des extensions, consultez [ici]({docsUrl}) comment basculer dessus."
           },
           "button": {
@@ -3823,10 +3816,6 @@
               "actions": "Actions de la planification",
               "preConditions": "Pré-conditions de la planification",
               "triggers": "Déclencheurs de la planification"
-            },
-            "alert": {
-              "noActions": "Aucune action configurée pour cette planification",
-              "noTriggers": "Aucun déclencheur configuré pour cette planification"
             }
           },
           "form": {
@@ -3839,8 +3828,7 @@
             "comparator": "Comparateur",
             "rootPath": "Chemin racine",
             "outputInto": "Sortir dans",
-            "ignoreFailure": "Ignorer l'échec",
-            "runInForeground": "Exécuter au premier plan"
+            "ignoreFailure": "Ignorer l'échec"
           },
           "condition": {
             "equals": "Égale à",
@@ -3904,8 +3892,7 @@
           "renderer": {
             "noActionSelected": "Sélectionnez un type d'action à configurer",
             "noActionDetails": "Détails de l'action non disponibles",
-            "ignoreFailure": "Ignorer l'échec : {value}",
-            "foreground": "Premier plan : {value}"
+            "ignoreFailure": "Ignorer l'échec : {value}"
           },
           "steps": {
             "empty": {
@@ -4258,8 +4245,7 @@
               "title": "Changements non sauvegardés",
               "content": "Vous avez des changements non sauvegardés dans vos variables de démarrage. Êtes-vous sûr de vouloir quitter cette page ? Si vous quittez, vos changements seront perdus."
             }
-          },
-          "noVariables": "Aucune variable de démarrage trouvée pour ce serveur."
+          }
         },
         "mounts": {
           "title": "Montages",

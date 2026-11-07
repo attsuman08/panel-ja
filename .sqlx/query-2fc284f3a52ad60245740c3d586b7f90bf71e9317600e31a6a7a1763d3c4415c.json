@@ -1,0 +1,51 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT\n                    COUNT(*) as servers,\n                    COALESCE(SUM(cpu), 0)::int8 as cpu,\n                    COALESCE(SUM(memory), 0)::int8 as memory,\n                    COALESCE(SUM(memory_overhead), 0)::int8 as memory_overhead,\n                    COALESCE(SUM(disk), 0)::int8 as disk\n                FROM servers\n                WHERE servers.node_uuid = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "servers",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "cpu",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "memory",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "memory_overhead",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "disk",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "2fc284f3a52ad60245740c3d586b7f90bf71e9317600e31a6a7a1763d3c4415c"
+}

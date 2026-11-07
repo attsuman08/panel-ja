@@ -18,9 +18,11 @@ export default function AdminDeviceServers({ device }: { device: z.infer<typeof 
     search,
     setSearch,
     setPage,
+    setPerPage,
   } = useSearchablePaginatedTable({
     queryKey: queryKeys.admin.deviceAssignments.serversByDevice(device.uuid),
-    fetcher: (page, search) => getDeviceServers(device.uuid, page, search),
+    fetcher: (page, search, perPage) => getDeviceServers(device.uuid, page, search, perPage),
+    backgroundRefetch: true,
   });
 
   return (
@@ -37,6 +39,7 @@ export default function AdminDeviceServers({ device }: { device: z.infer<typeof 
         loading={loading}
         pagination={deviceServers}
         onPageSelect={setPage}
+        onPerPageSelect={setPerPage}
         error={error}
       >
         {deviceServers?.data.map((serverDevice) => (

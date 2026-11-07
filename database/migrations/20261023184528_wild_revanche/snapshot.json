@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "3e3c33e3-5cf8-4c41-a918-33dda5a55a97",
+  "prevIds": [
+    "dc207ba1-ab9a-4906-8fb0-beea737b7364"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "oauth_providers",
+        "icon"
+      ],
+      "writes": [
+        "s|col|public.oauth_providers.icon",
+        "n|col|public.oauth_providers.icon",
+        "e|col|public.oauth_providers.icon"
+      ],
+      "reads": [
+        "n|tbl|public.oauth_providers",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "oauth_providers",
+        "name": "icon",
+        "type": "varchar(128)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

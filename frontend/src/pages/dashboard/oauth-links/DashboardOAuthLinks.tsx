@@ -2,7 +2,7 @@ import { faChevronDown, faFingerprint } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Ref, useEffect, useState } from 'react';
 import { z } from 'zod';
-import getOAuthProviders from '@/api/auth/getOAuthProviders.ts';
+import getOAuthLinkProviders from '@/api/me/oauth-links/getOAuthLinkProviders.ts';
 import getOAuthLinks from '@/api/me/oauth-links/getOAuthLinks.ts';
 import Button from '@/elements/buttons/Button.tsx';
 import AccountContentContainer from '@/elements/containers/AccountContentContainer.tsx';
@@ -22,7 +22,7 @@ export default function DashboardOAuthLinks() {
   const [oAuthProviders, setOAuthProviders] = useState<z.infer<typeof oAuthProviderSchema>[]>([]);
 
   useEffect(() => {
-    getOAuthProviders().then((oAuthProviders) => {
+    getOAuthLinkProviders().then((oAuthProviders) => {
       setOAuthProviders(oAuthProviders);
     });
   }, []);
@@ -32,10 +32,11 @@ export default function DashboardOAuthLinks() {
     loading,
     error,
     setPage,
+    setPerPage,
     refetch,
   } = useSearchablePaginatedTable({
     queryKey: queryKeys.user.oauthLinks.all(),
-    fetcher: getOAuthLinks,
+    fetcher: (page, _search, perPage) => getOAuthLinks(page, perPage),
   });
 
   const {
@@ -109,6 +110,7 @@ export default function DashboardOAuthLinks() {
           loading={loading}
           pagination={oauthLinks}
           onPageSelect={setPage}
+          onPerPageSelect={setPerPage}
           error={error}
         >
           {oauthLinks?.data.map((link) => (
@@ -118,7 +120,7 @@ export default function DashboardOAuthLinks() {
                   oauthLink={link}
                   ref={innerRef as Ref<HTMLTableRowElement>}
                   isSelected={selectedOAuthLinks.has(link.uuid)}
-                  onSelectionChange={(selected) => toggleOAuthLink(link, selected)}
+                  onSelectionChange={(selected, range) => toggleOAuthLink(link, selected, range)}
                 />
               )}
             </SelectionArea.Selectable>

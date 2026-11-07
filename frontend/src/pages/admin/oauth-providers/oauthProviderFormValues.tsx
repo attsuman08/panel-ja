@@ -1,3 +1,4 @@
+import { faFingerprint } from '@fortawesome/free-solid-svg-icons';
 import { z } from 'zod';
 import { type FieldDef } from '@/elements/form-engine/index.ts';
 import MultiKeyValueInput from '@/elements/input/MultiKeyValueInput.tsx';
@@ -10,6 +11,7 @@ type OAuthFormValues = z.infer<typeof adminOAuthProviderUpdateSchema>;
 export const oauthProviderEmptyFormValues: OAuthFormValues = {
   name: '',
   description: null,
+  icon: null,
   clientId: '',
   clientSecret: null,
   authUrl: '',
@@ -25,9 +27,11 @@ export const oauthProviderEmptyFormValues: OAuthFormValues = {
   avatarUrlTemplate: null,
   avatarOverwrite: false,
   enabled: true,
+  loginViewable: true,
   loginOnly: false,
   loginBypassTwoFactor: false,
   linkViewable: true,
+  apiLinkable: false,
   userManageable: true,
   basicAuth: false,
   pkce: false,
@@ -38,6 +42,7 @@ export const oauthProviderToFormValues = (
 ): Partial<OAuthFormValues> => ({
   name: provider.name,
   description: provider.description,
+  icon: provider.icon,
   clientId: provider.clientId,
   clientSecret: provider.clientSecret,
   authUrl: provider.authUrl,
@@ -53,9 +58,11 @@ export const oauthProviderToFormValues = (
   avatarUrlTemplate: provider.avatarUrlTemplate,
   avatarOverwrite: provider.avatarOverwrite,
   enabled: provider.enabled,
+  loginViewable: provider.loginViewable,
   loginOnly: provider.loginOnly,
   loginBypassTwoFactor: provider.loginBypassTwoFactor,
   linkViewable: provider.linkViewable,
+  apiLinkable: provider.apiLinkable,
   userManageable: provider.userManageable,
   basicAuth: provider.basicAuth,
   pkce: provider.pkce,
@@ -68,7 +75,13 @@ export function useOAuthProviderFormFields(): {
   const { t } = useTranslations();
 
   const fieldsTop: FieldDef<OAuthFormValues>[] = [
-    { type: 'text', name: 'name', label: t('common.form.name', {}), required: true },
+    {
+      type: 'text',
+      name: 'name',
+      label: t('common.form.name', {}),
+      required: true,
+      icon: { name: 'icon', label: t('common.form.icon', {}), fallback: faFingerprint },
+    },
     { type: 'textarea', name: 'description', label: t('common.form.description', {}) },
   ];
 
@@ -204,9 +217,21 @@ export function useOAuthProviderFormFields(): {
     },
     {
       type: 'switch',
+      name: 'apiLinkable',
+      label: t('pages.admin.oAuthProviders.tabs.general.page.form.apiLinkable', {}),
+      description: t('pages.admin.oAuthProviders.tabs.general.page.form.apiLinkableDescription', {}),
+    },
+    {
+      type: 'switch',
       name: 'userManageable',
       label: t('pages.admin.oAuthProviders.tabs.general.page.form.userManageable', {}),
       description: t('pages.admin.oAuthProviders.tabs.general.page.form.userManageableDescription', {}),
+    },
+    {
+      type: 'switch',
+      name: 'loginViewable',
+      label: t('pages.admin.oAuthProviders.tabs.general.page.form.loginViewable', {}),
+      description: t('pages.admin.oAuthProviders.tabs.general.page.form.loginViewableDescription', {}),
     },
     { type: 'switch', name: 'enabled', label: t('common.form.enabled', {}) },
   ];

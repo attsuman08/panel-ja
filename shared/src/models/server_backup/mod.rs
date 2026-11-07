@@ -482,7 +482,7 @@ impl ServerBackup {
                 AND ($4::server_backup_kind IS NULL OR server_backups.kind = $4)
                 AND ($5::uuid IS NULL OR server_backups.database_instance_uuid = $5)
                 AND ($6::database_agent_type IS NULL OR server_backups.database_type = $6)
-            ORDER BY server_backups.created {}
+            ORDER BY server_backups.created {1}, server_backups.uuid {1}
             LIMIT 1
             "#,
             Self::columns_sql(None),
@@ -521,6 +521,27 @@ impl ServerBackup {
         row.try_map(|row| Self::map(None, &row))
     }
 
+    pub async fn by_node_uuid_uuid_or_shared(
+        database: &crate::database::Database,
+        node_uuid: uuid::Uuid,
+        uuid: uuid::Uuid,
+    ) -> Result<Option<Self>, crate::database::DatabaseError> {
+        let row = sqlx::query(sqlx::AssertSqlSafe(format!(
+            r#"
+            SELECT {}
+            FROM server_backups
+            WHERE (server_backups.node_uuid = $1 OR server_backups.shared = true) AND server_backups.uuid = $2
+            "#,
+            Self::columns_sql(None)
+        )))
+        .bind(node_uuid)
+        .bind(uuid)
+        .fetch_optional(database.read())
+        .await?;
+
+        row.try_map(|row| Self::map(None, &row))
+    }
+
     pub async fn by_server_uuid_with_pagination(
         database: &crate::database::Database,
         server_uuid: uuid::Uuid,
@@ -528,40 +549,24 @@ impl ServerBackup {
         per_page: i64,
         search: Option<&str>,
     ) -> Result<super::Pagination<Self>, crate::database::DatabaseError> {
-        let offset = (page - 1) * per_page;
-
-        let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-            r#"
-            SELECT {}, COUNT(*) OVER() AS total_count
-            FROM server_backups
-            WHERE
-                server_backups.server_uuid = $1
-                AND server_backups.deleted IS NULL
-                AND {search}
-            ORDER BY server_backups.created
-            LIMIT $3 OFFSET $4
-            "#,
+        super::PaginatedQueryBuilder::new(
             Self::columns_sql(None),
-            search = super::search_sql(2, &["server_backups.name"], &["server_backups.uuid"])
-        )))
+            format!(
+                r#"
+                FROM server_backups
+                WHERE
+                    server_backups.server_uuid = $1
+                    AND server_backups.deleted IS NULL
+                    AND {search}
+                "#,
+                search = super::search_sql(2, &["server_backups.name"], &["server_backups.uuid"]),
+            ),
+            "server_backups.created, server_backups.uuid",
+        )
         .bind(server_uuid)
         .bind(search)
-        .bind(per_page)
-        .bind(offset)
-        .fetch_all(database.read())
-        .await?;
-
-        Ok(super::Pagination {
-            total: rows
-                .first()
-                .map_or(Ok(0), |row| row.try_get("total_count"))?,
-            per_page,
-            page,
-            data: rows
-                .into_iter()
-                .map(|row| Self::map(None, &row))
-                .try_collect_vec()?,
-        })
+        .fetch(database, page, per_page)
+        .await
     }
 
     pub async fn by_server_uuid_node_uuid_with_pagination(
@@ -573,49 +578,33 @@ impl ServerBackup {
         search: Option<&str>,
         filter: &ServerBackupFilter,
     ) -> Result<super::Pagination<Self>, crate::database::DatabaseError> {
-        let offset = (page - 1) * per_page;
-
-        let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-            r#"
-            SELECT {}, COUNT(*) OVER() AS total_count
-            FROM server_backups
-            WHERE
-                server_backups.server_uuid = $1
-                AND server_backups.node_uuid = $2
-                AND server_backups.system_backup_policy_uuid IS NULL
-                AND server_backups.deleted IS NULL
-                AND {search}
-                AND ($4::server_backup_kind IS NULL OR server_backups.kind = $4)
-                AND ($5::uuid IS NULL OR server_backups.database_instance_uuid = $5)
-                AND ($6::database_agent_type IS NULL OR server_backups.database_type = $6)
-            ORDER BY server_backups.created
-            LIMIT $7 OFFSET $8
-            "#,
+        super::PaginatedQueryBuilder::new(
             Self::columns_sql(None),
-            search = super::search_sql(3, &["server_backups.name"], &["server_backups.uuid"])
-        )))
+            format!(
+                r#"
+                FROM server_backups
+                WHERE
+                    server_backups.server_uuid = $1
+                    AND server_backups.node_uuid = $2
+                    AND server_backups.system_backup_policy_uuid IS NULL
+                    AND server_backups.deleted IS NULL
+                    AND {search}
+                    AND ($4::server_backup_kind IS NULL OR server_backups.kind = $4)
+                    AND ($5::uuid IS NULL OR server_backups.database_instance_uuid = $5)
+                    AND ($6::database_agent_type IS NULL OR server_backups.database_type = $6)
+                "#,
+                search = super::search_sql(3, &["server_backups.name"], &["server_backups.uuid"]),
+            ),
+            "server_backups.created, server_backups.uuid",
+        )
         .bind(server_uuid)
         .bind(node_uuid)
         .bind(search)
         .bind(filter.kind)
         .bind(filter.database_instance_uuid)
         .bind(filter.database_type)
-        .bind(per_page)
-        .bind(offset)
-        .fetch_all(database.read())
-        .await?;
-
-        Ok(super::Pagination {
-            total: rows
-                .first()
-                .map_or(Ok(0), |row| row.try_get("total_count"))?,
-            per_page,
-            page,
-            data: rows
-                .into_iter()
-                .map(|row| Self::map(None, &row))
-                .try_collect_vec()?,
-        })
+        .fetch(database, page, per_page)
+        .await
     }
 
     pub async fn by_server_uuid_node_uuid_backup_group_uuid_with_pagination(
@@ -627,44 +616,28 @@ impl ServerBackup {
         per_page: i64,
         search: Option<&str>,
     ) -> Result<super::Pagination<Self>, crate::database::DatabaseError> {
-        let offset = (page - 1) * per_page;
-
-        let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-            r#"
-            SELECT {}, COUNT(*) OVER() AS total_count
-            FROM server_backups
-            WHERE
-                server_backups.server_uuid = $1
-                AND server_backups.node_uuid = $2
-                AND server_backups.backup_group_uuid = $3
-                AND server_backups.deleted IS NULL
-                AND {search}
-            ORDER BY server_backups.created
-            LIMIT $5 OFFSET $6
-            "#,
+        super::PaginatedQueryBuilder::new(
             Self::columns_sql(None),
-            search = super::search_sql(4, &["server_backups.name"], &["server_backups.uuid"])
-        )))
+            format!(
+                r#"
+                FROM server_backups
+                WHERE
+                    server_backups.server_uuid = $1
+                    AND server_backups.node_uuid = $2
+                    AND server_backups.backup_group_uuid = $3
+                    AND server_backups.deleted IS NULL
+                    AND {search}
+                "#,
+                search = super::search_sql(4, &["server_backups.name"], &["server_backups.uuid"]),
+            ),
+            "server_backups.created, server_backups.uuid",
+        )
         .bind(server_uuid)
         .bind(node_uuid)
         .bind(backup_group_uuid)
         .bind(search)
-        .bind(per_page)
-        .bind(offset)
-        .fetch_all(database.read())
-        .await?;
-
-        Ok(super::Pagination {
-            total: rows
-                .first()
-                .map_or(Ok(0), |row| row.try_get("total_count"))?,
-            per_page,
-            page,
-            data: rows
-                .into_iter()
-                .map(|row| Self::map(None, &row))
-                .try_collect_vec()?,
-        })
+        .fetch(database, page, per_page)
+        .await
     }
 
     pub async fn by_ungrouped_server_uuid_node_uuid_with_pagination(
@@ -676,50 +649,34 @@ impl ServerBackup {
         search: Option<&str>,
         filter: &ServerBackupFilter,
     ) -> Result<super::Pagination<Self>, crate::database::DatabaseError> {
-        let offset = (page - 1) * per_page;
-
-        let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-            r#"
-            SELECT {}, COUNT(*) OVER() AS total_count
-            FROM server_backups
-            WHERE
-                server_backups.server_uuid = $1
-                AND server_backups.node_uuid = $2
-                AND server_backups.backup_group_uuid IS NULL
-                AND server_backups.system_backup_policy_uuid IS NULL
-                AND server_backups.deleted IS NULL
-                AND {search}
-                AND ($4::server_backup_kind IS NULL OR server_backups.kind = $4)
-                AND ($5::uuid IS NULL OR server_backups.database_instance_uuid = $5)
-                AND ($6::database_agent_type IS NULL OR server_backups.database_type = $6)
-            ORDER BY server_backups.created
-            LIMIT $7 OFFSET $8
-            "#,
+        super::PaginatedQueryBuilder::new(
             Self::columns_sql(None),
-            search = super::search_sql(3, &["server_backups.name"], &["server_backups.uuid"])
-        )))
+            format!(
+                r#"
+                FROM server_backups
+                WHERE
+                    server_backups.server_uuid = $1
+                    AND server_backups.node_uuid = $2
+                    AND server_backups.backup_group_uuid IS NULL
+                    AND server_backups.system_backup_policy_uuid IS NULL
+                    AND server_backups.deleted IS NULL
+                    AND {search}
+                    AND ($4::server_backup_kind IS NULL OR server_backups.kind = $4)
+                    AND ($5::uuid IS NULL OR server_backups.database_instance_uuid = $5)
+                    AND ($6::database_agent_type IS NULL OR server_backups.database_type = $6)
+                "#,
+                search = super::search_sql(3, &["server_backups.name"], &["server_backups.uuid"]),
+            ),
+            "server_backups.created, server_backups.uuid",
+        )
         .bind(server_uuid)
         .bind(node_uuid)
         .bind(search)
         .bind(filter.kind)
         .bind(filter.database_instance_uuid)
         .bind(filter.database_type)
-        .bind(per_page)
-        .bind(offset)
-        .fetch_all(database.read())
-        .await?;
-
-        Ok(super::Pagination {
-            total: rows
-                .first()
-                .map_or(Ok(0), |row| row.try_get("total_count"))?,
-            per_page,
-            page,
-            data: rows
-                .into_iter()
-                .map(|row| Self::map(None, &row))
-                .try_collect_vec()?,
-        })
+        .fetch(database, page, per_page)
+        .await
     }
 
     pub async fn usage_by_server_uuid(
@@ -756,43 +713,27 @@ impl ServerBackup {
         per_page: i64,
         search: Option<&str>,
     ) -> Result<super::Pagination<Self>, crate::database::DatabaseError> {
-        let offset = (page - 1) * per_page;
-
-        let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-            r#"
-            SELECT {}, COUNT(*) OVER() AS total_count
-            FROM server_backups
-            WHERE
-                server_backups.server_uuid = $1
-                AND server_backups.node_uuid = $2
-                AND server_backups.system_backup_policy_uuid IS NOT NULL
-                AND server_backups.deleted IS NULL
-                AND {search}
-            ORDER BY server_backups.created
-            LIMIT $4 OFFSET $5
-            "#,
+        super::PaginatedQueryBuilder::new(
             Self::columns_sql(None),
-            search = super::search_sql(3, &["server_backups.name"], &["server_backups.uuid"])
-        )))
+            format!(
+                r#"
+                FROM server_backups
+                WHERE
+                    server_backups.server_uuid = $1
+                    AND server_backups.node_uuid = $2
+                    AND server_backups.system_backup_policy_uuid IS NOT NULL
+                    AND server_backups.deleted IS NULL
+                    AND {search}
+                "#,
+                search = super::search_sql(3, &["server_backups.name"], &["server_backups.uuid"]),
+            ),
+            "server_backups.created, server_backups.uuid",
+        )
         .bind(server_uuid)
         .bind(node_uuid)
         .bind(search)
-        .bind(per_page)
-        .bind(offset)
-        .fetch_all(database.read())
-        .await?;
-
-        Ok(super::Pagination {
-            total: rows
-                .first()
-                .map_or(Ok(0), |row| row.try_get("total_count"))?,
-            per_page,
-            page,
-            data: rows
-                .into_iter()
-                .map(|row| Self::map(None, &row))
-                .try_collect_vec()?,
-        })
+        .fetch(database, page, per_page)
+        .await
     }
 
     pub async fn by_system_backup_policy_uuid_with_pagination(
@@ -802,40 +743,24 @@ impl ServerBackup {
         per_page: i64,
         search: Option<&str>,
     ) -> Result<super::Pagination<Self>, crate::database::DatabaseError> {
-        let offset = (page - 1) * per_page;
-
-        let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-            r#"
-            SELECT {}, COUNT(*) OVER() AS total_count
-            FROM server_backups
-            WHERE
-                server_backups.system_backup_policy_uuid = $1
-                AND server_backups.deleted IS NULL
-                AND {search}
-            ORDER BY server_backups.created
-            LIMIT $3 OFFSET $4
-            "#,
+        super::PaginatedQueryBuilder::new(
             Self::columns_sql(None),
-            search = super::search_sql(2, &["server_backups.name"], &["server_backups.uuid"])
-        )))
+            format!(
+                r#"
+                FROM server_backups
+                WHERE
+                    server_backups.system_backup_policy_uuid = $1
+                    AND server_backups.deleted IS NULL
+                    AND {search}
+                "#,
+                search = super::search_sql(2, &["server_backups.name"], &["server_backups.uuid"]),
+            ),
+            "server_backups.created, server_backups.uuid",
+        )
         .bind(system_backup_policy_uuid)
         .bind(search)
-        .bind(per_page)
-        .bind(offset)
-        .fetch_all(database.read())
-        .await?;
-
-        Ok(super::Pagination {
-            total: rows
-                .first()
-                .map_or(Ok(0), |row| row.try_get("total_count"))?,
-            per_page,
-            page,
-            data: rows
-                .into_iter()
-                .map(|row| Self::map(None, &row))
-                .try_collect_vec()?,
-        })
+        .fetch(database, page, per_page)
+        .await
     }
 
     pub async fn all_by_system_backup_policy_uuid(
@@ -869,42 +794,26 @@ impl ServerBackup {
         per_page: i64,
         search: Option<&str>,
     ) -> Result<super::Pagination<Self>, crate::database::DatabaseError> {
-        let offset = (page - 1) * per_page;
-
-        let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-            r#"
-            SELECT {}, COUNT(*) OVER() AS total_count
-            FROM server_backups
-            WHERE
-                server_backups.server_uuid = $1
-                AND server_backups.node_uuid != $2
-                AND server_backups.deleted IS NULL
-                AND {search}
-            ORDER BY server_backups.created
-            LIMIT $4 OFFSET $5
-            "#,
+        super::PaginatedQueryBuilder::new(
             Self::columns_sql(None),
-            search = super::search_sql(3, &["server_backups.name"], &["server_backups.uuid"])
-        )))
+            format!(
+                r#"
+                FROM server_backups
+                WHERE
+                    server_backups.server_uuid = $1
+                    AND server_backups.node_uuid != $2
+                    AND server_backups.deleted IS NULL
+                    AND {search}
+                "#,
+                search = super::search_sql(3, &["server_backups.name"], &["server_backups.uuid"]),
+            ),
+            "server_backups.created, server_backups.uuid",
+        )
         .bind(server_uuid)
         .bind(node_uuid)
         .bind(search)
-        .bind(per_page)
-        .bind(offset)
-        .fetch_all(database.read())
-        .await?;
-
-        Ok(super::Pagination {
-            total: rows
-                .first()
-                .map_or(Ok(0), |row| row.try_get("total_count"))?,
-            per_page,
-            page,
-            data: rows
-                .into_iter()
-                .map(|row| Self::map(None, &row))
-                .try_collect_vec()?,
-        })
+        .fetch(database, page, per_page)
+        .await
     }
 
     pub async fn by_node_uuid_with_pagination(
@@ -914,40 +823,24 @@ impl ServerBackup {
         per_page: i64,
         search: Option<&str>,
     ) -> Result<super::Pagination<Self>, crate::database::DatabaseError> {
-        let offset = (page - 1) * per_page;
-
-        let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-            r#"
-            SELECT {}, COUNT(*) OVER() AS total_count
-            FROM server_backups
-            WHERE
-                server_backups.node_uuid = $1
-                AND server_backups.deleted IS NULL
-                AND {search}
-            ORDER BY server_backups.created
-            LIMIT $3 OFFSET $4
-            "#,
+        super::PaginatedQueryBuilder::new(
             Self::columns_sql(None),
-            search = super::search_sql(2, &["server_backups.name"], &["server_backups.uuid"])
-        )))
+            format!(
+                r#"
+                FROM server_backups
+                WHERE
+                    server_backups.node_uuid = $1
+                    AND server_backups.deleted IS NULL
+                    AND {search}
+                "#,
+                search = super::search_sql(2, &["server_backups.name"], &["server_backups.uuid"]),
+            ),
+            "server_backups.created, server_backups.uuid",
+        )
         .bind(node_uuid)
         .bind(search)
-        .bind(per_page)
-        .bind(offset)
-        .fetch_all(database.read())
-        .await?;
-
-        Ok(super::Pagination {
-            total: rows
-                .first()
-                .map_or(Ok(0), |row| row.try_get("total_count"))?,
-            per_page,
-            page,
-            data: rows
-                .into_iter()
-                .map(|row| Self::map(None, &row))
-                .try_collect_vec()?,
-        })
+        .fetch(database, page, per_page)
+        .await
     }
 
     pub async fn by_database_agent_host_uuid_with_pagination(
@@ -957,41 +850,25 @@ impl ServerBackup {
         per_page: i64,
         search: Option<&str>,
     ) -> Result<super::Pagination<Self>, crate::database::DatabaseError> {
-        let offset = (page - 1) * per_page;
-
-        let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-            r#"
-            SELECT {}, COUNT(*) OVER() AS total_count
-            FROM server_backups
-            JOIN server_database_instances ON server_database_instances.uuid = server_backups.database_instance_uuid
-            WHERE
-                server_database_instances.database_agent_host_uuid = $1
-                AND server_backups.deleted IS NULL
-                AND {search}
-            ORDER BY server_backups.created
-            LIMIT $3 OFFSET $4
-            "#,
+        super::PaginatedQueryBuilder::new(
             Self::columns_sql(None),
-            search = super::search_sql(2, &["server_backups.name"], &["server_backups.uuid"])
-        )))
+            format!(
+                r#"
+                FROM server_backups
+                JOIN server_database_instances ON server_database_instances.uuid = server_backups.database_instance_uuid
+                WHERE
+                    server_database_instances.database_agent_host_uuid = $1
+                    AND server_backups.deleted IS NULL
+                    AND {search}
+                "#,
+                search = super::search_sql(2, &["server_backups.name"], &["server_backups.uuid"]),
+            ),
+            "server_backups.created, server_backups.uuid",
+        )
         .bind(database_agent_host_uuid)
         .bind(search)
-        .bind(per_page)
-        .bind(offset)
-        .fetch_all(database.read())
-        .await?;
-
-        Ok(super::Pagination {
-            total: rows
-                .first()
-                .map_or(Ok(0), |row| row.try_get("total_count"))?,
-            per_page,
-            page,
-            data: rows
-                .into_iter()
-                .map(|row| Self::map(None, &row))
-                .try_collect_vec()?,
-        })
+        .fetch(database, page, per_page)
+        .await
     }
 
     pub async fn by_backup_configuration_uuid_with_pagination(
@@ -1001,40 +878,24 @@ impl ServerBackup {
         per_page: i64,
         search: Option<&str>,
     ) -> Result<super::Pagination<Self>, crate::database::DatabaseError> {
-        let offset = (page - 1) * per_page;
-
-        let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-            r#"
-            SELECT {}, COUNT(*) OVER() AS total_count
-            FROM server_backups
-            WHERE
-                server_backups.backup_configuration_uuid = $1
-                AND server_backups.deleted IS NULL
-                AND {search}
-            ORDER BY server_backups.created
-            LIMIT $3 OFFSET $4
-            "#,
+        super::PaginatedQueryBuilder::new(
             Self::columns_sql(None),
-            search = super::search_sql(2, &["server_backups.name"], &["server_backups.uuid"])
-        )))
+            format!(
+                r#"
+                FROM server_backups
+                WHERE
+                    server_backups.backup_configuration_uuid = $1
+                    AND server_backups.deleted IS NULL
+                    AND {search}
+                "#,
+                search = super::search_sql(2, &["server_backups.name"], &["server_backups.uuid"]),
+            ),
+            "server_backups.created, server_backups.uuid",
+        )
         .bind(backup_configuration_uuid)
         .bind(search)
-        .bind(per_page)
-        .bind(offset)
-        .fetch_all(database.read())
-        .await?;
-
-        Ok(super::Pagination {
-            total: rows
-                .first()
-                .map_or(Ok(0), |row| row.try_get("total_count"))?,
-            per_page,
-            page,
-            data: rows
-                .into_iter()
-                .map(|row| Self::map(None, &row))
-                .try_collect_vec()?,
-        })
+        .fetch(database, page, per_page)
+        .await
     }
 
     pub async fn by_detached_node_uuid_with_pagination(
@@ -1044,41 +905,25 @@ impl ServerBackup {
         per_page: i64,
         search: Option<&str>,
     ) -> Result<super::Pagination<Self>, crate::database::DatabaseError> {
-        let offset = (page - 1) * per_page;
-
-        let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-            r#"
-            SELECT {}, COUNT(*) OVER() AS total_count
-            FROM server_backups
-            WHERE
-                server_backups.node_uuid = $1
-                AND server_backups.server_uuid IS NULL
-                AND server_backups.deleted IS NULL
-                AND {search}
-            ORDER BY server_backups.created
-            LIMIT $3 OFFSET $4
-            "#,
+        super::PaginatedQueryBuilder::new(
             Self::columns_sql(None),
-            search = super::search_sql(2, &["server_backups.name"], &["server_backups.uuid"])
-        )))
+            format!(
+                r#"
+                FROM server_backups
+                WHERE
+                    server_backups.node_uuid = $1
+                    AND server_backups.server_uuid IS NULL
+                    AND server_backups.deleted IS NULL
+                    AND {search}
+                "#,
+                search = super::search_sql(2, &["server_backups.name"], &["server_backups.uuid"]),
+            ),
+            "server_backups.created, server_backups.uuid",
+        )
         .bind(node_uuid)
         .bind(search)
-        .bind(per_page)
-        .bind(offset)
-        .fetch_all(database.read())
-        .await?;
-
-        Ok(super::Pagination {
-            total: rows
-                .first()
-                .map_or(Ok(0), |row| row.try_get("total_count"))?,
-            per_page,
-            page,
-            data: rows
-                .into_iter()
-                .map(|row| Self::map(None, &row))
-                .try_collect_vec()?,
-        })
+        .fetch(database, page, per_page)
+        .await
     }
 
     pub async fn all_uuids_by_server_uuid(
@@ -1159,58 +1004,6 @@ impl ServerBackup {
             "#,
         )
         .bind(server_uuid)
-        .fetch_one(database.read())
-        .await
-    }
-
-    /// In-flight system backups for a single policy on a node, ignoring rows older than a day
-    /// (those are only failed-out when the wings node resets and must not starve the scheduler
-    /// forever).
-    pub async fn count_system_inflight_by_system_backup_policy_uuid_node_uuid(
-        database: &crate::database::Database,
-        system_backup_policy_uuid: uuid::Uuid,
-        node_uuid: uuid::Uuid,
-    ) -> Result<i64, sqlx::Error> {
-        sqlx::query_scalar(
-            r#"
-            SELECT COUNT(*)
-            FROM server_backups
-            WHERE
-                server_backups.system_backup_policy_uuid = $1
-                AND server_backups.node_uuid = $2
-                AND server_backups.completed IS NULL
-                AND server_backups.deleted IS NULL
-                AND server_backups.created >= NOW() - INTERVAL '1 day'
-            "#,
-        )
-        .bind(system_backup_policy_uuid)
-        .bind(node_uuid)
-        .fetch_one(database.read())
-        .await
-    }
-
-    /// Sibling of [`Self::count_system_inflight_by_system_backup_policy_uuid_node_uuid`] for
-    /// database instance policies, whose dumps load the database agent host rather than the node.
-    pub async fn count_system_inflight_by_system_backup_policy_uuid_database_agent_host_uuid(
-        database: &crate::database::Database,
-        system_backup_policy_uuid: uuid::Uuid,
-        database_agent_host_uuid: uuid::Uuid,
-    ) -> Result<i64, sqlx::Error> {
-        sqlx::query_scalar(
-            r#"
-            SELECT COUNT(*)
-            FROM server_backups
-            JOIN server_database_instances ON server_database_instances.uuid = server_backups.database_instance_uuid
-            WHERE
-                server_backups.system_backup_policy_uuid = $1
-                AND server_database_instances.database_agent_host_uuid = $2
-                AND server_backups.completed IS NULL
-                AND server_backups.deleted IS NULL
-                AND server_backups.created >= NOW() - INTERVAL '1 day'
-            "#,
-        )
-        .bind(system_backup_policy_uuid)
-        .bind(database_agent_host_uuid)
         .fetch_one(database.read())
         .await
     }
@@ -2529,6 +2322,51 @@ impl FailedServerBackupScope {
     }
 }
 
+/// Which backups an admin sweep over a [`FailedServerBackupScope`] takes.
+#[derive(Clone, Copy)]
+enum FailedServerBackupSweep {
+    Backups,
+    Deletions,
+}
+
+impl FailedServerBackupSweep {
+    #[inline]
+    fn condition(self) -> &'static str {
+        match self {
+            Self::Backups => {
+                r#"
+                server_backups.deleted IS NULL
+                AND server_backups.completed IS NOT NULL
+                AND NOT server_backups.successful
+                AND NOT server_backups.locked
+                AND ($2::uuid IS NULL OR server_backups.node_uuid != $2)
+                AND (server_backups.deleting IS NULL OR server_backups.deletion_retries >= $3)
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM backup_configurations
+                    WHERE backup_configurations.uuid = server_backups.backup_configuration_uuid
+                        AND backup_configurations.maintenance_enabled
+                )
+                "#
+            }
+            Self::Deletions => {
+                r#"
+                server_backups.deleted IS NULL
+                AND server_backups.deleting IS NOT NULL
+                AND server_backups.deletion_retries >= $3
+                AND ($2::uuid IS NULL OR server_backups.node_uuid != $2)
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM backup_configurations
+                    WHERE backup_configurations.uuid = server_backups.backup_configuration_uuid
+                        AND backup_configurations.maintenance_enabled
+                )
+                "#
+            }
+        }
+    }
+}
+
 impl ServerBackup {
     pub const MAX_DELETION_RETRIES: i32 = 8;
 
@@ -2687,71 +2525,73 @@ impl ServerBackup {
         Ok(())
     }
 
-    pub async fn fail_deletion_attempt(&self, state: &crate::State) -> Result<i32, anyhow::Error> {
-        let deletion_retries: Option<i32> = sqlx::query_scalar(
+    pub async fn fail_deletion_attempt(&self, state: &crate::State) -> Result<(), anyhow::Error> {
+        let finalized = sqlx::query(
             r#"
             UPDATE server_backups
-            SET deletion_retries = deletion_retries + 1
+            SET deletion_retries = $2
             WHERE
                 server_backups.uuid = $1
                 AND server_backups.deleted IS NULL
                 AND server_backups.deleting IS NOT NULL
-            RETURNING server_backups.deletion_retries
+                AND server_backups.deletion_retries = $2 - 1
             "#,
         )
         .bind(self.uuid)
-        .fetch_optional(state.database.write())
-        .await?;
+        .bind(Self::MAX_DELETION_RETRIES)
+        .execute(state.database.write())
+        .await?
+        .rows_affected();
 
-        let Some(deletion_retries) = deletion_retries else {
-            return Ok(0);
-        };
+        if finalized > 0 {
+            self.finalize_failed_deletion(state).await;
+        }
 
-        if deletion_retries >= Self::MAX_DELETION_RETRIES {
-            if let Some(server) = &self.server
-                && let Err(err) = super::server_activity::ServerActivity::create(
-                    state,
-                    super::server_activity::CreateServerActivityOptions {
-                        server_uuid: server.uuid,
-                        user_uuid: None,
-                        impersonator_uuid: None,
-                        api_key_uuid: None,
-                        schedule_uuid: None,
-                        event: match self.kind {
-                            ServerBackupKind::Server => "server:backup.delete-failed",
-                            ServerBackupKind::DatabaseInstance => {
-                                "server:database-backup.delete-failed"
-                            }
+        Ok(())
+    }
+
+    async fn finalize_failed_deletion(&self, state: &crate::State) {
+        if let Some(server) = &self.server
+            && let Err(err) = super::server_activity::ServerActivity::create(
+                state,
+                super::server_activity::CreateServerActivityOptions {
+                    server_uuid: server.uuid,
+                    user_uuid: None,
+                    impersonator_uuid: None,
+                    api_key_uuid: None,
+                    schedule_uuid: None,
+                    event: match self.kind {
+                        ServerBackupKind::Server => "server:backup.delete-failed",
+                        ServerBackupKind::DatabaseInstance => {
+                            "server:database-backup.delete-failed"
                         }
-                        .into(),
-                        ip: None,
-                        data: serde_json::json!({
-                            "uuid": self.uuid,
-                            "name": self.name,
-                            "database_instance_uuid": self.database_instance_uuid,
-                        }),
-                        created: None,
-                    },
-                )
-                .await
-            {
-                tracing::warn!(
-                    backup = %self.uuid,
-                    "failed to log backup deletion failure activity: {:#?}",
-                    err
-                );
-            }
-
-            Self::get_event_emitter().emit(
-                state.clone(),
-                ServerBackupEvent::DeletionCompleted {
-                    backup: Box::new(self.clone()),
-                    successful: false,
+                    }
+                    .into(),
+                    ip: None,
+                    data: serde_json::json!({
+                        "uuid": self.uuid,
+                        "name": self.name,
+                        "database_instance_uuid": self.database_instance_uuid,
+                    }),
+                    created: None,
                 },
+            )
+            .await
+        {
+            tracing::warn!(
+                backup = %self.uuid,
+                "failed to log backup deletion failure activity: {:#?}",
+                err
             );
         }
 
-        Ok(deletion_retries)
+        Self::get_event_emitter().emit(
+            state.clone(),
+            ServerBackupEvent::DeletionCompleted {
+                backup: Box::new(self.clone()),
+                successful: false,
+            },
+        );
     }
 
     pub async fn redispatch_stale_deletions(state: &crate::State) -> Result<u64, anyhow::Error> {
@@ -2794,17 +2634,30 @@ impl ServerBackup {
                 continue;
             }
 
-            let deletion_retries: i32 = sqlx::query_scalar(
+            let deletion_retries: Option<i32> = sqlx::query_scalar(
                 r#"
                 UPDATE server_backups
                 SET deleting = NOW(), deletion_retries = deletion_retries + 1
-                WHERE server_backups.uuid = $1 AND server_backups.deleted IS NULL
+                WHERE
+                    server_backups.uuid = $1
+                    AND server_backups.deleted IS NULL
+                    AND server_backups.deleting = $2
                 RETURNING server_backups.deletion_retries
                 "#,
             )
             .bind(backup.uuid)
-            .fetch_one(state.database.write())
+            .bind(backup.deleting)
+            .fetch_optional(state.database.write())
             .await?;
+
+            let Some(deletion_retries) = deletion_retries else {
+                continue;
+            };
+
+            if deletion_retries >= Self::MAX_DELETION_RETRIES {
+                backup.finalize_failed_deletion(state).await;
+                continue;
+            }
 
             match backup
                 .dispatch_deletion(state, &DeleteServerBackupOptions::default())
@@ -2824,15 +2677,7 @@ impl ServerBackup {
                         err
                     );
 
-                    if deletion_retries >= Self::MAX_DELETION_RETRIES {
-                        Self::get_event_emitter().emit(
-                            state.clone(),
-                            ServerBackupEvent::DeletionCompleted {
-                                backup: Box::new(backup.clone()),
-                                successful: false,
-                            },
-                        );
-                    }
+                    backup.fail_deletion_attempt(state).await?;
 
                     continue;
                 }
@@ -3004,24 +2849,6 @@ impl ServerBackup {
         }
     }
 
-    /// Rows a failed-backup sweep may take: a completed but unsuccessful backup that is not
-    /// locked, is not already mid-deletion, and whose configuration is not in maintenance. Uses
-    /// `$2` for the node partially detached backups must not live on and `$3` for the retry cap.
-    const FAILED_SWEEP_CONDITION: &'static str = r#"
-        server_backups.deleted IS NULL
-        AND server_backups.completed IS NOT NULL
-        AND NOT server_backups.successful
-        AND NOT server_backups.locked
-        AND ($2::uuid IS NULL OR server_backups.node_uuid != $2)
-        AND (server_backups.deleting IS NULL OR server_backups.deletion_retries >= $3)
-        AND NOT EXISTS (
-            SELECT 1
-            FROM backup_configurations
-            WHERE backup_configurations.uuid = server_backups.backup_configuration_uuid
-                AND backup_configurations.maintenance_enabled
-        )
-    "#;
-
     const FAILED_SWEEP_CHUNK: i64 = 250;
     const FAILED_SWEEP_CONCURRENCY: usize = 5;
     const BULK_CONCURRENCY: usize = 5;
@@ -3029,6 +2856,21 @@ impl ServerBackup {
     pub async fn count_failed(
         database: &crate::database::Database,
         scope: FailedServerBackupScope,
+    ) -> Result<i64, sqlx::Error> {
+        Self::count_swept(database, scope, FailedServerBackupSweep::Backups).await
+    }
+
+    pub async fn count_failed_deletions(
+        database: &crate::database::Database,
+        scope: FailedServerBackupScope,
+    ) -> Result<i64, sqlx::Error> {
+        Self::count_swept(database, scope, FailedServerBackupSweep::Deletions).await
+    }
+
+    async fn count_swept(
+        database: &crate::database::Database,
+        scope: FailedServerBackupScope,
+        sweep: FailedServerBackupSweep,
     ) -> Result<i64, sqlx::Error> {
         let (scope_uuid, excluded_node_uuid) = scope.bindings();
 
@@ -3039,7 +2881,7 @@ impl ServerBackup {
             WHERE {} AND {}
             "#,
             scope.condition(),
-            Self::FAILED_SWEEP_CONDITION
+            sweep.condition()
         )))
         .bind(scope_uuid)
         .bind(excluded_node_uuid)
@@ -3051,9 +2893,10 @@ impl ServerBackup {
     /// Claims one chunk of the sweep, returning the backups now marked deleting alongside the
     /// uuid the next chunk must start after. Backups are only rejected before the claim, since a
     /// claim erroring mid-transaction would take the whole chunk down with it.
-    async fn claim_failed_deletions(
+    async fn claim_swept_deletions(
         state: &crate::State,
         scope: FailedServerBackupScope,
+        sweep: FailedServerBackupSweep,
         options: &DeleteServerBackupOptions,
         after: Option<uuid::Uuid>,
     ) -> Result<(Vec<Self>, Option<uuid::Uuid>), anyhow::Error> {
@@ -3074,7 +2917,7 @@ impl ServerBackup {
             "#,
             Self::columns_sql(None),
             scope.condition(),
-            Self::FAILED_SWEEP_CONDITION
+            sweep.condition()
         )))
         .bind(scope_uuid)
         .bind(excluded_node_uuid)
@@ -3280,12 +3123,31 @@ impl ServerBackup {
         deleted
     }
 
-    /// Deletes every failed backup in `scope`, returning how many deletions were dispatched. Each
-    /// chunk is claimed in its own transaction so the rows show as deleting straight away, and a
-    /// panel restart mid-sweep leaves them to `redispatch_stale_deletions`.
+    /// Deletes every failed backup in `scope`, returning how many deletions were dispatched.
     pub async fn delete_failed(
         state: &crate::State,
         scope: FailedServerBackupScope,
+        force: bool,
+    ) -> Result<u64, anyhow::Error> {
+        Self::sweep(state, scope, FailedServerBackupSweep::Backups, force).await
+    }
+
+    /// Retries every backup deletion in `scope` that ran out of retries, returning how many
+    /// deletions were dispatched.
+    pub async fn retry_failed_deletions(
+        state: &crate::State,
+        scope: FailedServerBackupScope,
+        force: bool,
+    ) -> Result<u64, anyhow::Error> {
+        Self::sweep(state, scope, FailedServerBackupSweep::Deletions, force).await
+    }
+
+    /// Each chunk is claimed in its own transaction so the rows show as deleting straight away,
+    /// and a panel restart mid-sweep leaves them to `redispatch_stale_deletions`.
+    async fn sweep(
+        state: &crate::State,
+        scope: FailedServerBackupScope,
+        sweep: FailedServerBackupSweep,
         force: bool,
     ) -> Result<u64, anyhow::Error> {
         let options = DeleteServerBackupOptions {
@@ -3298,7 +3160,7 @@ impl ServerBackup {
 
         loop {
             let (claimed, cursor) =
-                Self::claim_failed_deletions(state, scope, &options, after).await?;
+                Self::claim_swept_deletions(state, scope, sweep, &options, after).await?;
 
             let mut futures = Vec::with_capacity(claimed.len());
             for backup in &claimed {

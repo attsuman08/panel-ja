@@ -69,6 +69,27 @@ export const backupDiskEnum = pgEnum('backup_disk', [
   'KOPIA',
 ]);
 export const serverBackupKindEnum = pgEnum('server_backup_kind', ['SERVER', 'DATABASE_INSTANCE']);
+export const systemBackupPolicyRunTargetStatusEnum = pgEnum('system_backup_policy_run_target_status', [
+  'PENDING',
+  'DISPATCHED',
+  'SKIPPED',
+  'FAILED',
+]);
+export const systemBackupPolicyRunTargetReasonEnum = pgEnum('system_backup_policy_run_target_reason', [
+  'NODE_MAINTENANCE',
+  'BACKUP_CONFIGURATION_MAINTENANCE',
+  'DATABASE_AGENT_HOST_MAINTENANCE',
+  'DATABASE_INSTANCE_STOPPED',
+  'SERVER_BUSY',
+  'METADATA_FAILED',
+  'NO_BACKUP_CONFIGURATION',
+  'UNSUPPORTED_BACKUP_DISK',
+  'TARGET_REMOVED',
+  'CREATE_FAILED',
+  'POLICY_DISABLED',
+  'SUPERSEDED',
+  'CANCELLED',
+]);
 export const serverDatabaseInstanceStatusEnum = pgEnum('server_database_instance_status', ['RESTORING_BACKUP']);
 export const announcementTypeEnum = pgEnum('announcement_type', ['INFO', 'SUCCESS', 'WARNING', 'ERROR']);
 export const tunnelProtocolEnum = pgEnum('tunnel_protocol', ['TCP', 'UDP']);
@@ -170,6 +191,7 @@ export const usersTable = pgTable(
   },
   (cols) => [
     index('users_role_uuid_idx').on(cols.role_uuid),
+    index('users_created_idx').on(cols.created),
     uniqueIndex('users_external_id_idx').on(cols.external_id),
     uniqueIndex('users_username_idx').on(sql`lower(${cols.username})`),
     uniqueIndex('users_email_idx').on(sql`lower(${cols.email})`),
@@ -270,6 +292,7 @@ export const userPasswordResetsTable = pgTable(
       .notNull(),
     token_start: char({ length: 16 }).notNull(),
     token: text().notNull(),
+    account_created: boolean().default(false).notNull(),
     created: timestamp().defaultNow().notNull(),
   },
   (cols) => [
@@ -457,6 +480,7 @@ export const oauthProvidersTable = pgTable(
     uuid: uuid().default(sql`gen_random_uuid()`).primaryKey().notNull(),
     name: varchar({ length: 255 * UTF8_MAX_SCALAR_SIZE }).notNull(),
     description: text(),
+    icon: varchar({ length: 128 }),
     client_id: varchar({ length: 255 }).notNull(),
     client_secret: bytea(),
     auth_url: varchar({ length: 255 }).notNull(),
@@ -472,9 +496,11 @@ export const oauthProvidersTable = pgTable(
     avatar_url_template: varchar({ length: 255 }),
     avatar_overwrite: boolean().default(false).notNull(),
     enabled: boolean().default(false).notNull(),
+    login_viewable: boolean().default(true).notNull(),
     login_only: boolean().default(false).notNull(),
     login_bypass_two_factor: boolean().default(true).notNull(),
     link_viewable: boolean().default(false).notNull(),
+    api_linkable: boolean().default(false).notNull(),
     user_manageable: boolean().default(false).notNull(),
     basic_auth: boolean().default(false).notNull(),
     pkce: boolean().default(false).notNull(),
@@ -560,7 +586,6 @@ export const systemBackupPoliciesTable = pgTable(
     cron: varchar({ length: 255 }).notNull(),
     retention: jsonb().default({ count: 0, days: 0, daily: 0, weekly: 0, monthly: 0, yearly: 0 }).notNull(),
     parallelism: integer().default(2).notNull(),
-    triggered: timestamp(),
     created: timestamp().defaultNow().notNull(),
   },
   (cols) => [
@@ -650,6 +675,61 @@ export const systemBackupPolicyServersTable = pgTable(
     }),
     index('system_backup_policy_servers_system_backup_policy_uuid_idx').on(cols.system_backup_policy_uuid),
     index('system_backup_policy_servers_server_uuid_idx').on(cols.server_uuid),
+  ],
+);
+
+export const systemBackupPolicyRunsTable = pgTable(
+  'system_backup_policy_runs',
+  {
+    uuid: uuid().default(sql`gen_random_uuid()`).primaryKey().notNull(),
+    system_backup_policy_uuid: uuid()
+      .references(() => systemBackupPoliciesTable.uuid, { onDelete: 'cascade' })
+      .notNull(),
+    manual: boolean().notNull(),
+    occurrence: timestamp().notNull(),
+    total_targets: integer().default(0).notNull(),
+    successful_targets: integer().default(0).notNull(),
+    failed_targets: integer().default(0).notNull(),
+    skipped_targets: integer().default(0).notNull(),
+    cancelled: timestamp(),
+    completed: timestamp(),
+    created: timestamp().defaultNow().notNull(),
+  },
+  (cols) => [
+    index('system_backup_policy_runs_policy_uuid_created_idx').on(cols.system_backup_policy_uuid, cols.created),
+    uniqueIndex('system_backup_policy_runs_policy_uuid_occurrence_idx')
+      .on(cols.system_backup_policy_uuid, cols.occurrence)
+      .where(sql`NOT ${cols.manual}`),
+    index('system_backup_policy_runs_policy_uuid_open_idx')
+      .on(cols.system_backup_policy_uuid)
+      .where(sql`${cols.completed} IS NULL`),
+  ],
+);
+
+export const systemBackupPolicyRunTargetsTable = pgTable(
+  'system_backup_policy_run_targets',
+  {
+    uuid: uuid().default(sql`gen_random_uuid()`).primaryKey().notNull(),
+    system_backup_policy_run_uuid: uuid()
+      .references(() => systemBackupPolicyRunsTable.uuid, { onDelete: 'cascade' })
+      .notNull(),
+    server_uuid: uuid().references(() => serversTable.uuid, { onDelete: 'set null' }),
+    database_instance_uuid: uuid().references(() => serverDatabaseInstancesTable.uuid, { onDelete: 'set null' }),
+    server_backup_uuid: uuid().references(() => serverBackupsTable.uuid, { onDelete: 'set null' }),
+    status: systemBackupPolicyRunTargetStatusEnum().default('PENDING').notNull(),
+    reason: systemBackupPolicyRunTargetReasonEnum(),
+    last_attempt: timestamp(),
+    not_before: timestamp(),
+    updated: timestamp().defaultNow().notNull(),
+  },
+  (cols) => [
+    index('system_backup_policy_run_targets_run_uuid_idx').on(cols.system_backup_policy_run_uuid),
+    index('system_backup_policy_run_targets_run_uuid_pending_idx')
+      .on(cols.system_backup_policy_run_uuid)
+      .where(sql`${cols.status} = 'PENDING'`),
+    index('system_backup_policy_run_targets_server_uuid_idx').on(cols.server_uuid),
+    index('system_backup_policy_run_targets_database_instance_uuid_idx').on(cols.database_instance_uuid),
+    index('system_backup_policy_run_targets_server_backup_uuid_idx').on(cols.server_backup_uuid),
   ],
 );
 
@@ -785,8 +865,34 @@ export const nodeAllocationsTable = pgTable(
     created: timestamp().defaultNow().notNull(),
   },
   (cols) => [
-    index('allocations_node_uuid_idx').on(cols.node_uuid),
+    index('allocations_node_uuid_ip_inet_port_idx').on(cols.node_uuid, cols.ip, cols.port),
     uniqueIndex('allocations_node_uuid_ip_port_idx').on(cols.node_uuid, sql`host(${cols.ip})`, cols.port),
+  ],
+);
+
+export const nodePermissionInvalidationsTable = pgTable(
+  'node_permission_invalidations',
+  {
+    uuid: uuid().default(sql`gen_random_uuid()`).primaryKey().notNull(),
+    node_uuid: uuid()
+      .references(() => nodesTable.uuid, { onDelete: 'cascade' })
+      .notNull(),
+    as_of: bigint({ mode: 'number' }).notNull(),
+    users: uuid().array().default([]).notNull(),
+    servers: uuid().array().default([]).notNull(),
+    all_servers: boolean().default(false).notNull(),
+    revoke_users: uuid().array().default([]).notNull(),
+    revoke_credentials: uuid().array().default([]).notNull(),
+    attempts: integer().default(0).notNull(),
+    next_attempt: timestamp().defaultNow().notNull(),
+    created: timestamp().defaultNow().notNull(),
+  },
+  (cols) => [
+    index('node_permission_invalidations_node_uuid_idx').on(cols.node_uuid),
+    index('node_permission_invalidations_next_attempt_idx').on(cols.next_attempt),
+    uniqueIndex('node_permission_invalidations_node_uuid_pending_idx')
+      .on(cols.node_uuid)
+      .where(sql`cardinality(${cols.revoke_users}) = 0 AND cardinality(${cols.revoke_credentials}) = 0`),
   ],
 );
 
@@ -1121,6 +1227,7 @@ export const serversTable = pgTable(
     index('servers_egg_uuid_idx').on(cols.egg_uuid),
     index('servers_backup_configuration_uuid_idx').on(cols.backup_configuration_uuid),
     uniqueIndex('servers_uuid_short_idx').on(cols.uuid_short),
+    index('servers_created_idx').on(cols.created),
   ],
 );
 
@@ -1257,7 +1364,7 @@ export const serverActivitiesTable = pgTable(
     created: timestamp().defaultNow().notNull(),
   },
   (cols) => [
-    index('server_activities_server_uuid_idx').on(cols.server_uuid),
+    index('server_activities_server_uuid_created_idx').on(cols.server_uuid, cols.created),
     index('server_activities_impersonator_uuid_idx').on(cols.impersonator_uuid),
     index('server_activities_api_key_uuid_idx').on(cols.api_key_uuid),
     index('server_activities_schedule_uuid_idx').on(cols.schedule_uuid),
@@ -1376,9 +1483,16 @@ export const serverBackupsTable = pgTable(
   (cols) => [
     index('server_backups_server_uuid_idx').on(cols.server_uuid),
     index('server_backups_node_uuid_idx').on(cols.node_uuid),
+    index('server_backups_node_uuid_created_idx').on(cols.node_uuid, cols.created).where(sql`${cols.deleted} IS NULL`),
     index('server_backups_backup_configuration_uuid_idx').on(cols.backup_configuration_uuid),
     index('server_backups_backup_group_uuid_idx').on(cols.backup_group_uuid),
     index('server_backups_system_backup_policy_uuid_idx').on(cols.system_backup_policy_uuid),
+    index('server_backups_policy_uuid_server_uuid_created_idx')
+      .on(cols.system_backup_policy_uuid, cols.server_uuid, cols.created)
+      .where(sql`${cols.system_backup_policy_uuid} IS NOT NULL`),
+    index('server_backups_policy_uuid_database_instance_uuid_created_idx')
+      .on(cols.system_backup_policy_uuid, cols.database_instance_uuid, cols.created)
+      .where(sql`${cols.system_backup_policy_uuid} IS NOT NULL AND ${cols.database_instance_uuid} IS NOT NULL`),
     index('server_backups_database_instance_uuid_idx').on(cols.database_instance_uuid),
     index('server_backups_successful_idx').on(cols.successful),
     index('server_backups_deleting_idx').on(cols.deleting),

@@ -1,11 +1,12 @@
 import { faFileText, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import Button from '@/elements/buttons/Button.tsx';
 import { AdminCan } from '@/elements/Can.tsx';
 import AdminContentContainer from '@/elements/containers/AdminContentContainer.tsx';
 import Group from '@/elements/layout/Group.tsx';
 import ConditionalTooltip from '@/elements/overlays/ConditionalTooltip.tsx';
+import { computeInstalledCount } from '@/lib/extensions.ts';
 import { useTranslations } from '@/providers/TranslationProvider.tsx';
 import ExtensionInstallOverlay from './ExtensionInstallOverlay.tsx';
 import ExtensionStatusAlerts from './ExtensionStatusAlerts.tsx';
@@ -21,10 +22,15 @@ export default function AdminExtensions() {
   const { t } = useTranslations();
   const ext = useExtensionManagement();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [search, setSearch] = useState('');
+
+  const installedCount = useMemo(() => computeInstalledCount(ext.adminExtensions), [ext.adminExtensions]);
 
   return (
     <AdminContentContainer
       title={t('pages.admin.extensions.title', {})}
+      search={search}
+      setSearch={installedCount > 0 ? setSearch : undefined}
       contentRight={
         <AdminCan action='extensions.manage'>
           <Group hidden={!ext.extensionStatus} gap='xs'>
@@ -63,6 +69,7 @@ export default function AdminExtensions() {
         opened={!!ext.removalExtension}
         extension={ext.removalExtension}
         onRemove={(removeMigrations) => ext.handleRemove(ext.removalExtension!, removeMigrations)}
+        removing={!!ext.removalExtension && ext.isPending(`remove:${ext.removalExtension.metadataToml.packageName}`)}
         onClose={() => ext.setRemovalExtension(null)}
       />
 
@@ -74,9 +81,11 @@ export default function AdminExtensions() {
         buildFailed={ext.buildFailed}
         failureReason={ext.failureReason}
         failedExtensions={ext.failedExtensions}
+        startFailedExtensions={ext.adminExtensions?.failed ?? {}}
         pendingRestart={ext.pendingRestart}
         isBuilding={ext.isBuilding}
         onRestart={ext.handleRestart}
+        restarting={ext.isPending('restart')}
       />
 
       <ExtensionUploadsCard uploads={ext.uploads} onCancel={ext.handleCancelUpload} />
@@ -87,6 +96,8 @@ export default function AdminExtensions() {
         failedExtensions={ext.failedExtensions}
         onRemove={ext.setRemovalExtension}
         onToggle={ext.handleToggle}
+        isPending={ext.isPending}
+        search={search}
       />
 
       {ext.extensionStatus && (
@@ -100,6 +111,7 @@ export default function AdminExtensions() {
           onCancelBuild={ext.handleCancelBuild}
           onRebuild={ext.handleRebuild}
           onRemove={ext.handleRemove}
+          isPending={ext.isPending}
         />
       )}
     </AdminContentContainer>

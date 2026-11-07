@@ -30,6 +30,7 @@ mod system;
 mod token;
 mod transfers;
 mod tunnel;
+mod upgrade;
 
 pub async fn auth(
     state: GetState,
@@ -206,6 +207,14 @@ mod patch {
     ) -> ApiResponseResult {
         permissions.has_admin_permission("nodes.update")?;
 
+        if data.url.as_ref().is_some_and(|url| {
+            reqwest::Url::parse(url)
+                .ok()
+                .is_none_or(|url| url != node.url)
+        }) {
+            permissions.has_admin_permission("nodes.read-token")?;
+        }
+
         let disabled_features = DisabledFeatures::resolve(&state.database).await?;
         match node.update(&state, data).await {
             Ok(_) => {}
@@ -253,6 +262,7 @@ pub fn router(state: &State) -> OpenApiRouter<State> {
         .nest("/enrollment", enrollment::router(state))
         .nest("/pair", pair::router(state))
         .nest("/token", token::router(state))
+        .nest("/upgrade", upgrade::router(state))
         .nest("/tunnel", tunnel::router(state))
         .nest("/allocations", allocations::router(state))
         .nest("/system", system::router(state))

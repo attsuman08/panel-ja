@@ -25,9 +25,11 @@ export default function AdminServerAllocations({ server }: { server: AdminServer
     search,
     setSearch,
     setPage,
+    setPerPage,
   } = useSearchablePaginatedTable({
     queryKey: queryKeys.admin.servers.allocations(server.uuid),
-    fetcher: (page, search) => getServerAllocations(server.uuid, page, search),
+    fetcher: (page, search, perPage) => getServerAllocations(server.uuid, page, search, perPage),
+    backgroundRefetch: true,
   });
 
   return (
@@ -55,6 +57,7 @@ export default function AdminServerAllocations({ server }: { server: AdminServer
         loading={loading}
         pagination={serverAllocations}
         onPageSelect={setPage}
+        onPerPageSelect={setPerPage}
         error={error}
       >
         {serverAllocations?.data.map((allocation) => (

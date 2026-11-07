@@ -44,6 +44,11 @@ const handImplementedMethods = new Set([
     'post /api/tundra/sync',
 ])
 
+/** Responses whose schema tracks wings' internals too closely to pin, consumers deserialize what they need. */
+const untypedResponses = new Set([
+    'get /api/system/config',
+])
+
 const compatBodyProperties: Record<string, Record<string, 'client' | 'extra'>> = {
     'post /api/backups/{backup}/export': { ignored: 'client' },
     'post /api/servers/{server}/files/chmod': { ignored: 'client' },
@@ -64,12 +69,15 @@ const compatBodyProperties: Record<string, Record<string, 'client' | 'extra'>> =
     'post /api/servers/{server}/files/trash': { ignored: 'client' },
     'post /api/servers/{server}/files/trash/restore': { ignored: 'client' },
     'post /api/servers/{server}/files/trash/purge': { ignored: 'client' },
+    'post /api/servers/{server}/files/trash/{entry}/restore': { ignored: 'client' },
+    'post /api/servers/{server}/files/trash/{entry}/return': { ignored: 'client' },
     'post /api/servers/{server}/reinstall': { start_on_completion: 'extra' },
 }
 
 /** Properties wings only started sending after the schema shipped, so older nodes omit them. */
 const serdeDefaultProperties: Record<string, string[]> = {
     QueryResultSet: ['truncated'],
+    ResourceUsage: ['trash_bytes'],
 }
 
 /** The same, for properties of a route's inline response bodies. */
@@ -79,6 +87,54 @@ const serdeDefaultResponseProperties: Record<string, string[]> = {
 }
 
 const openapi: oas31.OpenAPIObject = JSON.parse(fs.readFileSync('../openapi.json', 'utf-8'))
+
+function resolveObjectSchema(schema: oas31.SchemaObject | oas31.ReferenceObject): oas31.SchemaObject | null {
+    if (schema.$ref) {
+        const target = openapi.components?.schemas?.[schema.$ref.split('/').at(-1)!]
+        return target ? resolveObjectSchema(target) : null
+    }
+
+    const object = schema as oas31.SchemaObject
+    if (object.allOf) return mergeAllOf(object)
+
+    return object.type === 'object' && !object.additionalProperties ? object : null
+}
+
+/**
+ * Turns an `allOf` of plain objects (what utoipa emits for `#[serde(flatten)]`) into one object schema.
+ * Referenced models become a `#[serde(flatten)]` property named after the model, inline parts are merged.
+ */
+function mergeAllOf(schema: oas31.SchemaObject): oas31.SchemaObject | null {
+    if (schema.allOf!.some((part) => !resolveObjectSchema(part))) return null
+
+    const properties: Record<string, oas31.SchemaObject | oas31.ReferenceObject> = {}
+    const required = new Set<string>()
+    for (const part of schema.allOf!) {
+        if (part.$ref) {
+            const name = snakeCase(part.$ref.split('/').at(-1)!)
+            properties[name] = { $ref: part.$ref, 'x-flatten': true } as oas31.ReferenceObject
+            required.add(name)
+        } else {
+            const object = resolveObjectSchema(part)!
+            Object.assign(properties, object.properties ?? {})
+            object.required?.forEach((name) => required.add(name))
+        }
+    }
+
+    const { allOf: _, ...rest } = schema
+    return { ...rest, type: 'object', properties, required: [...required] }
+}
+
+function flattenAllOf(value: any): any {
+    if (Array.isArray(value)) return value.map(flattenAllOf)
+    if (!value || typeof value !== 'object') return value
+
+    const flattened = Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, flattenAllOf(inner)]))
+    return Array.isArray(flattened.allOf) ? mergeAllOf(flattened) ?? flattened : flattened
+}
+
+openapi.paths = flattenAllOf(openapi.paths)
+openapi.components = flattenAllOf(openapi.components)
 const output = fs.createWriteStream('../src/lib.rs', { flags: 'w' })
 
 output.write(`//! The Calagopus Panel Wings API library.
@@ -389,6 +445,7 @@ for (const [path, route] of Object.entries(openapi.paths ?? {})) {
     if (!path.startsWith('/api')) continue
 
     output.write(`pub mod ${snakeCase(path).slice(4)} {\n`)
+    if (methods.every((method) => !route[method] || untypedResponses.has(`${method} ${path}`))) output.write('    #[allow(unused_imports)]\n')
     output.write('    use super::*;\n')
 
     for (const method of methods) {
@@ -396,6 +453,7 @@ for (const [path, route] of Object.entries(openapi.paths ?? {})) {
         if (!data) continue
 
         output.write(`\n    pub mod ${method} {\n`)
+        if (untypedResponses.has(`${method} ${path}`)) output.write('        #[allow(unused_imports)]\n')
         output.write('        use super::*;\n\n')
 
         const compat = compatBodyProperties[`${method} ${path}`] ?? {}
@@ -420,7 +478,9 @@ for (const [path, route] of Object.entries(openapi.paths ?? {})) {
         for (const [code, _response] of Object.entries(data.responses ?? [])) {
             const response = _response as oas31.ResponseObject
             const schema = Object.values(response.content ?? {})[0].schema
-            if (schema?.$ref) {
+            if (code.startsWith('2') && untypedResponses.has(`${method} ${path}`)) {
+                output.write(`        pub type Response${code} = serde_json::Value;\n\n`)
+            } else if (schema?.$ref) {
                 output.write(`        pub type Response${code} = ${schema.$ref.split('/').at(-1)};\n\n`)
             } else {
                 if ((schema as oas31.SchemaObject).type !== 'object') {
@@ -554,6 +614,7 @@ for (const [path, route] of Object.entries(openapi.paths ?? {})) {
                     const field = rustIdent(param.name)
                     const isArray = inner.startsWith('Vec<')
                     const isString = inner === 'compact_str::CompactString'
+                    const isDateTime = inner.startsWith('chrono::DateTime<')
                     const itemIsString = isArray && inner.slice(4, -1) === 'compact_str::CompactString'
 
                     clientOutput.write(`        if let Some(value) = ${isArray || isString ? '&' : ''}query.${field} {\n`)
@@ -567,6 +628,8 @@ for (const [path, route] of Object.entries(openapi.paths ?? {})) {
                         clientOutput.write('            }\n')
                     } else if (isString) {
                         clientOutput.write(`            query_parts.push(format!("${key}={}", urlencoding::encode(value)).into());\n`)
+                    } else if (isDateTime) {
+                        clientOutput.write(`            query_parts.push(format!("${key}={}", urlencoding::encode(&value.to_rfc3339())).into());\n`)
                     } else {
                         clientOutput.write(`            query_parts.push(format!("${key}={}", value).into());\n`)
                     }

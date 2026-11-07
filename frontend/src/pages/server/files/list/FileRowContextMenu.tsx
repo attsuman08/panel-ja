@@ -5,15 +5,19 @@ import {
   faCopy,
   faEnvelopesBulk,
   faFileArrowDown,
+  faFileCirclePlus,
   faFilePen,
   faFileShield,
   faFileZipper,
   faFingerprint,
+  faFolderOpen,
+  faFolderPlus,
   faInfoCircle,
   faLink,
   faListDots,
   faPause,
   faPlay,
+  faRotateLeft,
   faTrash,
   faWindowMaximize,
   faWindowRestore,
@@ -39,6 +43,8 @@ import { serverDirectoryEntrySchema } from '@/lib/schemas/server/files.ts';
 import { FileUploadState } from '@/pages/server/files/hooks/useFileUpload.ts';
 import { buildDownloadAsMenuItems, downloadFilesWithToast } from '@/pages/server/files/list/downloadFilesWithToast.ts';
 import { isMountGateway } from '@/pages/server/files/list/mountGateway.ts';
+import { trashItemTargets } from '@/pages/server/files/trash/entry/trashItems.ts';
+import { useTrashItemRestore } from '@/pages/server/files/trash/entry/useTrashItemRestore.ts';
 import { useServerCan } from '@/plugins/usePermissions.ts';
 import { useToast } from '@/providers/contexts/toastContext.ts';
 import { useWindows } from '@/providers/contexts/windowContext.ts';
@@ -71,6 +77,8 @@ interface FileRowContextMenuProps {
   writableDirectory?: boolean;
   upload?: FileUploadState;
   surface?: 'table' | 'tree';
+  onCreateFile?: () => void;
+  onCreateDirectory?: () => void;
   children: (props: { items: ContextMenuItem[]; openMenu: (x: number, y: number) => void }) => React.ReactNode;
 }
 
@@ -82,10 +90,12 @@ export default function FileRowContextMenu({
   writableDirectory,
   upload,
   surface = 'table',
+  onCreateFile,
+  onCreateDirectory,
   children,
 }: FileRowContextMenuProps) {
   const { t } = useTranslations();
-  const { addToast } = useToast();
+  const { addToast, addPendingToast } = useToast();
   const { addWindow } = useWindows();
   const server = useServerStore((state) => state.server);
   const store = useFileManagerApi();
@@ -97,11 +107,13 @@ export default function FileRowContextMenu({
   const canArchive = useServerCan('files.archive');
   const canDelete = useServerCan('files.delete');
   const browsingPrimaryFilesystem = useFileManagerStore((state) => state.browsingPrimaryFilesystem);
+  const trashRestore = useTrashItemRestore();
   const trashEnabled = isTrashEnabled(server, browsingPrimaryFilesystem);
   const mountGateway = isMountGateway(file, browsingPrimaryFilesystem);
   const activeDirectory = directory ?? browsingDirectory;
   const activeWritableDirectory = writableDirectory ?? browsingWritableDirectory;
   const local = upload?.local ?? null;
+  const trashTargets = trashItemTargets(activeDirectory, [file]);
 
   const prepareFileManager = () => {
     store.getState().setBrowsingContext({ directory: activeDirectory, writable: activeWritableDirectory });
@@ -146,10 +158,10 @@ export default function FileRowContextMenu({
 
   const doDownload = (archiveFormat: z.infer<typeof streamingArchiveFormat>) => {
     prepareFileManager();
-    downloadFilesWithToast(downloadFiles(server.uuid, activeDirectory, [file.name], file.directory, archiveFormat), {
-      addToast,
-      t,
-    });
+    return downloadFilesWithToast(
+      downloadFiles(server.uuid, activeDirectory, [file.name], file.directory, archiveFormat),
+      { addToast, addPendingToast, t },
+    );
   };
 
   return (
@@ -232,6 +244,47 @@ export default function FileRowContextMenu({
               onClick: openInNewTab,
               canAccess: canReadContent,
             },
+        {
+          type: 'action',
+          icon: faFileCirclePlus,
+          label: t('pages.server.files.quickAction.newFile', {}),
+          hidden: !onCreateFile || !!upload,
+          onClick: onCreateFile,
+          color: 'gray',
+          canAccess: canCreate,
+        },
+        {
+          type: 'action',
+          icon: faFolderPlus,
+          label: t('pages.server.files.quickAction.newDirectory', {}),
+          hidden: !onCreateDirectory || !!upload,
+          onClick: onCreateDirectory,
+          color: 'gray',
+          canAccess: canCreate,
+        },
+        {
+          type: 'divider',
+          hidden: (!onCreateFile && !onCreateDirectory) || !!upload,
+          canAccess: canCreate,
+        },
+        {
+          type: 'action',
+          icon: faRotateLeft,
+          label: t('common.button.restore', {}),
+          hidden: !trashRestore.available || trashTargets.length === 0,
+          onClick: () => trashRestore.restore(trashTargets),
+          color: 'gray',
+          canAccess: canDelete,
+        },
+        {
+          type: 'action',
+          icon: faFolderOpen,
+          label: t('pages.server.files.button.restoreTo', {}),
+          hidden: !trashRestore.available || trashTargets.length === 0,
+          onClick: () => openModal('trashRestoreTo'),
+          color: 'gray',
+          canAccess: canDelete,
+        },
         {
           type: 'action',
           icon: faFilePen,

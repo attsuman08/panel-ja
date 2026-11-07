@@ -35,7 +35,7 @@ import DatabaseInstanceDeleteModal from './modals/DatabaseInstanceDeleteModal.ts
 interface DatabaseInstanceRowProps {
   instance: z.infer<typeof serverDatabaseInstanceSchema>;
   isSelected?: boolean;
-  onSelectionChange?: (selected: boolean) => void;
+  onSelectionChange?: (selected: boolean, range?: boolean) => void;
   onClick?: (event: React.MouseEvent) => void;
 }
 
@@ -50,13 +50,15 @@ const DatabaseInstanceRow = forwardRef<HTMLTableRowElement, DatabaseInstanceRowP
   const [openModal, setOpenModal] = useState<'delete' | 'kill' | null>(null);
   const host = instance.host ? `${instance.host}${instance.port ? `:${instance.port}` : ''}` : null;
 
-  const onPowerAction = (action: DatabaseInstancePowerAction) => {
-    setOpenModal(null);
-
+  const onPowerAction = (action: DatabaseInstancePowerAction) =>
     postDatabaseInstancePower(server.uuid, instance.uuid, action)
-      .then(() => addToast(t(`pages.server.databases.instance.power.toast.${action}`, {}), 'success'))
-      .catch((msg) => addToast(httpErrorToHuman(msg), 'error'));
-  };
+      .then(() => {
+        setOpenModal(null);
+        addToast(t(`pages.server.databases.instance.power.toast.${action}`, {}), 'success');
+      })
+      .catch((msg) => {
+        addToast(httpErrorToHuman(msg), 'error');
+      });
 
   return (
     <>
@@ -165,9 +167,9 @@ const DatabaseInstanceRow = forwardRef<HTMLTableRowElement, DatabaseInstanceRowP
             <TableData>
               <Group gap='xs' wrap='nowrap'>
                 {instance.isLocked ? (
-                  <FontAwesomeIcon className='text-green-500' icon={faLock} />
+                  <FontAwesomeIcon className='text-(--mantine-color-green-text)' icon={faLock} />
                 ) : (
-                  <FontAwesomeIcon className='text-red-500' icon={faLockOpen} />
+                  <FontAwesomeIcon className='text-(--mantine-color-red-text)' icon={faLockOpen} />
                 )}
                 {instance.updateAvailable && (
                   <Badge color='yellow'>{t('pages.server.databases.instance.updateAvailable', {})}</Badge>

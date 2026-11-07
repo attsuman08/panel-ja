@@ -13,8 +13,8 @@ import Group from '@/elements/layout/Group.tsx';
 import ConfirmationModal from '@/elements/modals/ConfirmationModal.tsx';
 import Tooltip from '@/elements/overlays/Tooltip.tsx';
 import Code from '@/elements/typography/Code.tsx';
-import { queryKeys } from '@/lib/queryKeys.ts';
 import { serverDeviceSchema } from '@/lib/schemas/server/devices.ts';
+import { setDeviceAttached } from '@/pages/server/devices/deviceCache.ts';
 import { useToast } from '@/providers/contexts/toastContext.ts';
 import { useTranslations } from '@/providers/contexts/translationContext.ts';
 import { useServerStore } from '@/stores/server.ts';
@@ -22,7 +22,7 @@ import { useServerStore } from '@/stores/server.ts';
 interface DeviceRowProps {
   contextDevice: z.infer<typeof serverDeviceSchema>;
   isSelected?: boolean;
-  onSelectionChange?: (selected: boolean) => void;
+  onSelectionChange?: (selected: boolean, range?: boolean) => void;
 }
 
 export const DeviceRow = forwardRef<HTMLTableRowElement, DeviceRowProps>(function DeviceRow(
@@ -45,7 +45,7 @@ export const DeviceRow = forwardRef<HTMLTableRowElement, DeviceRowProps>(functio
           }),
           'success',
         );
-        queryClient.invalidateQueries({ queryKey: queryKeys.server(server.uuid).devices.all() });
+        setDeviceAttached(queryClient, server.uuid, contextDevice.uuid, true);
         setOpenModal(null);
       })
       .catch((msg) => {
@@ -62,7 +62,7 @@ export const DeviceRow = forwardRef<HTMLTableRowElement, DeviceRowProps>(functio
           }),
           'success',
         );
-        queryClient.invalidateQueries({ queryKey: queryKeys.server(server.uuid).devices.all() });
+        setDeviceAttached(queryClient, server.uuid, contextDevice.uuid, false);
         setOpenModal(null);
       })
       .catch((msg) => {
@@ -118,9 +118,9 @@ export const DeviceRow = forwardRef<HTMLTableRowElement, DeviceRowProps>(functio
 
         <TableData>
           {contextDevice.created ? (
-            <FontAwesomeIcon icon={faCheck} className='text-green-500' />
+            <FontAwesomeIcon icon={faCheck} className='text-(--mantine-color-green-text)' />
           ) : (
-            <FontAwesomeIcon icon={faX} className='text-red-500' />
+            <FontAwesomeIcon icon={faX} className='text-(--mantine-color-red-text)' />
           )}
         </TableData>
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { z } from 'zod';
 import deleteFailedNodeBackups from '@/api/admin/nodes/backups/deleteFailedNodeBackups.ts';
 import getNodeBackups from '@/api/admin/nodes/backups/getNodeBackups.ts';
+import retryFailedNodeBackupDeletions from '@/api/admin/nodes/backups/retryFailedNodeBackupDeletions.ts';
 import AdminSubContentContainer from '@/elements/containers/AdminSubContentContainer.tsx';
 import Table from '@/elements/data-display/Table.tsx';
 import Switch from '@/elements/input/Switch.tsx';
@@ -12,6 +13,7 @@ import { useSearchablePaginatedTable } from '@/plugins/resource/useSearchablePag
 import { useTranslations } from '@/providers/TranslationProvider.tsx';
 import DeleteFailedBackupsButton from './DeleteFailedBackupsButton.tsx';
 import NodeBackupRow from './NodeBackupRow.tsx';
+import RetryFailedDeletionsButton from './RetryFailedDeletionsButton.tsx';
 
 export default function AdminNodeBackups({ node }: { node: z.infer<typeof adminNodeSchema> }) {
   const { t } = useTranslations();
@@ -24,9 +26,10 @@ export default function AdminNodeBackups({ node }: { node: z.infer<typeof adminN
     search,
     setSearch,
     setPage,
+    setPerPage,
   } = useSearchablePaginatedTable({
     queryKey: queryKeys.admin.backups.byNode(node.uuid),
-    fetcher: (page, search) => getNodeBackups(node.uuid, page, search, showDetachedNodeBackups),
+    fetcher: (page, search, perPage) => getNodeBackups(node.uuid, page, search, showDetachedNodeBackups, perPage),
     paginationKey: 'backups',
     deps: [showDetachedNodeBackups],
     refetchInterval: (data) =>
@@ -53,6 +56,11 @@ export default function AdminNodeBackups({ node }: { node: z.infer<typeof adminN
             failed={nodeBackups?.failed ?? 0}
             onDelete={(force) => deleteFailedNodeBackups(node.uuid, { detached: showDetachedNodeBackups, force })}
           />
+
+          <RetryFailedDeletionsButton
+            failedDeletions={nodeBackups?.failedDeletions ?? 0}
+            onRetry={(force) => retryFailedNodeBackupDeletions(node.uuid, { detached: showDetachedNodeBackups, force })}
+          />
         </Group>
       }
     >
@@ -73,6 +81,7 @@ export default function AdminNodeBackups({ node }: { node: z.infer<typeof adminN
         error={error}
         pagination={nodeBackups?.backups}
         onPageSelect={setPage}
+        onPerPageSelect={setPerPage}
       >
         {nodeBackups?.backups.data.map((backup) => (
           <NodeBackupRow key={backup.uuid} node={node} backup={backup} />

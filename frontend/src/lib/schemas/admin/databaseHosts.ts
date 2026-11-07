@@ -74,3 +74,20 @@ export const adminDatabaseHostUpdateSchema = z.lazy(() =>
     })
     .partial(),
 );
+
+export const adminDatabaseHostDatabaseSizeSchema = z.object({
+  uuid: z.string(),
+  name: z.string(),
+  server: z.object({
+    uuid: z.string(),
+    name: z.string(),
+  }),
+  size: z.number(),
+});
+
+export const adminDatabaseHostCountsSchema = z.record(
+  z.string(),
+  z.object({
+    databaseHostServerDatabases: z.number(),
+  }),
+);

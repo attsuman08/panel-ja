@@ -28,6 +28,22 @@ export function upsertByPackageName<T extends PackageNamed>(list: T[], item: T):
   return [...removeByPackageName(list, pkgName(item)), item];
 }
 
+export function matchesExtensionSearch(
+  packageName: string,
+  backendExtension: AdminBackendExtension | undefined,
+  search: string,
+): boolean {
+  const term = search.trim().toLowerCase();
+  if (!term) return true;
+
+  return [
+    packageName,
+    backendExtension?.metadataToml.name,
+    backendExtension?.description,
+    ...(backendExtension?.authors ?? []),
+  ].some((value) => value?.toLowerCase().includes(term));
+}
+
 export function getBackendOnlyExtensions(adminExtensions: AdminExtensionList | undefined): AdminBackendExtension[] {
   const frontend = window.extensionContext.extensions;
   return (adminExtensions?.extensions ?? []).filter((be) => !someByPackageName(frontend, pkgName(be)));
@@ -86,6 +102,7 @@ export interface ExtensionCardFlags {
   isDisabled: boolean;
   isPendingDisabled: boolean;
   isBuildFailed: boolean;
+  isStartFailed: boolean;
 }
 
 export interface ExtensionBadge {
@@ -100,6 +117,9 @@ export function getExtensionBadges(t: TFunc, flags: ExtensionCardFlags): Extensi
   if (flags.isBuildFailed) {
     badges.push({ key: 'buildFailed', color: 'red', label: t('pages.admin.extensions.badge.buildFailed', {}) });
   }
+  if (flags.isStartFailed) {
+    badges.push({ key: 'startFailed', color: 'red', label: t('pages.admin.extensions.badge.startFailed', {}) });
+  }
   if (flags.isDisabled) {
     badges.push({ key: 'disabled', color: 'gray', label: t('pages.admin.extensions.badge.disabled', {}) });
   }
@@ -110,7 +130,7 @@ export function getExtensionBadges(t: TFunc, flags: ExtensionCardFlags): Extensi
       label: t('pages.admin.extensions.badge.pendingRestart', {}),
     });
   }
-  if (!flags.hasFrontend && !flags.isDisabled) {
+  if (!flags.hasFrontend && !flags.isDisabled && !flags.isStartFailed) {
     badges.push({
       key: 'frontendMissing',
       color: 'red',
