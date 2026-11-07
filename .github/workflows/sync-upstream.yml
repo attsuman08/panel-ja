@@ -1,0 +1,141 @@
+# Fork-only workflow: merge calagopus/panel into main on a schedule,
+# auto-resolve ja.json conflicts, and translate new strings with Gemini.
+#
+# Required secrets:
+#   SYNC_TOKEN               Fine-grained PAT for this repo with
+#                            "Contents: Read and write" and "Workflows: Read and write".
+#                            (GITHUB_TOKEN cannot push upstream changes to .github/workflows.)
+#   GEMINI_API_KEY           Gemini API key from Google AI Studio.
+#                            Without it, the merge still runs and translation is skipped.
+# Optional variable (Settings > Secrets and variables > Actions > Variables):
+#   GEMINI_MODEL             Model id to use (default: gemini-flash-latest).
+name: Sync upstream
+
+on:
+  schedule:
+    - cron: '0 1 * * *' # 10:00 JST daily
+  workflow_dispatch:
+    inputs:
+      translate:
+        description: 'Translate missing ja.json keys with Gemini'
+        type: boolean
+        default: true
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  UPSTREAM_REPO: https://github.com/calagopus/panel.git
+  UPSTREAM_BRANCH: main
+  TARGET_BRANCH: main
+  JA_FILES: frontend/public/translations/ja.json shared/mails/variables/ja.json
+  TODO_FILE: .ja-todo.json
+  RESULT_FILE: .ja-result.json
+  HAS_GEMINI_KEY: ${{ secrets.GEMINI_API_KEY != '' }}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TARGET_BRANCH }}
+          fetch-depth: 0
+          token: ${{ secrets.SYNC_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+      - name: Merge upstream
+        id: merge
+        run: |
+          echo "before=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          git remote add upstream "$UPSTREAM_REPO"
+          git fetch --no-tags upstream "$UPSTREAM_BRANCH"
+
+          if git merge-base --is-ancestor "upstream/$UPSTREAM_BRANCH" HEAD; then
+            echo "Already up to date with upstream."
+            exit 0
+          fi
+
+          msg="Merge branch '$UPSTREAM_BRANCH' of $UPSTREAM_REPO"
+          if ! git merge --no-ff --no-edit -m "$msg" "upstream/$UPSTREAM_BRANCH"; then
+            conflicts=$(git diff --name-only --diff-filter=U)
+            echo "Conflicted files:"; echo "$conflicts"
+
+            others=$(echo "$conflicts" | grep -vxF $(printf -- '-e %s ' $JA_FILES) || true)
+            if [ -n "$others" ]; then
+              echo "::error::Conflicts outside ja.json need manual resolution:%0A${others//$'\n'/%0A}"
+              git merge --abort
+              exit 1
+            fi
+
+            python3 scripts/ja_sync.py resolve $conflicts
+            git commit --no-edit
+          fi
+
+      - name: Find strings to translate
+        id: todo
+        run: |
+          python3 scripts/ja_sync.py normalize
+          count=$(python3 scripts/ja_sync.py todo --old-ref "${{ steps.merge.outputs.before }}" --output "$TODO_FILE")
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          echo "$count key(s) need translation."
+
+      - name: Translate with Gemini
+        id: translate
+        if: >-
+          steps.todo.outputs.count != '0'
+          && github.event.inputs.translate != 'false'
+          && env.HAS_GEMINI_KEY == 'true'
+        continue-on-error: true
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+        run: python3 scripts/translate_ja_gemini.py "$TODO_FILE" "$RESULT_FILE"
+
+      - name: Apply translations
+        if: steps.translate.outcome == 'success'
+        run: |
+          if [ ! -f "$RESULT_FILE" ]; then
+            echo "::warning::No translation result ($RESULT_FILE)"
+            exit 0
+          fi
+          python3 scripts/ja_sync.py apply "$RESULT_FILE"
+          python3 scripts/ja_sync.py check > /tmp/check.log || true
+          if grep -q '^PLACEHOLDER' /tmp/check.log; then
+            grep '^PLACEHOLDER' /tmp/check.log
+            echo "::error::Placeholder mismatch in translations; discarding them."
+            git checkout -- $JA_FILES
+            python3 scripts/ja_sync.py normalize
+            exit 1
+          fi
+
+      - name: Commit and push
+        if: always() && steps.merge.outcome == 'success'
+        run: |
+          rm -f "$TODO_FILE" "$RESULT_FILE"
+          git add -- $JA_FILES
+          if ! git diff --cached --quiet; then
+            git commit -m "update japanese translations"
+          fi
+
+          if [ "$(git rev-parse HEAD)" = "${{ steps.merge.outputs.before }}" ]; then
+            echo "Nothing to push."
+            exit 0
+          fi
+          git log --oneline "${{ steps.merge.outputs.before }}..HEAD" --first-parent
+          git push origin "HEAD:$TARGET_BRANCH"
+
+      - name: Report untranslated keys
+        if: always() && steps.merge.outcome == 'success'
+        run: |
+          python3 scripts/find_missing_ja_keys.py --missing-only --keys-only >> "$GITHUB_STEP_SUMMARY" 2>&1 || true
