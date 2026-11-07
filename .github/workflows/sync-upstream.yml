@@ -67,8 +67,7 @@ jobs:
             exit 0
           fi
 
-          msg="Merge branch '$UPSTREAM_BRANCH' of $UPSTREAM_REPO"
-          if ! git merge --no-ff --no-edit -m "$msg" "upstream/$UPSTREAM_BRANCH"; then
+          if ! git merge --no-ff --no-edit -m "Upstream" "upstream/$UPSTREAM_BRANCH"; then
             conflicts=$(git diff --name-only --diff-filter=U)
             echo "Conflicted files:"; echo "$conflicts"
 
@@ -82,6 +81,7 @@ jobs:
             python3 scripts/ja_sync.py resolve $conflicts
             git commit --no-edit
           fi
+          echo "merged=true" >> "$GITHUB_OUTPUT"
 
       - name: Find strings to translate
         id: todo
@@ -122,13 +122,19 @@ jobs:
             exit 1
           fi
 
+      # Skipped when the run is cancelled, so nothing is pushed.
       - name: Commit and push
-        if: always() && steps.merge.outcome == 'success'
+        if: "!cancelled() && steps.merge.outcome == 'success'"
         run: |
           rm -f "$TODO_FILE" "$RESULT_FILE"
           git add -- $JA_FILES
           if ! git diff --cached --quiet; then
-            git commit -m "update japanese translations"
+            if [ "${{ steps.merge.outputs.merged }}" = "true" ]; then
+              # Fold translations into this run's (still unpushed) merge commit.
+              git commit --amend -m "Upstream + Japanese Translations"
+            else
+              git commit -m "Japanese Translations"
+            fi
           fi
 
           if [ "$(git rev-parse HEAD)" = "${{ steps.merge.outputs.before }}" ]; then
@@ -139,6 +145,6 @@ jobs:
           git push origin "HEAD:$TARGET_BRANCH"
 
       - name: Report untranslated keys
-        if: always() && steps.merge.outcome == 'success'
+        if: "!cancelled() && steps.merge.outcome == 'success'"
         run: |
           python3 scripts/find_missing_ja_keys.py --missing-only --keys-only >> "$GITHUB_STEP_SUMMARY" 2>&1 || true
