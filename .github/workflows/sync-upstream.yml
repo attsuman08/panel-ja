@@ -1,13 +1,14 @@
 # Fork-only workflow: merge calagopus/panel into main on a schedule,
-# auto-resolve ja.json conflicts, and translate new strings with Claude.
+# auto-resolve ja.json conflicts, and translate new strings with Gemini.
 #
 # Required secrets:
 #   SYNC_TOKEN               Fine-grained PAT for this repo with
 #                            "Contents: Read and write" and "Workflows: Read and write".
 #                            (GITHUB_TOKEN cannot push upstream changes to .github/workflows.)
-#   CLAUDE_CODE_OAUTH_TOKEN  Output of `claude setup-token` (uses your Claude subscription), or
-#   ANTHROPIC_API_KEY        an API key instead (pay-as-you-go). Only one is needed.
-#                            Without either, the merge still runs and translation is skipped.
+#   GEMINI_API_KEY           Gemini API key from Google AI Studio.
+#                            Without it, the merge still runs and translation is skipped.
+# Optional variable (Settings > Secrets and variables > Actions > Variables):
+#   GEMINI_MODEL             Model id to use (default: gemini-flash-latest).
 name: Sync upstream
 
 on:
@@ -16,7 +17,7 @@ on:
   workflow_dispatch:
     inputs:
       translate:
-        description: 'Translate missing ja.json keys with Claude'
+        description: 'Translate missing ja.json keys with Gemini'
         type: boolean
         default: true
 
@@ -34,7 +35,7 @@ env:
   JA_FILES: frontend/public/translations/ja.json shared/mails/variables/ja.json
   TODO_FILE: .ja-todo.json
   RESULT_FILE: .ja-result.json
-  HAS_CLAUDE_AUTH: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' || secrets.ANTHROPIC_API_KEY != '' }}
+  HAS_GEMINI_KEY: ${{ secrets.GEMINI_API_KEY != '' }}
 
 jobs:
   sync:
@@ -89,56 +90,30 @@ jobs:
           echo "count=$count" >> "$GITHUB_OUTPUT"
           echo "$count key(s) need translation."
 
-      - name: Translate with Claude
+      - name: Translate with Gemini
         id: translate
         if: >-
           steps.todo.outputs.count != '0'
           && github.event.inputs.translate != 'false'
-          && env.HAS_CLAUDE_AUTH == 'true'
+          && env.HAS_GEMINI_KEY == 'true'
         continue-on-error: true
-        uses: anthropics/claude-code-action@402b5b79551e3ce6614c179fbccbfdb79291cead # v1.0.269
-        with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: >-
-            --model claude-sonnet-5-5
-            --max-turns 80
-            --allowedTools "Read,Write,Grep,Glob"
-          prompt: |
-            You are translating the UI of a game-server management panel into Japanese.
-
-            `${{ env.TODO_FILE }}` lists the strings that need work, grouped by target file:
-            { "<ja.json path>": { "<dotted.key>": { "en": "...", "old_en"?: "...", "ja"?: "..." } } }
-            - Entries with only "en" are missing and need a new translation.
-            - Entries with "old_en" and "ja" had their English text changed upstream.
-              Update the existing "ja" so it matches the new "en" (keep it if it already fits).
-
-            Write ALL results to `${{ env.RESULT_FILE }}` as JSON in this exact shape:
-            { "<ja.json path>": { "<dotted.key>": "日本語訳" } }
-
-            Rules:
-            - Keep every placeholder exactly as in English: `{count}`, `{name}`, `{{ settings.app.name }}`, etc.
-              Keep HTML tags and Markdown intact.
-            - Keys ending in .zero/.one/.two/.few/.many/.other are plural forms; Japanese normally
-              uses the same text for all of them.
-            - Match the terminology and tone of the existing translations. The ja.json files are
-              large, so do NOT read them in full: use Grep on them to look up how related words
-              and nearby keys (same key prefix) are already translated.
-            - Do not edit any file other than `${{ env.RESULT_FILE }}`. Do not commit.
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+        run: python3 scripts/translate_ja_gemini.py "$TODO_FILE" "$RESULT_FILE"
 
       - name: Apply translations
         if: steps.translate.outcome == 'success'
         run: |
           if [ ! -f "$RESULT_FILE" ]; then
-            echo "::warning::Claude did not produce $RESULT_FILE"
+            echo "::warning::No translation result ($RESULT_FILE)"
             exit 0
           fi
           python3 scripts/ja_sync.py apply "$RESULT_FILE"
           python3 scripts/ja_sync.py check > /tmp/check.log || true
           if grep -q '^PLACEHOLDER' /tmp/check.log; then
             grep '^PLACEHOLDER' /tmp/check.log
-            echo "::error::Placeholder mismatch in Claude's translations; discarding them."
+            echo "::error::Placeholder mismatch in translations; discarding them."
             git checkout -- $JA_FILES
             python3 scripts/ja_sync.py normalize
             exit 1
@@ -146,8 +121,6 @@ jobs:
 
       - name: Commit and push
         if: always() && steps.merge.outcome == 'success'
-        env:
-          SYNC_TOKEN: ${{ secrets.SYNC_TOKEN }}
         run: |
           rm -f "$TODO_FILE" "$RESULT_FILE"
           git add -- $JA_FILES
@@ -160,9 +133,7 @@ jobs:
             exit 0
           fi
           git log --oneline "${{ steps.merge.outputs.before }}..HEAD" --first-parent
-          # Push with the PAT explicitly, in case another step replaced the git credentials.
-          git config --local --unset-all http.https://github.com/.extraheader || true
-          git push "https://x-access-token:${SYNC_TOKEN}@github.com/${{ github.repository }}.git" "HEAD:$TARGET_BRANCH"
+          git push origin "HEAD:$TARGET_BRANCH"
 
       - name: Report untranslated keys
         if: always() && steps.merge.outcome == 'success'

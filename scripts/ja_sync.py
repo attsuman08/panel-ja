@@ -191,6 +191,8 @@ def main(argv: list[str]) -> int:
         return cmd_todo(args.old_ref, args.output)
     if args.cmd == "apply":
         return cmd_apply(args.result)
+    if args.cmd == "resolve" and not args.files:
+        parser.error("resolve needs the conflicted ja.json path(s)")
     files = args.files or JA_FILES
     return {"resolve": cmd_resolve, "normalize": cmd_normalize, "check": cmd_check}[args.cmd](files)
 
