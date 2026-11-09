@@ -573,7 +573,8 @@
           "captchaSiteKey": "半角英数字、ハイフン、アンダースコアのみを使用してください。",
           "variableName": "半角英小文字で始め、その後に半角英小文字、数字、アンダースコアを最大63文字まで使用できます。",
           "hexColor": "#1c7ed6 のような16進数のカラーコードを入力してください。",
-          "devicePermissions": "r（読み取り）、w（書き込み）、m（mknod）を任意に組み合わせて指定してください。"
+          "devicePermissions": "r（読み取り）、w（書き込み）、m（mknod）を任意に組み合わせて指定してください。",
+          "percentage": "0から100の間のパーセンテージを指定してください。"
         }
       },
       "table": {
@@ -733,6 +734,26 @@
           "resourcesUnavailable": "リソース使用量を取得できません"
         }
       },
+      "systemBackupPolicyRun": {
+        "state": {
+          "running": "実行中",
+          "cancelling": "キャンセル中",
+          "cancelled": "キャンセル済み",
+          "succeeded": "成功",
+          "partiallySucceeded": "一部成功",
+          "failed": "失敗",
+          "nothingToBackUp": "バックアップ対象なし"
+        }
+      },
+      "systemBackupPolicyRunTarget": {
+        "state": {
+          "pending": "待機中",
+          "running": "実行中",
+          "successful": "成功",
+          "failed": "失敗",
+          "skipped": "スキップ済み"
+        }
+      },
       "enum": {
         "userToastPosition": {
           "topLeft": "左上",
@@ -771,6 +792,27 @@
         "serverBackupKind": {
           "server": "サーバー",
           "databaseInstance": "データベース"
+        },
+        "systemBackupPolicyRunTargetStatus": {
+          "pending": "待機中",
+          "dispatched": "送信済み",
+          "skipped": "スキップ済み",
+          "failed": "失敗"
+        },
+        "systemBackupPolicyRunTargetReason": {
+          "nodeMaintenance": "ノードがメンテナンス中",
+          "backupConfigurationMaintenance": "バックアップ設定がメンテナンス中",
+          "databaseAgentHostMaintenance": "データベースエージェントホストがメンテナンス中",
+          "databaseInstanceStopped": "データベースインスタンスが稼働していません",
+          "serverBusy": "サーバーがビジー状態（インストール、復元、または転送中）",
+          "metadataFailed": "バックアップメタデータを収集できませんでした",
+          "noBackupConfiguration": "バックアップ設定がありません",
+          "unsupportedBackupDisk": "バックアップ設定がデータベースバックアップに対応していません",
+          "targetRemoved": "バックアップ前に削除されました",
+          "createFailed": "バックアップを作成できませんでした",
+          "policyDisabled": "ポリシーが無効化されています",
+          "superseded": "次のスケジュール実行が先に開始されました",
+          "cancelled": "実行がキャンセルされました"
         },
         "serverFirewallRuleAction": {
           "allow": "許可",
@@ -5371,13 +5413,11 @@
         "systemBackupPolicies": {
           "title": "システムバックアップポリシー",
           "resourceName": "システムバックアップポリシー",
-          "badge": {
-            "runPending": "実行待機中"
-          },
           "table": {
             "columns": {
               "cron": "スケジュール",
-              "backups": "バックアップ"
+              "backups": "バックアップ",
+              "lastRun": "前回の実行"
             }
           },
           "form": {
@@ -5426,6 +5466,45 @@
                 "title": "システムバックアップポリシーのバックアップ",
                 "toast": {
                   "downloadStarted": "ダウンロードを開始しました。"
+                }
+              }
+            },
+            "runs": {
+              "title": "実行履歴",
+              "page": {
+                "title": "システムバックアップポリシーの実行",
+                "table": {
+                  "columns": {
+                    "started": "開始日時",
+                    "trigger": "トリガー",
+                    "progress": "進捗",
+                    "completed": "完了日時",
+                    "reason": "理由"
+                  }
+                },
+                "badge": {
+                  "manual": "手動",
+                  "scheduled": "スケジュール"
+                },
+                "button": {
+                  "viewTargets": "対象を表示",
+                  "cancelRun": "実行をキャンセル"
+                },
+                "toast": {
+                  "cancelled": "実行をキャンセルしました。"
+                },
+                "progress": {
+                  "summary": "{total} 件中 {done} 件完了"
+                },
+                "modal": {
+                  "targets": {
+                    "title": "実行対象",
+                    "allStatuses": "すべてのステータス"
+                  },
+                  "cancel": {
+                    "title": "実行キャンセルの確認",
+                    "content": "この実行をキャンセルしてもよろしいですか？保留中の対象 `{pending}` 件はスキップされます。すでに開始されているバックアップは完了するまで実行が継続されます。"
+                  }
                 }
               }
             },
@@ -5808,6 +5887,40 @@
             "offline": "サーバーはオフラインです",
             "connecting": "接続中…"
           },
+          "history": {
+            "title": "リソース履歴",
+            "loading": "読み込み中...",
+            "noData": "この範囲に記録されたデータはありません",
+            "timeframeStart": "開始",
+            "timeframeEnd": "終了",
+            "timeframeTo": "〜",
+            "uptime": "稼働率 {percent}",
+            "range": {
+              "hours": "{hours}時間",
+              "days": "{days}日",
+              "years": "{years}年"
+            },
+            "tooltip": {
+              "earlier": "前へ",
+              "later": "次へ",
+              "latest": "現在にジャンプ"
+            },
+            "block": {
+              "states": "サーバー状態"
+            },
+            "series": {
+              "average": "平均",
+              "peak": "ピーク",
+              "limit": "制限"
+            },
+            "summary": {
+              "peak": "ピーク {value}"
+            },
+            "unavailable": {
+              "title": "リソース履歴を利用できません",
+              "description": "このサーバーが稼働しているノードではリソース履歴が記録されていません。機能が無効になっているか、ノードのアップデートが必要です。"
+            }
+          },
           "socketConnected": "接続済み (Ping: {ping}ms)",
           "socketDisconnected": "切断済み"
         },
@@ -5906,6 +6019,7 @@
             "trash": "ゴミ箱",
             "emptyTrash": "ゴミ箱を空にする",
             "backToFiles": "ファイルに戻る",
+            "backToTrash": "ゴミ箱に戻る",
             "restoreTo": "復元先を指定...",
             "remoteCopy": "リモートコピー",
             "search": "検索",
@@ -7062,7 +7176,12 @@
           },
           "preCondition": {
             "valueSeconds": "値 (秒)",
-            "valuePercent": "値 (%)",
+            "percentOfLimit": "制限に対する割合 (%)",
+            "percentOfLimitHint": "サーバーの制限に対する相対値であり、制限の変更に合わせて追従します",
+            "cpuPercentHint": "制限に関係なく、100%はCPUコア1つ分に相当します",
+            "cpuPercentOfLimitHint": "サーバーのCPU制限に対する相対値、または無制限の場合はホストの全コアに対する相対値",
+            "percentNoLimit": "このサーバーにはこのリソースの制限がないため、パーセンテージが一致することはありません",
+            "valueOfLimit": "制限の {value}%",
             "value": "値"
           },
           "triggers": {

@@ -7,6 +7,7 @@ import { z } from 'zod';
 import getBackupConfigurations from '@/api/admin/backup-configurations/getBackupConfigurations.ts';
 import createSystemBackupPolicy from '@/api/admin/system-backup-policies/createSystemBackupPolicy.ts';
 import deleteSystemBackupPolicy from '@/api/admin/system-backup-policies/deleteSystemBackupPolicy.ts';
+import getSystemBackupPolicyLatestRuns from '@/api/admin/system-backup-policies/getSystemBackupPolicyLatestRuns.ts';
 import triggerSystemBackupPolicy from '@/api/admin/system-backup-policies/triggerSystemBackupPolicy.ts';
 import updateSystemBackupPolicy from '@/api/admin/system-backup-policies/updateSystemBackupPolicy.ts';
 import { httpErrorToHuman } from '@/api/axios.ts';
@@ -18,6 +19,7 @@ import Switch from '@/elements/input/Switch.tsx';
 import Group from '@/elements/layout/Group.tsx';
 import Stack from '@/elements/layout/Stack.tsx';
 import ConfirmationModal from '@/elements/modals/ConfirmationModal.tsx';
+import { isSystemBackupPolicyRunDispatching } from '@/lib/domain/systemBackupPolicyRun.ts';
 import { queryKeys } from '@/lib/queryKeys.ts';
 import { adminBackupConfigurationSchema } from '@/lib/schemas/admin/backupConfigurations.ts';
 import {
@@ -25,8 +27,9 @@ import {
   adminSystemBackupPolicyUpdateSchema,
 } from '@/lib/schemas/admin/systemBackupPolicies.ts';
 import { useHydrateForm } from '@/plugins/form/useHydrateForm.ts';
+import { useInfiniteSearchableResource } from '@/plugins/resource/useInfiniteSearchableResource.ts';
+import { useResource } from '@/plugins/resource/useResource.ts';
 import { useResourceForm } from '@/plugins/resource/useResourceForm.ts';
-import { useSearchableResource } from '@/plugins/resource/useSearchableResource.ts';
 import { useAdminCan } from '@/plugins/usePermissions.ts';
 import { useToast } from '@/providers/ToastProvider.tsx';
 import { useTranslations } from '@/providers/TranslationProvider.tsx';
@@ -51,6 +54,16 @@ export default function SystemBackupPolicyCreateOrUpdate({
   const [openModal, setOpenModal] = useState<'delete' | 'trigger' | null>(null);
   const [deleteBackups, setDeleteBackups] = useState(false);
 
+  const { data: latestRuns } = useResource({
+    queryKey: queryKeys.admin.systemBackupPolicies.latestRuns(),
+    queryFn: getSystemBackupPolicyLatestRuns,
+    enabled: !!contextSystemBackupPolicy,
+    silent: true,
+  });
+  const runDispatching = contextSystemBackupPolicy
+    ? isSystemBackupPolicyRunDispatching(latestRuns?.[contextSystemBackupPolicy.uuid])
+    : false;
+
   const doTrigger = async () => {
     if (!contextSystemBackupPolicy) {
       return;
@@ -62,7 +75,10 @@ export default function SystemBackupPolicyCreateOrUpdate({
 
         setOpenModal(null);
         queryClient.invalidateQueries({
-          queryKey: queryKeys.admin.systemBackupPolicies.detail(contextSystemBackupPolicy.uuid),
+          queryKey: queryKeys.admin.systemBackupPolicies.latestRuns(),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.admin.systemBackupPolicies.runs(contextSystemBackupPolicy.uuid),
         });
       })
       .catch((msg) => {
@@ -94,9 +110,9 @@ export default function SystemBackupPolicyCreateOrUpdate({
 
   useHydrateForm(form, contextSystemBackupPolicy, systemBackupPolicyToFormValues);
 
-  const backupConfigurations = useSearchableResource<z.infer<typeof adminBackupConfigurationSchema>>({
+  const backupConfigurations = useInfiniteSearchableResource<z.infer<typeof adminBackupConfigurationSchema>>({
     queryKey: queryKeys.admin.backupConfigurations.all(),
-    fetcher: (search) => getBackupConfigurations(1, search),
+    fetcher: (page, search) => getBackupConfigurations(page, search),
     defaultSearchValue: contextSystemBackupPolicy?.backupConfiguration?.name,
     canRequest: canReadBackupConfigurations,
   });
@@ -183,11 +199,7 @@ export default function SystemBackupPolicyCreateOrUpdate({
           {contextSystemBackupPolicy && (
             <>
               <AdminCan action='system-backup-policies.update'>
-                <Button
-                  variant='default'
-                  onClick={() => setOpenModal('trigger')}
-                  loading={loading || !!contextSystemBackupPolicy.triggered}
-                >
+                <Button variant='default' onClick={() => setOpenModal('trigger')} loading={loading || runDispatching}>
                   {t('pages.admin.systemBackupPolicies.tabs.general.page.button.runNow', {})}
                 </Button>
               </AdminCan>

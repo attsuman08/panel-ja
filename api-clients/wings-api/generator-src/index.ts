@@ -69,6 +69,8 @@ const compatBodyProperties: Record<string, Record<string, 'client' | 'extra'>> =
     'post /api/servers/{server}/files/trash': { ignored: 'client' },
     'post /api/servers/{server}/files/trash/restore': { ignored: 'client' },
     'post /api/servers/{server}/files/trash/purge': { ignored: 'client' },
+    'post /api/servers/{server}/files/trash/{entry}/restore': { ignored: 'client' },
+    'post /api/servers/{server}/files/trash/{entry}/return': { ignored: 'client' },
     'post /api/servers/{server}/reinstall': { start_on_completion: 'extra' },
 }
 
@@ -267,7 +269,7 @@ async fn request_impl<T: DeserializeOwned + 'static>(
         request = request.body(bytes);
     } else if let Some(body_reader) = body_reader {
         request = request.body(reqwest::Body::wrap_stream(
-            tokio_util::io::ReaderStream::new(body_reader),
+            tokio_util::io::ReaderStream::with_capacity(body_reader, 64 * 1024),
         ));
     }
 
@@ -612,6 +614,7 @@ for (const [path, route] of Object.entries(openapi.paths ?? {})) {
                     const field = rustIdent(param.name)
                     const isArray = inner.startsWith('Vec<')
                     const isString = inner === 'compact_str::CompactString'
+                    const isDateTime = inner.startsWith('chrono::DateTime<')
                     const itemIsString = isArray && inner.slice(4, -1) === 'compact_str::CompactString'
 
                     clientOutput.write(`        if let Some(value) = ${isArray || isString ? '&' : ''}query.${field} {\n`)
@@ -625,6 +628,8 @@ for (const [path, route] of Object.entries(openapi.paths ?? {})) {
                         clientOutput.write('            }\n')
                     } else if (isString) {
                         clientOutput.write(`            query_parts.push(format!("${key}={}", urlencoding::encode(value)).into());\n`)
+                    } else if (isDateTime) {
+                        clientOutput.write(`            query_parts.push(format!("${key}={}", urlencoding::encode(&value.to_rfc3339())).into());\n`)
                     } else {
                         clientOutput.write(`            query_parts.push(format!("${key}={}", value).into());\n`)
                     }

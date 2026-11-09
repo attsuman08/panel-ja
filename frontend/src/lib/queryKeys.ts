@@ -176,6 +176,10 @@ const admin = {
     databaseAgentHosts: (uuid: string) => ['admin', 'system-backup-policies', uuid, 'database-agent-hosts'] as const,
     locations: (uuid: string) => ['admin', 'system-backup-policies', uuid, 'locations'] as const,
     servers: (uuid: string) => ['admin', 'system-backup-policies', uuid, 'servers'] as const,
+    runs: (uuid: string) => ['admin', 'system-backup-policies', uuid, 'runs'] as const,
+    runTargets: (uuid: string, runUuid: string) =>
+      ['admin', 'system-backup-policies', uuid, 'runs', runUuid, 'targets'] as const,
+    latestRuns: () => ['admin', 'system-backup-policies', 'latest-runs'] as const,
   },
 
   oAuthProviders: {
@@ -306,6 +310,7 @@ const server = (serverUuid: string) => ({
     pathStat: (directory: string, names: string[]) =>
       ['server', serverUuid, 'files', 'path-stat', directory, names] as const,
     trash: () => ['server', serverUuid, 'files', 'trash'] as const,
+    trashEntry: (uuid: string) => ['server', serverUuid, 'files', 'trash', { uuid }] as const,
   },
   firewall: {
     all: () => ['server', serverUuid, 'firewall'] as const,
@@ -318,6 +323,10 @@ const server = (serverUuid: string) => ({
   },
   network: {
     all: () => ['server', serverUuid, 'network'] as const,
+  },
+  resources: {
+    history: (start: number, end: number, points: number) =>
+      ['server', serverUuid, 'resources', 'history', { start, end, points }] as const,
   },
   schedules: {
     all: () => ['server', serverUuid, 'schedules'] as const,

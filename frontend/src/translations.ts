@@ -394,6 +394,7 @@ const baseTranslations = defineTranslations({
           variableName: 'Starts with a lowercase letter, then up to 63 lowercase letters, digits or underscores.',
           hexColor: 'A hex color such as #1c7ed6.',
           devicePermissions: 'Any combination of r (read), w (write) and m (mknod).',
+          percentage: 'A percentage between 0 and 100.',
         },
       },
       table: {
@@ -555,6 +556,26 @@ const baseTranslations = defineTranslations({
           resourcesUnavailable: 'Resource Usage Unavailable',
         },
       },
+      systemBackupPolicyRun: {
+        state: {
+          running: 'Running',
+          cancelling: 'Cancelling',
+          cancelled: 'Cancelled',
+          succeeded: 'Succeeded',
+          partiallySucceeded: 'Partially Succeeded',
+          failed: 'Failed',
+          nothingToBackUp: 'Nothing to Back Up',
+        },
+      },
+      systemBackupPolicyRunTarget: {
+        state: {
+          pending: 'Pending',
+          running: 'Running',
+          successful: 'Successful',
+          failed: 'Failed',
+          skipped: 'Skipped',
+        },
+      },
       enum: {
         userToastPosition: {
           topLeft: 'Top Left',
@@ -593,6 +614,27 @@ const baseTranslations = defineTranslations({
         serverBackupKind: {
           server: 'Server',
           databaseInstance: 'Database',
+        },
+        systemBackupPolicyRunTargetStatus: {
+          pending: 'Pending',
+          dispatched: 'Dispatched',
+          skipped: 'Skipped',
+          failed: 'Failed',
+        },
+        systemBackupPolicyRunTargetReason: {
+          nodeMaintenance: 'Node in maintenance',
+          backupConfigurationMaintenance: 'Backup configuration in maintenance',
+          databaseAgentHostMaintenance: 'Database agent host in maintenance',
+          databaseInstanceStopped: 'Database instance not running',
+          serverBusy: 'Server busy (installing, restoring or transferring)',
+          metadataFailed: 'Could not collect backup metadata',
+          noBackupConfiguration: 'No backup configuration',
+          unsupportedBackupDisk: 'Backup configuration does not support database backups',
+          targetRemoved: 'Removed before it was backed up',
+          createFailed: 'Backup could not be created',
+          policyDisabled: 'Policy disabled',
+          superseded: 'Next scheduled run started first',
+          cancelled: 'Run cancelled',
         },
         serverFirewallRuleAction: {
           allow: 'Allow',
@@ -5389,13 +5431,11 @@ const baseTranslations = defineTranslations({
         systemBackupPolicies: {
           title: 'System Backup Policies',
           resourceName: 'System Backup Policy',
-          badge: {
-            runPending: 'Run pending',
-          },
           table: {
             columns: {
               cron: 'Schedule',
               backups: 'Backups',
+              lastRun: 'Last Run',
             },
           },
           form: {
@@ -5448,6 +5488,46 @@ const baseTranslations = defineTranslations({
                 title: 'System Backup Policy Backups',
                 toast: {
                   downloadStarted: 'Download started.',
+                },
+              },
+            },
+            runs: {
+              title: 'Runs',
+              page: {
+                title: 'System Backup Policy Runs',
+                table: {
+                  columns: {
+                    started: 'Started',
+                    trigger: 'Trigger',
+                    progress: 'Progress',
+                    completed: 'Completed',
+                    reason: 'Reason',
+                  },
+                },
+                badge: {
+                  manual: 'Manual',
+                  scheduled: 'Scheduled',
+                },
+                button: {
+                  viewTargets: 'View Targets',
+                  cancelRun: 'Cancel Run',
+                },
+                toast: {
+                  cancelled: 'Run cancelled.',
+                },
+                progress: {
+                  summary: '{done} of {total} done',
+                },
+                modal: {
+                  targets: {
+                    title: 'Run Targets',
+                    allStatuses: 'All Statuses',
+                  },
+                  cancel: {
+                    title: 'Confirm Run Cancellation',
+                    content:
+                      'Are you sure you want to cancel this run? Its `{pending}` pending targets will be skipped. Backups that have already started keep running until they finish.',
+                  },
                 },
               },
             },
@@ -5839,6 +5919,41 @@ const baseTranslations = defineTranslations({
             offline: 'Server is offline',
             connecting: 'Connecting...',
           },
+          history: {
+            title: 'Resource History',
+            loading: 'Loading...',
+            noData: 'No data recorded in this range',
+            timeframeStart: 'Start',
+            timeframeEnd: 'End',
+            timeframeTo: 'to',
+            uptime: '{percent} running',
+            range: {
+              hours: '{hours}h',
+              days: '{days}d',
+              years: '{years}y',
+            },
+            tooltip: {
+              earlier: 'Earlier',
+              later: 'Later',
+              latest: 'Jump to Now',
+            },
+            block: {
+              states: 'Server State',
+            },
+            series: {
+              average: 'Average',
+              peak: 'Peak',
+              limit: 'Limit',
+            },
+            summary: {
+              peak: 'Peak {value}',
+            },
+            unavailable: {
+              title: 'Resource History Unavailable',
+              description:
+                "The node this server runs on doesn't record resource history, either because it is turned off or because the node needs an update.",
+            },
+          },
           socketConnected: 'Connected ({ping}ms ping)',
           socketDisconnected: 'Disconnected',
         },
@@ -5937,6 +6052,7 @@ const baseTranslations = defineTranslations({
             trash: 'Trash',
             emptyTrash: 'Empty Trash',
             backToFiles: 'Back to Files',
+            backToTrash: 'Back to Trash',
             restoreTo: 'Restore to...',
             remoteCopy: 'Remote Copy',
             search: 'Search',
@@ -7129,7 +7245,12 @@ const baseTranslations = defineTranslations({
           },
           preCondition: {
             valueSeconds: 'Value (seconds)',
-            valuePercent: 'Value (%)',
+            percentOfLimit: '% of limit',
+            percentOfLimitHint: "Relative to the server's limit, follows it when the limit changes",
+            cpuPercentHint: '100% is one full CPU core, regardless of the limit',
+            cpuPercentOfLimitHint: "Relative to the server's CPU limit, or all host cores when unlimited",
+            percentNoLimit: 'This server has no limit for this resource, so a percentage will never match',
+            valueOfLimit: '{value}% of limit',
             value: 'Value',
           },
           triggers: {

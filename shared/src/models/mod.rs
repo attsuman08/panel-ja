@@ -66,6 +66,8 @@ pub mod system_backup_policy;
 pub mod system_backup_policy_database_agent_host;
 pub mod system_backup_policy_location;
 pub mod system_backup_policy_node;
+pub mod system_backup_policy_run;
+pub mod system_backup_policy_run_target;
 pub mod system_backup_policy_server;
 pub mod user;
 pub mod user_activity;
@@ -1171,6 +1173,10 @@ impl<F: Send + Sync + 'static, AfterF: Send + Sync + 'static> Default
 }
 
 impl<F: Send + Sync + 'static, AfterF: Send + Sync + 'static> ModelHandlerList<F, AfterF> {
+    pub fn is_empty(&self) -> bool {
+        self.before_handlers.read().is_empty() && self.after_handlers.read().is_empty()
+    }
+
     pub fn register_handler(
         self: &Arc<Self>,
         priority: ListenerPriority,
