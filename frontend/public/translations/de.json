@@ -2023,6 +2023,35 @@
           "tooltip": {
             "limitReached": "Du bist auf {max} Befehlskürzel limitiert."
           },
+          "table": {
+            "columns": {
+              "appliesTo": "Gilt für"
+            }
+          },
+          "form": {
+            "eggsPlaceholder": "Eggs auswählen",
+            "matcher": "Gilt für",
+            "matcherDescription": "Legt anhand ihres Eggs fest, auf welchen Servern dieses Befehlskürzel verfügbar ist.",
+            "matcherType": "Matcher-Typ"
+          },
+          "matcher": {
+            "allMustMatch": "Alle Matcher müssen zutreffen:",
+            "anyMustMatch": "Mindestens ein Matcher muss zutreffen:",
+            "mustNotMatch": "Matcher darf nicht zutreffen:"
+          },
+          "button": {
+            "addMatcher": "Matcher hinzufügen"
+          },
+          "enum": {
+            "matcherType": {
+              "never": "Nie (Nirgends verfügbar)",
+              "all": "Alle (Auf jedem Server verfügbar)",
+              "and": "UND (Alle müssen zutreffen)",
+              "or": "ODER (Mindestens einer muss zutreffen)",
+              "not": "NICHT (Darf nicht zutreffen)",
+              "eggs": "Eggs"
+            }
+          },
           "modal": {
             "createCommandSnippet": {
               "title": "Befehlskürzel erstellen",
@@ -2309,6 +2338,7 @@
                   "generalHealth": "Allgemeiner Zustand",
                   "extensionMigrationHealth": "Erweiterungsmigrations-Zustand",
                   "desyncNodes": "Asynchrone Nodes",
+                  "reverseProxy": "Reverse Proxy",
                   "debugMode": "Debug-Modus"
                 },
                 "appliedMigrations": "Angewendete Migrationen ({percent}%)",
@@ -2317,6 +2347,13 @@
                 "noExtensions": "Keine Erweiterungen gefunden.",
                 "nodesSynced": "Es scheint, als hätten alle Nodes eine synchrone Uhr (innerhalb von 5 Sekunden zur Panel-Uhr). ({failed} Prüfungen fehlgeschlagen)",
                 "nodesDesync": "Einige Nodes haben asynchrone Uhren (mehr als 5 Sekunden Abweichung von der Panel-Uhr). Dies kann zu Problemen beim Dateidownload oder der Konsole führen. ({desync} asynchron, {failed} Prüfungen fehlgeschlagen)",
+                "alert": {
+                  "flagged": "Einige Zustandsprüfungen erfordern Aufmerksamkeit: {cards}"
+                },
+                "proxiesOk": "Keine IP-Adresse wird von ungewöhnlich vielen Benutzern geteilt. ({activeUsers} aktive Benutzer in den letzten 7 Tagen)",
+                "proxiesSuspicious": "Einige IP-Adressen werden von ungewöhnlich vielen Benutzern geteilt. Das bedeutet meist, dass das Panel die IP eines Reverse Proxys statt der echten Client-IP sieht. ({activeUsers} aktive Benutzer in den letzten 7 Tagen)",
+                "proxyHintUntrusted": "Füge diese IP zu `APP_TRUSTED_PROXIES` hinzu, falls sie zu deinem Reverse Proxy gehört.",
+                "proxyHintTrusted": "Diese IP ist bereits vertrauenswürdig, stelle sicher, dass der Proxy einen `X-Forwarded-For`- oder `X-Real-IP`-Header sendet.",
                 "debugEnabled": "Der Debug-Modus ist derzeit aktiviert. Im Debug-Modus werden zusätzliche Informationen protokolliert, die bei der Fehlersuche helfen können. Du solltest den Debug-Modus in der Produktion nicht aktiviert lassen.",
                 "debugDisabled": "Der Debug-Modus ist derzeit deaktiviert. Aktiviere den Debug-Modus nur, wenn du Probleme untersuchst.",
                 "debugResetNote": "Hinweis: Diese Einstellung wird beim nächsten Neustart der Anwendung auf den Standardwert ({default}) zurückgesetzt.",
@@ -2326,6 +2363,10 @@
                   "total": "Gesamt",
                   "id": "ID",
                   "desync": "Asynchron",
+                  "ip": "IP",
+                  "users": "Benutzer",
+                  "sessions": "Sitzungen",
+                  "hint": "Hinweis",
                   "appliedValue": "{applied} ({percent}%)"
                 },
                 "button": {
@@ -2425,12 +2466,28 @@
                   "themeColor": "Themenfarbe",
                   "themeColorDescription": "Färbt die Browser-Oberfläche auf Mobilgeräten und Link-Vorschauen.",
                   "indexable": "Indexierung durch Suchmaschinen erlauben",
-                  "twitterCard": "Twitter-Card-Typ"
+                  "twitterCard": "Twitter-Card-Typ",
+                  "pwa": "Installierbare App (PWA)",
+                  "pwaName": "App-Name",
+                  "pwaNameDescription": "Wird in der Installationsaufforderung und auf dem Startbildschirm angezeigt.",
+                  "pwaShortName": "Kurzer App-Name",
+                  "pwaShortNameDescription": "Wird unter dem Symbol auf dem Startbildschirm angezeigt, wenn der volle Name nicht passt.",
+                  "pwaIcon": "App-Symbol",
+                  "pwaIconDescription": "Ein quadratisches PNG mit mindestens 512x512 oder ein SVG.",
+                  "pwaDisplay": "Anzeigemodus",
+                  "pwaBackgroundColor": "Farbe des Startbildschirms",
+                  "pwaBackgroundColorDescription": "Hintergrund des Startbildschirms, der beim Öffnen der App angezeigt wird."
                 },
                 "enum": {
                   "twitterCard": {
                     "summary": "Zusammenfassung",
                     "summaryLargeImage": "Zusammenfassung mit großem Bild"
+                  },
+                  "pwaDisplay": {
+                    "standalone": "Eigenständig",
+                    "fullscreen": "Vollbild",
+                    "minimalUi": "Minimale Oberfläche",
+                    "browser": "Browser-Tab"
                   }
                 },
                 "placeholder": {
@@ -4092,13 +4149,28 @@
               "page": {
                 "title": "Server Logs",
                 "form": {
-                  "logType": "Log-Typ"
+                  "logType": "Log-Typ",
+                  "crash": "Absturz"
                 },
                 "enum": {
                   "logType": {
                     "console": "Konsole",
-                    "install": "Installation"
+                    "install": "Installation",
+                    "crash": "Absturz"
                   }
+                },
+                "crashOption": "{timestamp} - Exit-Code {exitCode}",
+                "crashOptionOom": "{timestamp} - Exit-Code {exitCode} (Speicher erschöpft)",
+                "noCrashes": "Keine Abstürze aufgezeichnet",
+                "crashesUnavailable": "Absturzverlauf nicht verfügbar",
+                "modal": {
+                  "deleteCrash": {
+                    "title": "Absturz löschen",
+                    "content": "Möchtest du den Absturz vom **{timestamp}** samt Konsolenausgabe wirklich löschen?"
+                  }
+                },
+                "toast": {
+                  "crashDeleted": "Absturz gelöscht."
                 }
               }
             },
@@ -4428,11 +4500,19 @@
         "eggConfigurations": {
           "title": "Egg-Konfigurationen",
           "resourceName": "Egg-Konfiguration",
+          "dropzone": {
+            "title": "Lege einige Dateien hier ab, um sie als Egg-Konfigurationen zu importieren",
+            "subtitle": "Loslassen, um den Import zu starten"
+          },
           "table": {
             "columns": {
               "order": "Reihenfolge",
               "appliesTo": "Gilt für"
             }
+          },
+          "toast": {
+            "imported": "Egg-Konfiguration importiert.",
+            "parseFailed": "Egg-Konfiguration konnte nicht verarbeitet werden: {error}"
           },
           "tabs": {
             "general": {
@@ -4538,6 +4618,9 @@
                     "allowCustomStartupCommand": "Benutzerdefinierten Startup-Befehl erlauben",
                     "allowCustomStartupCommandDescription": "Erlaube Benutzern, ihre eigenen, nicht vordefinierten Startup-Befehle festzulegen."
                   }
+                },
+                "toast": {
+                  "exported": "Egg-Konfiguration exportiert."
                 },
                 "modal": {
                   "delete": {
@@ -5822,7 +5905,9 @@
             "increaseFontSize": "Schriftgröße erhöhen",
             "copySelection": "Auswahl kopieren",
             "popout": "In separatem Fenster öffnen",
-            "commandPrefix": "Befehlspräfix"
+            "commandPrefix": "Befehlspräfix",
+            "crashHistory": "Absturzverlauf",
+            "recentCrash": "In den letzten 24 Stunden abgestürzt"
           },
           "quickAction": {
             "search": "Konsole durchsuchen",
@@ -5898,7 +5983,8 @@
             "range": {
               "hours": "{hours} Std.",
               "days": "{days} T.",
-              "years": "{years} J."
+              "years": "{years} J.",
+              "custom": "Benutzerdefiniert"
             },
             "tooltip": {
               "earlier": "Früher",
@@ -5919,6 +6005,45 @@
             "unavailable": {
               "title": "Ressourcenverlauf nicht verfügbar",
               "description": "Der Node, auf dem dieser Server läuft, zeichnet keinen Ressourcenverlauf auf, entweder weil er deaktiviert ist oder weil der Node ein Update benötigt."
+            }
+          },
+          "crashes": {
+            "title": "Absturzverlauf",
+            "button": {
+              "backToConsole": "Zurück zur Konsole"
+            },
+            "sidebar": {
+              "title": "Abstürze"
+            },
+            "exitCode": "Exit-Code {exitCode}",
+            "exitCodeSignal": "Exit-Code {exitCode} ({signal})",
+            "badge": {
+              "oomKilled": "Speicher erschöpft",
+              "truncated": "Gekürzt"
+            },
+            "tooltip": {
+              "truncated": "Ältere Ausgabe wurde abgeschnitten, um das Größenlimit einzuhalten."
+            },
+            "empty": {
+              "title": "Keine Abstürze",
+              "description": "Wenn der Server abstürzt, werden hier sein Exit-Code und die letzte Konsolenausgabe gespeichert."
+            },
+            "missing": {
+              "title": "Absturz nicht gefunden",
+              "description": "Dieser Absturzeintrag ist abgelaufen oder wurde gelöscht."
+            },
+            "unavailable": {
+              "title": "Absturzverlauf nicht verfügbar",
+              "description": "Die Node, auf der dieser Server läuft, speichert keinen Absturzverlauf, entweder weil er deaktiviert ist oder weil die Node aktualisiert werden muss."
+            },
+            "modal": {
+              "delete": {
+                "title": "Absturz löschen",
+                "content": "Möchtest du den Absturz vom **{timestamp}** samt Konsolenausgabe wirklich löschen?"
+              }
+            },
+            "toast": {
+              "deleted": "Absturz gelöscht."
             }
           },
           "socketConnected": "Verbunden ({ping}ms ping)",

@@ -1,9 +1,9 @@
 import { InputWrapper, Loader, mergeThemeOverrides, Tooltip } from '@mantine/core';
 import { createRoot } from 'react-dom/client';
 import { Extension, ExtensionContext } from 'shared';
-import App from '@/App.tsx';
 import getIcons from '@/api/getIcons.ts';
 import getSettings from '@/api/getSettings.ts';
+import App from '@/App.tsx';
 import { SpinnerLoader } from '@/elements/feedback/Spinner.tsx';
 import { preloadRouterForPath } from '@/routers/routerImports.ts';
 import { registerAssetReloadHandler } from '@/stores/assetReload.ts';
@@ -85,6 +85,7 @@ setExtensionStylesEnabled((identifier) => renderedInactiveExtensions?.includes(i
   preloadRouterForPath(window.location.pathname);
 
   let disabled: string[] = [];
+  let settingsLoaded = false;
 
   const icons = getIcons()
     .then((icons) => useGlobalStore.getState().setIcons(icons))
@@ -96,6 +97,7 @@ setExtensionStylesEnabled((identifier) => renderedInactiveExtensions?.includes(i
     disabled = settings.disabledExtensions;
     useGlobalStore.getState().setSettings(settings);
     useGlobalStore.getState().setTimeOffset(Date.now() - new Date(settings.time).getTime());
+    settingsLoaded = true;
   } catch (err) {
     console.error('Failed to load settings, assuming no extensions are disabled:', err);
   }
@@ -116,6 +118,7 @@ setExtensionStylesEnabled((identifier) => renderedInactiveExtensions?.includes(i
     <App
       theme={mergeThemeOverrides(baseTheme, window.extensionContext.getMantineTheme())}
       cssVariablesResolver={window.extensionContext.getMantineCssResolver()}
+      settingsLoaded={settingsLoaded}
     />,
   );
 })();

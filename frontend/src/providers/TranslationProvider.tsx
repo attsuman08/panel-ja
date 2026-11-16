@@ -14,6 +14,7 @@ import { $ZodConfig } from 'zod/v4/core';
 import { axiosInstance } from '@/api/axios.ts';
 import Anchor from '@/elements/typography/Anchor.tsx';
 import Code from '@/elements/typography/Code.tsx';
+import { safeLocalStorageGet, safeLocalStorageSet } from '@/lib/safeStorage.ts';
 import { getGlobalStore, useGlobalStore } from '@/stores/global.ts';
 import baseTranslations from '@/translations.ts';
 
@@ -150,12 +151,12 @@ String.prototype.md = function (): ReactNode {
 
 const TranslationProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguageState] = useState(
-    localStorage.getItem('last_language') || getGlobalStore().settings.app.language || 'en',
+    safeLocalStorageGet('last_language') || getGlobalStore().settings.app.language || 'en',
   );
   const [languageData, setLanguageData] = useState<LanguageData | null>(null);
   const languages = useGlobalStore((state) => state.languages);
   const pendingDetection = useRef(
-    !localStorage.getItem('last_language') && getGlobalStore().settings.user.allowChangingLanguage,
+    !safeLocalStorageGet('last_language') && getGlobalStore().settings.user.allowChangingLanguage,
   );
 
   const setLanguage = useCallback((value: string) => {
@@ -264,7 +265,7 @@ const TranslationProvider = ({ children }: { children: ReactNode }) => {
       loadMonaco(language);
     });
 
-    localStorage.setItem('last_language', language);
+    safeLocalStorageSet('last_language', language);
 
     return () => {
       cancelled = true;
@@ -273,6 +274,7 @@ const TranslationProvider = ({ children }: { children: ReactNode }) => {
 
   const contextValue = useMemo(() => {
     const numberFormat = new Intl.NumberFormat(language, { maximumFractionDigits: 20 });
+    const pluralRules = new Intl.PluralRules(language);
 
     const formatValue = (value: unknown): string => {
       if (typeof value !== 'number') {
@@ -388,10 +390,13 @@ const TranslationProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(`Language item key ${key} not found.`);
       }
 
-      const translationItem = languageData?.items[key] || baseTranslations.items[key as never];
-      const rules = new Intl.PluralRules(language);
+      const translatedItem = languageData?.items[key];
+      const baseItem = baseTranslations.items[key as never] as TranslationItemRecord[string] | undefined;
+      const form = pluralRules.select(count);
+      const translation =
+        translatedItem?.[form] || translatedItem?.other || baseItem?.[form] || baseItem?.other || `{count} ${key}`;
 
-      return translationItem[rules.select(count)].replaceAll('{count}', formatValue(count));
+      return translation.replaceAll('{count}', formatValue(count));
     };
 
     return { language, setLanguage, t, tReact, tItem };

@@ -4,6 +4,8 @@ import { createRef, RefObject, startTransition } from 'react';
 import { z } from 'zod';
 import { create, StoreApi } from 'zustand';
 import { createContext } from 'zustand-utils';
+import type { FileMoveGroup } from '@/pages/server/files/list/fileMove.ts';
+import type { TrashItemConflict } from '@/pages/server/files/trash/entry/trashItems.ts';
 import { getEmptyPaginationSet, httpErrorToHuman } from '@/api/axios.ts';
 import { DirectoryResponse } from '@/api/server/files/loadDirectory.ts';
 import searchFiles from '@/api/server/files/searchFiles.ts';
@@ -26,8 +28,6 @@ import {
   setUserSettingLocal,
   subscribeUserSetting,
 } from '@/lib/userSettings.ts';
-import type { FileMoveGroup } from '@/pages/server/files/list/fileMove.ts';
-import type { TrashItemConflict } from '@/pages/server/files/trash/entry/trashItems.ts';
 import { FileUploader } from '@/stores/uploads.ts';
 
 export type ModalType =
@@ -51,6 +51,8 @@ export type ModalType =
   | 'trashRestoreTo'
   | 'trashRestoreConflict'
   | null;
+
+const DIRECTORY_INDEPENDENT_MODALS = new Set<ModalType>(['search', 'largestDirectories', 'incompleteUploads', 'sftp']);
 
 export interface SearchInfo {
   query?: string;
@@ -367,11 +369,13 @@ export const createFileManagerStore = (
           if (state.browsingDirectory === directory) return state;
 
           selectionAnchor = null;
+          const closeModal = state.openModal !== null && !DIRECTORY_INDEPENDENT_MODALS.has(state.openModal);
           return {
             browsingDirectory: directory,
             selectedFiles: new ObjectSet('name'),
             searchInfo: null,
             searchGeneration: state.searchGeneration + 1,
+            ...(closeModal ? { openModal: null, modalDirectoryEntries: [] } : {}),
           };
         }),
       setBrowsingContext: ({ directory, primary, writable, fast }) =>
@@ -604,6 +608,10 @@ export const createFileManagerStore = (
 
         if (get().externals.serverUuid !== serverUuid) return;
 
+        // The tree view keeps its own directory state outside the query cache.
+        const normalizedDirectory = join('/', directory);
+        directoryRefreshListeners.forEach((listener) => listener([normalizedDirectory]));
+
         startTransition(() => {
           queryClient.setQueriesData<InfiniteData<DirectoryResponse>>(
             {
@@ -666,7 +674,7 @@ export const createFileManagerStore = (
         set((state) => ({
           actingMode: mode,
           actingFiles: new ObjectSet('name', files),
-          actingFilesSource: state.browsingDirectory,
+          actingFilesSource: state.searchInfo?.root ?? state.browsingDirectory,
         })),
       clearActingFiles: () =>
         set({

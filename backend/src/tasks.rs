@@ -19,7 +19,6 @@ use shared::models::{
     },
     user_activity::UserActivity,
     user_api_key::UserApiKey,
-    user_command_snippet::UserCommandSnippet,
     user_email_verification::UserEmailVerification,
     user_password_reset::UserPasswordReset,
     user_security_key::UserSecurityKey,
@@ -549,15 +548,6 @@ pub async fn define_background_tasks(
                     );
                 }
 
-                let cleaned_user_command_snippets =
-                    UserCommandSnippet::cleanup_uuid_arrays(&state.database).await?;
-                if cleaned_user_command_snippets > 0 {
-                    tracing::info!(
-                        "cleaned up {} invalid UUIDs in user command snippets",
-                        cleaned_user_command_snippets
-                    );
-                }
-
                 let cleaned_user_server_groups =
                     UserServerGroup::cleanup_uuid_arrays(&state.database).await?;
                 if cleaned_user_server_groups > 0 {
@@ -640,6 +630,10 @@ pub async fn define_background_tasks(
                     }
 
                     for backup_configuration in &backup_configurations.data {
+                        if backup_configuration.maintenance_enabled {
+                            continue;
+                        }
+
                         let config_uuid = backup_configuration.uuid;
                         let Some(restic) = &backup_configuration.backup_configs.restic else {
                             continue;

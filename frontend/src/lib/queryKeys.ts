@@ -54,6 +54,7 @@ const admin = {
     allocations: (serverUuid: string) => ['admin', 'servers', serverUuid, 'allocations'] as const,
     databases: (serverUuid: string) => ['admin', 'servers', serverUuid, 'databases'] as const,
     variables: (serverUuid: string) => ['admin', 'servers', serverUuid, 'variables'] as const,
+    crashes: (serverUuid: string) => ['admin', 'servers', serverUuid, 'crashes'] as const,
   },
 
   extensions: {
@@ -234,7 +235,10 @@ const admin = {
   health: {
     nodes: () => ['admin', 'health', 'nodes'] as const,
     general: () => ['admin', 'health', 'general'] as const,
+    proxies: () => ['admin', 'health', 'proxies'] as const,
   },
+
+  settings: () => ['admin', 'settings'] as const,
 
   emailTemplates: {
     all: () => ['admin', 'emailTemplates'] as const,
@@ -252,6 +256,10 @@ const server = (serverUuid: string) => ({
   },
   announcements: {
     all: () => ['server', serverUuid, 'announcements'] as const,
+  },
+  crashes: {
+    all: () => ['server', serverUuid, 'crashes'] as const,
+    log: (crashId: number) => ['server', serverUuid, 'crashes', crashId, 'log'] as const,
   },
   backups: {
     all: () => ['server', serverUuid, 'backups'] as const,
@@ -296,6 +304,8 @@ const server = (serverUuid: string) => ({
           'column-types',
         ] as const,
       users: (instanceUuid: string) => ['server', serverUuid, 'databases', 'instances', instanceUuid, 'users'] as const,
+      resources: (instanceUuid: string) =>
+        ['server', serverUuid, 'databases', 'instances', instanceUuid, 'resources'] as const,
     },
   },
   files: {

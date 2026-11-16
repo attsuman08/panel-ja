@@ -529,6 +529,7 @@
         "device": "デバイス",
         "nest": "Nest",
         "nestCreateHint": "見つからない場合は、新しい Nest を作成してください",
+        "locationCreateHint": "見つかりませんか？新しいロケーションを作成",
         "lines": "行数",
         "databaseHost": "データベースホスト",
         "databaseAgentHost": "データベースエージェントホスト",
@@ -567,7 +568,7 @@
         "truncateDirectory": "この操作を実行する前に、このサーバーのすべてのファイルを削除しますか？この操作は元に戻せません。",
         "rule": {
           "invalidCharacters": "使用できない文字が含まれています。",
-          "username": "半角英数字とアンダースコアのみで、3〜15文字で入力してください。",
+          "username": "半角英数字とアンダースコアのみで、3〜48文字で入力してください。",
           "databaseName": "半角英数字とアンダースコアのみで、31文字以内で入力してください。",
           "databaseInstanceIdentifier": "半角英数字のみで、2〜23文字で入力してください。",
           "captchaSiteKey": "半角英数字、ハイフン、アンダースコアのみを使用してください。",
@@ -1026,6 +1027,18 @@
       "selectInput": {
         "noResults": "結果が見つかりませんでした。"
       },
+      "resourceSelectModal": {
+        "empty": {
+          "mounts": "マウントがまだ存在しません。最初にマウントを作成してから、ここにリンクしてください。",
+          "nodes": "ノードがまだ存在しません。最初にノードを作成してから、ここにリンクしてください。",
+          "eggs": "Eggがまだ存在しません。最初にネスト内でEggを作成またはインポートしてから、ここにリンクしてください。",
+          "locations": "ロケーションがまだ存在しません。最初にロケーションを作成してから、ここにリンクしてください。",
+          "databaseHosts": "データベースホストがまだ存在しません。最初にデータベースホストを作成してから、ここにリンクしてください。",
+          "databaseAgentHosts": "データベースエージェントホストがまだ存在しません。最初に作成してから、ここにリンクしてください。",
+          "serverMounts": "このサーバーで利用可能なマウントはありません。マウントは、このサーバーのノードとEggの両方にリンクされた後にのみ提供されます。マウントの **ノード** タブと **Egg** タブからリンクしてください。"
+        },
+        "manageMounts": "マウントを管理"
+      },
       "serverSelect": {
         "showOtherUsersServers": "他のユーザーのサーバーを表示"
       },
@@ -1066,6 +1079,9 @@
             "title": "アクティビティの詳細"
           }
         }
+      },
+      "captcha": {
+        "loadFailed": "キャプチャの読み込みに失敗しました。広告ブロッカーなどのブラウザ拡張機能がブロックしている可能性があるため、このサイトで無効化して再試行してください。"
       },
       "screenBlock": {
         "permissionDenied": {
@@ -1120,12 +1136,13 @@
           "connectionClosed": "サーバーへの接続が切断されました。再接続を試みています...",
           "connectionRetry": "接続が失われました。再試行中（試行回数: {attempt}）...",
           "authFailed": "認証に失敗しました。認証情報を更新しています... ({error})",
-          "authRefreshFailed": "認証情報の更新に失敗しました。ページを再読み込みしてやり直してください。",
+          "authRefreshFailed": "認証情報の更新に失敗しました。再接続してやり直してください。",
           "permissionRevoked": "接続が切断されました: このサーバーへのアクセス権限が取り消されました。",
-          "tokenRefreshLoop": "認証ループが検出されました。ページを再読み込みしてやり直してください。"
+          "tokenRefreshLoop": "認証ループが検出されました。再接続してやり直してください。"
         },
         "banner": {
-          "retrying": "{countdown} 後に再試行します..."
+          "retrying": "{countdown} 後に再試行します...",
+          "reconnect": "再接続"
         },
         "listener": {
           "toast": {
@@ -1194,6 +1211,8 @@
         "resume": "アップロードを再開",
         "cancel": "アップロードをキャンセル",
         "reselect": "ファイルを再選択して再開",
+        "uploadAnyway": "そのままアップロード",
+        "openTrash": "ゴミ箱を開く",
         "badge": {
           "uploading": "アップロード中",
           "uploadingPercent": "アップロード中 {percent}%",
@@ -1232,6 +1251,8 @@
           "cancelledFile": "`{file}` のアップロードをキャンセルしました。",
           "cancelledFolder": "`{folder}` ({files}) のアップロードをキャンセルしました。",
           "wrongFile": "選択されたファイルが `{file}` と一致しません。再開するには同じファイルを選択してください。",
+          "uploadingInOtherTab": "`{file}` は別のタブでアップロードされています。",
+          "insufficientDisk": "ディスクの空き容量が不足しています: {files} には {needed} が必要ですが、{free} しか空きがありません。",
           "cancelledAll": "すべてのアップロードがキャンセルされました。",
           "completedServer": "{files} の `{server}` へのアップロードが完了しました。",
           "completedAssets": "{files} の管理アセットへのアップロードが完了しました。",
@@ -1300,6 +1321,7 @@
             "backupDisk": "バックアップディスク",
             "backupDiskPlaceholder": "バックアップディスク"
           },
+          "skipHint": "ノードとサーバーの両方にロケーションが必要なため、ロケーションをスキップするとノードおよびサーバーの手順もスキップされます。後で管理エリアで作成できます。",
           "button": {
             "create": "作成して続行"
           }
@@ -1316,6 +1338,7 @@
           "error": {
             "noLocations": "問題が発生しました。ロケーションが見つかりませんでした。"
           },
+          "skipHint": "サーバーの実行にはノードが必要なため、ノードをスキップするとサーバーの手順もスキップされます。",
           "button": {
             "create": "作成して続行"
           }
@@ -1328,6 +1351,7 @@
             "frontendConnectionError": "ブラウザからノードに接続できませんでした。（公開）URL、TLS証明書、ファイアウォールを確認してください。WebSocketやダウンロードはこの接続に依存しています。"
           },
           "successMessage": "ノードへの接続が正常に確認されました。続行できます。",
+          "skipHint": "検証をスキップするとセットアップの最後まで直接移動するため、サーバーは作成されません。",
           "configurationDescription": "これを `{file}` の設定ファイルに記述するか、以下を実行してください:",
           "button": {
             "verify": "接続を確認"
@@ -1341,6 +1365,7 @@
             "applicationUrl": "アプリケーションURL",
             "registration": "ユーザー登録を有効化",
             "registrationDescription": "新規ユーザーが自身のアカウントを登録できるようにします。",
+            "registrationDescriptionNoCaptcha": "新規ユーザーが自身のアカウントを登録できるようにします。キャプチャがまだ設定されていないため、セットアップ完了後に管理設定で設定してボットを防いでください。",
             "securityKeys": "セキュリティキーを有効化",
             "securityKeysDescription": "{rpId} にスコープされたパスキーおよびハードウェアセキュリティキーでのサインインを許可します。この設定は後から管理者設定で変更できます。"
           },
@@ -1367,7 +1392,8 @@
               "description": "Node.js、Java、Rustなどの一般的なランタイム向けEggです。",
               "nest": "汎用"
             }
-          }
+          },
+          "skipHint": "Eggリポジトリがなくてもロケーションとノードは設定できますが、このセットアップの最後にサーバーを作成することはできません。"
         },
         "server": {
           "title": "サーバー",
@@ -1382,10 +1408,12 @@
             "nestDescription": "このEggを使用するにはNestを作成する必要があります。NestはEggのコレクションです。名前を入力してください:"
           },
           "error": {
-            "noNodes": "問題が発生しました。ノードが見つかりませんでした。"
+            "noNodes": "問題が発生しました。ノードが見つかりませんでした。",
+            "noEggRepositories": "Eggリポジトリがインポートされていないため、サーバーの作成に使用できるEggがありません。Eggリポジトリの手順でインポートするか、この手順をスキップして後で管理エリアでサーバーを作成してください。"
           },
           "button": {
-            "create": "作成して続行"
+            "create": "作成して続行",
+            "importRepositories": "Eggリポジトリをインポート"
           }
         },
         "finished": {
@@ -1424,7 +1452,9 @@
           "error": {
             "usernameRequired": "ユーザー名を入力してください",
             "registrationDisabled": "一致するアカウントが見つかりませんでした。現在、新規登録は無効になっています。",
-            "userAlreadyExists": "このユーザー名またはメールアドレスのアカウントは既に存在します。",
+            "userAlreadyExists": "このユーザー名またはメールアドレスのアカウントは既に存在します。まず別の方法でサインインし、アカウント → OAuth連携からこのプロバイダーを連携してください。",
+            "oauthFailed": "プロバイダーでのサインインに失敗しました ({code})。もう一度お試しください。",
+            "accountPasswordLoginDisabled": "このアカウントではパスワードサインインが無効になっています。代わりにセキュリティキーまたは以下のいずれかのオプションでサインインしてください。",
             "securityKeyRequired": "このアカウントには2要素認証が必要です。代わりにセキュリティキーでサインインしてください。",
             "passwordLoginDisabled": "このパネルではパスワードログインが無効です。以下のいずれかの方法でログインしてください。"
           },
@@ -1477,7 +1507,8 @@
               "button": {
                 "signIn": "サインイン",
                 "forgotPassword": "パスワードをお忘れですか？"
-              }
+              },
+              "providerHint": "プロバイダーで登録しましたか？代わりにそちらを使用してサインインしてください。"
             },
             "totp": {
               "title": "2要素認証",
@@ -1549,7 +1580,8 @@
             "confirmPasswordPlaceholder": "パスワードを再入力"
           },
           "button": {
-            "reset": "パスワードを再設定"
+            "reset": "パスワードを再設定",
+            "requestNewLink": "新しいリンクをリクエスト"
           },
           "toast": {
             "success": "パスワードが再設定されました。"
@@ -1588,6 +1620,9 @@
                 },
                 "button": {
                   "createGroup": "グループを作成"
+                },
+                "tooltip": {
+                  "limitReached": "サーバーグループは最大 {max} 個までに制限されています。"
                 },
                 "modal": {
                   "createServerGroup": {
@@ -1675,7 +1710,8 @@
           "alert": {
             "requireTwoFactor": {
               "title": "2要素認証が必要です",
-              "description": "このアカウントには2要素認証の設定が必要です。パネルの利用を継続するには、以下から設定してください。"
+              "description": "このアカウントには2要素認証の設定が必要です。パネルの利用を継続するには、次のいずれかの方法を設定してください: {methods}。",
+              "descriptionNoMethods": "このアカウントには2要素認証の設定が必要ですが、現在利用可能な許可された認証方法がありません。管理者にお問い合わせください。"
             },
             "verifyEmail": {
               "title": "メールアドレスの確認が必要です",
@@ -1754,6 +1790,8 @@
               "none": "アカウントに2つ目の認証要素が設定されていません。",
               "requirementMet": "アカウントは2要素認証の要件を満たしています。",
               "requirementUnmet": "アカウントはまだ2要素認証の要件を満たしていません。",
+              "notAccepted": "この方法は、2要素認証の必須条件としてカウントされません。",
+              "lastAcceptedMethod": "これは必要な2要素認証として認められている唯一の方法です。これを削除すると、別の許可された方法を設定するまでアカウントページしか利用できなくなります。",
               "enum": {
                 "twoFactorMethod": {
                   "totp": "認証アプリ",
@@ -1765,6 +1803,9 @@
             "emailTwoFactor": {
               "toast": {
                 "disabled": "メール2要素認証を無効化しました。"
+              },
+              "tooltip": {
+                "unavailable": "現在パネルから確認コードのメールを送信できないため、メールによる2要素認証は利用できません。管理者にお問い合わせください。"
               },
               "modal": {
                 "enable": {
@@ -1836,7 +1877,9 @@
           "tooltip": {
             "secureContextRequired": "セキュリティキーを使用するにはセキュアなコンテキスト（HTTPS）が必要です。",
             "limitReached": "セキュリティキーは最大 {max} 個までに制限されています。",
-            "disabled": "セキュリティキーは管理者によって無効化されています。"
+            "disabled": "セキュリティキーは管理者によって無効化されています。",
+            "lastKeyPasswordLoginOff": "これは最後のセキュリティキーであり、パスワードログインはオフになっています。削除する前にアカウントページでパスワードログインを再度有効にしてください。",
+            "lastKeyPasswordLoginDisabled": "これは最後のセキュリティキーであり、このインスタンスではパスワードログインが無効化されています。これを削除するとロックアウトされます。"
           },
           "alert": {
             "disabled": "セキュリティキーは管理者によって無効化されています。既存のキーは以下に一覧表示され削除することは可能ですが、サインインには使用できず、新しいキーを作成することもできません。"
@@ -1917,7 +1960,8 @@
             "imported": "{shortcuts} を更新しました。",
             "importedNone": "変更されたショートカットはありませんでした。",
             "importErrors": "{unknown} と {invalid} を無視しました。",
-            "resetAll": "すべてのショートカットをデフォルトにリセットしました。"
+            "resetAll": "すべてのショートカットをデフォルトにリセットしました。",
+            "conflict": "このキーの組み合わせは次でも使用されています: {shortcuts}。"
           },
           "general": {
             "title": "一般",
@@ -2023,6 +2067,35 @@
           "tooltip": {
             "limitReached": "コマンドスニペットは最大 {max} 個までに制限されています。"
           },
+          "table": {
+            "columns": {
+              "appliesTo": "適用先"
+            }
+          },
+          "form": {
+            "eggsPlaceholder": "Eggを選択",
+            "matcher": "適用先",
+            "matcherDescription": "Eggに基づいて、このスニペットがどのサーバーで利用可能かを決定します。",
+            "matcherType": "マッチャーの種類"
+          },
+          "matcher": {
+            "allMustMatch": "すべてのマッチャーが一致する必要があります:",
+            "anyMustMatch": "いずれかのマッチャーが一致する必要があります:",
+            "mustNotMatch": "マッチャーが一致してはなりません:"
+          },
+          "button": {
+            "addMatcher": "マッチャーを追加"
+          },
+          "enum": {
+            "matcherType": {
+              "never": "なし (どこでも利用不可)",
+              "all": "すべて (全サーバーで利用可能)",
+              "and": "AND (すべて一致する必要あり)",
+              "or": "OR (いずれか一致する必要あり)",
+              "not": "NOT (一致してはならない)",
+              "eggs": "Egg"
+            }
+          },
           "modal": {
             "createCommandSnippet": {
               "title": "コマンドスニペットを作成",
@@ -2066,12 +2139,26 @@
               "providerName": "プロバイダー名"
             }
           },
+          "alert": {
+            "lastLoginMethod": {
+              "title": "OAuthが唯一のサインイン方法です",
+              "description": "アカウントにパスワードまたはセキュリティキーがないため、少なくとも1つのOAuth連携を残す必要があります。削除できるようにするには{passwordLink}してください。",
+              "passwordLink": "アカウントにパスワードを設定"
+            }
+          },
+          "tooltip": {
+            "lastLoginMethod": "これが最後のサインイン方法です。削除する前にアカウントにパスワードを設定してください。",
+            "notManageable": "このプロバイダーでは接続の解除を自身で行うことができません。管理者にお問い合わせください。",
+            "notLinkable": "管理者がこのページからのこのプロバイダーへの接続をオフにしています。",
+            "nothingToConnect": "連携できる他のプロバイダーはありません。"
+          },
           "modal": {
             "deleteOAuthLinks": {
               "title": "OAuth連携の削除を確認",
               "content": "アカウントから**{oauthLinks}**を削除してもよろしいですか？",
               "alert": {
-                "skipped": "{oauthLinks} はスキップされます。連携解除が許可されていないプロバイダーのリンクは削除できません。"
+                "skipped": "{oauthLinks} はスキップされます。連携解除が許可されていないプロバイダーのリンクは削除できません。",
+                "keptLast": "1つの連携は最後に残されたサインイン手段のため保持されます。削除するには、アカウントにパスワードを設定してください。"
               }
             },
             "deleteOAuthLink": {
@@ -2160,7 +2247,9 @@
             "subtitle": "アプリケーションがあなたのアカウントのAPIキー作成を要求しています。",
             "alert": {
               "adminPermissions": "このAPIキーは**管理者権限**を要求しています。このキーを保持している人は誰でも、あなたになりすましてこのパネルで管理者操作を実行できます。要求元のアプリケーションを完全に信頼できる場合のみ続行してください。",
-              "callbackUrl": "作成後、新しいAPIキーは **{url}** に送信されます。"
+              "callbackUrl": "作成後、新しいAPIキーは **{url}** に送信されます。",
+              "limitReached": "すでに上限である **{max}** 個のAPIキーが存在します。新しいキーを作成する前に「APIキー」で1つ削除してください。",
+              "droppedPermissions": "アプリケーションは以下の権限も要求しましたが、これらは不明かあなたのアカウントで利用できないため付与されません: {permissions}"
             },
             "noPermissions": "このAPIキーには権限が一切付与されません。",
             "keyCreated": "新しいAPIキーが作成されました。このキーは二度と表示されませんので、今すぐコピーしてください。",
@@ -2309,6 +2398,7 @@
                   "generalHealth": "全般的な状態",
                   "extensionMigrationHealth": "拡張機能マイグレーションの状態",
                   "desyncNodes": "時刻ずれノード",
+                  "reverseProxy": "リバースプロキシ",
                   "debugMode": "デバッグモード"
                 },
                 "appliedMigrations": "適用済みマイグレーション ({percent}%)",
@@ -2317,6 +2407,13 @@
                 "noExtensions": "拡張機能が見つかりませんでした。",
                 "nodesSynced": "すべてのノードの時刻が同期されているようです（パネルとのずれが5秒以内）。（確認失敗: {failed} 件）",
                 "nodesDesync": "一部のノードの時刻がパネルとずれています（5秒超）。これによりファイルのダウンロードやコンソールで問題が発生する可能性があります。（時刻ずれ: {desync} 件、確認失敗: {failed} 件）",
+                "alert": {
+                  "flagged": "注意が必要なヘルスチェックがあります: {cards}"
+                },
+                "proxiesOk": "異常な数のユーザーに共有されているIPアドレスはありません。（過去7日間のアクティブユーザー: {activeUsers} 人）",
+                "proxiesSuspicious": "一部のIPアドレスが異常な数のユーザーに共有されています。これは通常、パネルが実際のクライアントIPではなくリバースプロキシのIPを認識していることを意味します。（過去7日間のアクティブユーザー: {activeUsers} 人）",
+                "proxyHintUntrusted": "このIPがリバースプロキシのものである場合は、`APP_TRUSTED_PROXIES` に追加してください。",
+                "proxyHintTrusted": "このIPはすでに信頼されています。プロキシが `X-Forwarded-For` または `X-Real-IP` ヘッダーを送信していることを確認してください。",
                 "debugEnabled": "デバッグモードは現在有効です。",
                 "debugDisabled": "デバッグモードは現在無効です。",
                 "debugResetNote": "この設定はアプリケーション再起動時にデフォルト値（{default}）にリセットされます。",
@@ -2326,6 +2423,10 @@
                   "total": "合計",
                   "id": "ID",
                   "desync": "時刻ずれ",
+                  "ip": "IP",
+                  "users": "ユーザー",
+                  "sessions": "セッション",
+                  "hint": "ヒント",
                   "appliedValue": "{applied} ({percent}%)"
                 },
                 "button": {
@@ -2361,13 +2462,22 @@
                   "emailTwoFactorEnabledDescription": "ユーザーがメールでワンタイムログインコードを受け取れるようにします。メール送信の設定が必要です。",
                   "twoFactorAcceptedMethods": "許可する2要素認証方法",
                   "twoFactorAcceptedMethodsDescription": "2要素認証の要件を満たす認証要素を選択します。パスワード再設定もメール経由で行われ、メールはパスワードから独立していないため、デフォルトでオフになっています。",
+                  "twoFactorAcceptedMethodsNoneAvailable": "許可される認証方法が少なくとも1つ利用可能である必要があります。そうでない場合、2要素認証を必要とするユーザーが要件を満たせなくなります。",
                   "emailVerificationRequired": "メールアドレスの確認を必須化",
                   "emailVerificationRequiredDescription": "新規ユーザーはパネルを使用する前にメールアドレスを確認する必要があります。メール送信の設定が必要です。",
+                  "emailTwoFactorEnabledNoMail": "メール送信が設定されていないため、ログインコードを送信できません。最初に「メール」タブで設定してください。",
+                  "emailVerificationRequiredNoMail": "メール送信が設定されていないため、確認メールを送信できません。最初に「メール」タブで設定してください。",
+                  "emailRequiresMail": "これにはメール送信設定が必要です。無効にするか、「メール」タブで設定してください。",
+                  "registrationEnabledNoPasswordLogin": "ローカル登録にはパスワードを使用するため、パスワードログインが無効になっている間は機能しません。",
                   "telemetryEnabled": "テレメトリを有効化",
                   "telemetryEnabledDescription": "アプリケーションの改善に役立てるため、Calagopusが限定的かつ匿名の利用状況データを収集することを許可します。",
                   "registrationEnabled": "ユーザー登録を有効化",
                   "passwordLoginEnabled": "パスワードログインを有効にする",
                   "passwordLoginEnabledDescription": "ユーザーがユーザー名とパスワードでログインできるようにします。無効にすると、OAuthプロバイダーまたはセキュリティキーのみでログイン可能になり、ローカル登録、パスワードのリセット、SFTPのパスワード認証も利用できなくなります。"
+                },
+                "alert": {
+                  "noMail": "メール2要素認証とメールアドレス確認にはメール送信設定が必要です。これらを無効にするか、{link} で設定してください。",
+                  "noMailLink": "「メール」タブ"
                 },
                 "section": {
                   "general": "一般",
@@ -2381,6 +2491,11 @@
                     "totp": "認証アプリ (TOTP)",
                     "securityKey": "セキュリティキー",
                     "email": "メール"
+                  },
+                  "twoFactorMethodUnavailable": {
+                    "securityKey": "セキュリティキー（WebAuthnが無効）",
+                    "email": "メール（メール2要素認証がオフ）",
+                    "emailNoMail": "メール（メール送信が設定されていません）"
                   },
                   "twoFactorRequirement": {
                     "admins": "管理者のみ",
@@ -2401,11 +2516,20 @@
                   },
                   "enableRegistration": {
                     "title": "ユーザー登録の有効化確認",
-                    "content": "ユーザー登録を有効にしてもよろしいですか？有効にすると、誰でもこのパネルにアカウントを作成できるようになります。CAPTCHAが設定されていない場合、この設定は誤りである可能性があります。"
+                    "content": "ユーザー登録を有効にしてもよろしいですか？有効にすると、誰でもこのパネルにアカウントを作成できるようになります。",
+                    "noCaptcha": "CAPTCHAが設定されていないため、ボットが自由に登録できます。{link} で設定してください。",
+                    "noCaptchaLink": "「CAPTCHA」タブ"
                   },
                   "disablePasswordLogin": {
                     "title": "パスワードログインの無効化を確認",
-                    "content": "パスワードログインを無効にしてもよろしいですか？すべてのユーザーにOAuthプロバイダーまたはセキュリティキーでのログインが必要になり、ローカル登録、パスワードのリセット、SFTPのパスワード認証も利用できなくなります。続行する前に、ご自身が引き続きログインできることを確認してください。"
+                    "content": "パスワードログインを無効にしてもよろしいですか？すべてのユーザーにOAuthプロバイダーまたはセキュリティキーでのログインが必要になり、ローカル登録、パスワードのリセット、SFTPのパスワード認証も利用できなくなります。続行する前に、ご自身が引き続きログインできることを確認してください。",
+                    "yourOptions": "あなたのその他のサインイン方法:",
+                    "oauthLink": "OAuth: {provider}",
+                    "securityKey": "セキュリティキー",
+                    "checking": "サインインオプションを確認中...",
+                    "checkFailed": "サインインオプションを確認できませんでした。ご自身が引き続きサインインできることを確認してください。",
+                    "noProviders": "有効なOAuthプロバイダーがありません。パスワードログインを無効にする前に、いずれかのプロバイダーを有効にしてください。",
+                    "noOptions": "有効なOAuthプロバイダーとの連携およびセキュリティキーが設定されていないため、ロックアウトされる可能性があります。まずOAuthアカウントを連携するか、セキュリティキーを追加してください。"
                   },
                   "telemetryPreview": {
                     "title": "テレメトリのプレビュー"
@@ -2425,12 +2549,28 @@
                   "themeColor": "テーマカラー",
                   "themeColorDescription": "モバイル端末のブラウザUIやリンクプレビューに色を付けます。",
                   "indexable": "検索エンジンによるインデックス登録を許可",
-                  "twitterCard": "Twitterカードタイプ"
+                  "twitterCard": "Twitterカードタイプ",
+                  "pwa": "インストール可能なアプリ (PWA)",
+                  "pwaName": "アプリ名",
+                  "pwaNameDescription": "インストールプロンプトやスプラッシュスクリーンに表示されます。",
+                  "pwaShortName": "アプリ略称",
+                  "pwaShortNameDescription": "正式名称が収まらない場合にホーム画面アイコンの下に表示されます。",
+                  "pwaIcon": "アプリアイコン",
+                  "pwaIconDescription": "512x512以上の正方形のPNG、またはSVG。",
+                  "pwaDisplay": "表示モード",
+                  "pwaBackgroundColor": "スプラッシュスクリーンの色",
+                  "pwaBackgroundColorDescription": "アプリの起動中に表示されるスプラッシュスクリーンの背景色です。"
                 },
                 "enum": {
                   "twitterCard": {
                     "summary": "サマリー",
                     "summaryLargeImage": "大きな画像付きサマリー"
+                  },
+                  "pwaDisplay": {
+                    "standalone": "スタンドアロン",
+                    "fullscreen": "全画面",
+                    "minimalUi": "最小限のUI",
+                    "browser": "ブラウザタブ"
                   }
                 },
                 "placeholder": {
@@ -2503,6 +2643,10 @@
                 "tooltip": {
                   "noProvider": "テストメールを送信する前に、メールプロバイダーの設定を保存してください。"
                 },
+                "alert": {
+                  "noneInUse": "メールによる二要素認証またはメール確認が有効になっているため、プロバイダーを「なし」に設定できません。まず{link}でこれらをオフにしてください。",
+                  "noneInUseLink": "アプリケーションタブ"
+                },
                 "modal": {
                   "sendTestEmail": {
                     "title": "テストメールを送信",
@@ -2538,7 +2682,9 @@
                   "syntaxOr": "や",
                   "syntaxAfter": "などの制御構造がサポートされています。",
                   "variablesBefore": "テキストフラグメントは",
-                  "variablesAfter": "で参照され、「変数」セクションで言語ごとに翻訳されるため、テンプレートは1つのレイアウトでユーザーが選択できるすべての言語に対応できます。"
+                  "variablesAfter": "で参照され、「変数」セクションで言語ごとに翻訳されるため、テンプレートは1つのレイアウトでユーザーが選択できるすべての言語に対応できます。",
+                  "disabledTwoFactor": "メールによる二要素認証が有効になっています。このテンプレートを無効にすると、ユーザーはログインコードを受信できなくなり、メールが二要素認証方法として機能しなくなります。",
+                  "disabledVerification": "メール確認が必要です。このテンプレートを無効にすると、新規ユーザーは確認メールを受信できず、パネルからロックアウトされたままになります。"
                 },
                 "variables": {
                   "title": "変数",
@@ -2617,6 +2763,7 @@
                 "form": {
                   "enabled": "セキュリティキーを有効化",
                   "enabledDescription": "ユーザーがセキュリティキーを登録してサインインできるようにします。オフにしても既存のキーは保持され表示もされますが、サインインには使用できなくなります。",
+                  "enabledLocked": "セキュリティキーが利用可能な唯一の受け入れられている二要素認証方法です。これをオフにする前に、アプリケーション設定で別の方法を許可してください。",
                   "allowDiscoverable": "ユーザー名なしでのログインを許可",
                   "allowDiscoverableDescription": "ユーザーがパスキーをデバイスに保存し、ユーザー名を入力する代わりにリストから選択できるようにします。",
                   "rpId": "RP ID",
@@ -3025,7 +3172,10 @@
             "general": {
               "page": {
                 "tooltip": {
-                  "cannotImpersonateSelf": "自分自身として代理ログインすることはできません。"
+                  "cannotImpersonateSelf": "自分自身として代理ログインすることはできません。",
+                  "passwordResetPasswordLoginDisabled": "パスワードログインが無効になっているため、リセットするパスワードがありません。",
+                  "passwordResetNoMail": "メール送信の設定がされていないため、メールを送信できません。",
+                  "passwordResetTemplateDisabled": "パスワードリセットのメールテンプレートが無効になっています。"
                 },
                 "button": {
                   "sendPasswordResetEmail": "パスワード再設定メールを送信",
@@ -3091,12 +3241,18 @@
                   "added": "OAuth連携を追加しました。",
                   "removed": "OAuth連携を解除しました。"
                 },
+                "tooltip": {
+                  "rootOnly": "管理者のみがOAuth IDを他のアカウントに連携できます。"
+                },
                 "modal": {
                   "add": {
                     "title": "OAuth連携を追加",
                     "form": {
                       "oauthProvider": "OAuthプロバイダー"
-                    }
+                    },
+                    "noProviders": "OAuthプロバイダーがまだ存在しません。",
+                    "noProvidersCreate": "OAuthプロバイダーがまだ存在しません。まず{link}してください。",
+                    "createProvider": "OAuthプロバイダーを作成"
                   },
                   "delete": {
                     "title": "OAuth連携の解除確認",
@@ -3126,6 +3282,9 @@
                   "delete": {
                     "title": "ロケーションの削除確認"
                   }
+                },
+                "tooltip": {
+                  "deleteBlocked": "{count} 個のノードがまだこのロケーションに存在します。先に移動または削除してください（「ノード」タブを参照）。"
                 },
                 "titleCreate": "ロケーションを作成",
                 "titleUpdate": "ロケーションを更新"
@@ -3260,7 +3419,8 @@
                   "errorWhileFetchingVersion": "バージョン取得エラー",
                   "updateAvailable": "{version} (アップデート利用可能)",
                   "latestVersionUnknown": "{version} (最新バージョン不明)",
-                  "useWingsProxyUrl": "WingsプロキシURLを使用"
+                  "useWingsProxyUrl": "WingsプロキシURLを使用",
+                  "deleteBlocked": "{count} 個のサーバーがまだこのノードを使用しています。先に削除または転送してください（「サーバー」タブを参照）。"
                 },
                 "form": {
                   "urlDescription": "ノードとの内部通信に使用されます。",
@@ -3441,6 +3601,13 @@
                     "ipAlias": "IPエイリアス"
                   }
                 },
+                "alert": {
+                  "noneAvailable": "このノードには利用可能な割り当てがありません。",
+                  "noneAvailableCreate": "このノードには利用可能な割り当てがありません。割り当てるために新しく作成してください。"
+                },
+                "button": {
+                  "createAllocations": "割り当てを作成"
+                },
                 "modal": {
                   "create": {
                     "title": "ノード割り当てを作成",
@@ -3453,6 +3620,12 @@
                   },
                   "update": {
                     "title": "ノード割り当てを更新",
+                    "form": {
+                      "ipAliasUnchanged": "編集しない限り変更されません。"
+                    },
+                    "alert": {
+                      "ipAppliesToAll": "このIPは、現在異なるIPを使用しているものを含むすべての {allocations} に適用されます。"
+                    },
                     "button": {
                       "update": "{count} 件更新"
                     },
@@ -3619,6 +3792,12 @@
                     "toast": {
                       "started": "{servers} の移行を開始しました。"
                     },
+                    "tooltip": {
+                      "aioNotSupported": "All-in-One ノードへの転送はサポートされていません。"
+                    },
+                    "alert": {
+                      "eggConfigRequired": "対応する設定がないEggを持つサーバーはリクエストが失敗します。失敗したサーバーの前に処理されたサーバーの転送は継続され、残りは転送されません。"
+                    },
                     "confirm": {
                       "title": "サーバー移行の確認",
                       "content": "`{count}` 台のサーバーを **{from}** から **{to}** へ移行してもよろしいですか？この操作は元に戻せません。"
@@ -3638,6 +3817,9 @@
                     "title": "電源アクションの確認",
                     "content": "{servers} に対して **{action}** を実行してもよろしいですか？"
                   }
+                },
+                "tooltip": {
+                  "searchActive": "最初に検索を解除してください。この操作はノード上のすべてのサーバーに適用されます。"
                 }
               }
             },
@@ -3955,6 +4137,8 @@
                   "pinnedCpusTooltip": "インデックスで指定（例: 0, 1, 2）。すべてのコアを許可する場合は空欄にしてください。",
                   "predefinedDockerImages": "事前定義されたDockerイメージ",
                   "predefinedDockerImagesPlaceholder": "事前定義イメージが選択されていません",
+                  "nodeUnreachable": "到達不能",
+                  "nodeUnreachableDescription": "このノードに到達できませんでした。ノードがオンラインに戻らない限り、サーバーの作成は失敗します。",
                   "startupCommandCustom": "カスタム",
                   "predefinedStartupCommands": "事前定義された起動コマンド",
                   "labels": "コンテナラベル",
@@ -4092,13 +4276,28 @@
               "page": {
                 "title": "サーバーのログ",
                 "form": {
-                  "logType": "ログタイプ"
+                  "logType": "ログタイプ",
+                  "crash": "クラッシュ"
                 },
                 "enum": {
                   "logType": {
                     "console": "コンソール",
-                    "install": "インストール"
+                    "install": "インストール",
+                    "crash": "クラッシュ"
                   }
+                },
+                "crashOption": "{timestamp} - 終了コード {exitCode}",
+                "crashOptionOom": "{timestamp} - 終了コード {exitCode} (メモリ不足)",
+                "noCrashes": "記録されたクラッシュはありません",
+                "crashesUnavailable": "クラッシュ履歴を利用できません",
+                "modal": {
+                  "deleteCrash": {
+                    "title": "クラッシュの削除",
+                    "content": "**{timestamp}** のクラッシュログとコンソール出力を削除してもよろしいですか？"
+                  }
+                },
+                "toast": {
+                  "crashDeleted": "クラッシュを削除しました。"
                 }
               }
             },
@@ -4117,6 +4316,10 @@
                   "content": "このサーバーとそのデータをシステム内の別のノードに移行します。",
                   "toast": {
                     "started": "サーバーの移行を開始しました。"
+                  },
+                  "tooltip": {
+                    "alreadyTransferring": "このサーバーは既に転送中です。",
+                    "busy": "このサーバーはインストール中またはバックアップ復元中のため、現在転送できません。"
                   },
                   "modal": {
                     "title": "サーバーの移行",
@@ -4204,6 +4407,9 @@
               "page": {
                 "titleCreate": "Nestを作成",
                 "titleUpdate": "Nestを更新",
+                "tooltip": {
+                  "deleteBlocked": "{count} 個のサーバーがまだこのNest内のEggを使用しています。先にサーバーを削除するか、Eggを変更してください（各Eggの「サーバー」タブを参照）。"
+                },
                 "modal": {
                   "delete": {
                     "title": "Nestの削除確認",
@@ -4267,6 +4473,9 @@
                     "page": {
                       "titleCreate": "Eggを作成",
                       "titleUpdate": "Eggを更新",
+                      "tooltip": {
+                        "deleteBlocked": "{count} 個のサーバーがまだこのEggを使用しています。先にサーバーを削除するか、Eggを変更してください（「サーバー」タブを参照）。"
+                      },
                       "card": {
                         "startupConfiguration": "起動設定",
                         "stopConfiguration": "停止設定",
@@ -4428,11 +4637,19 @@
         "eggConfigurations": {
           "title": "Egg構成",
           "resourceName": "Egg構成",
+          "dropzone": {
+            "title": "ここにファイルをドロップしてEgg設定としてインポートします",
+            "subtitle": "ドロップしてインポートを開始"
+          },
           "table": {
             "columns": {
               "order": "順序",
               "appliesTo": "適用対象"
             }
+          },
+          "toast": {
+            "imported": "Egg設定をインポートしました。",
+            "parseFailed": "Egg設定の解析に失敗しました: {error}"
           },
           "tabs": {
             "general": {
@@ -4538,6 +4755,9 @@
                     "allowCustomStartupCommand": "カスタム起動コマンドを許可",
                     "allowCustomStartupCommandDescription": "ユーザーが事前定義されていない独自の起動コマンドを設定できるようにします。"
                   }
+                },
+                "toast": {
+                  "exported": "Egg設定をエクスポートしました。"
                 },
                 "modal": {
                   "delete": {
@@ -5084,6 +5304,9 @@
               "page": {
                 "titleCreate": "OAuthプロバイダーを作成",
                 "titleUpdate": "OAuthプロバイダーを更新",
+                "tooltip": {
+                  "rootOnly": "このプロバイダーがユーザーを識別する方法、サインイン方法、またはアカウントを連携できるユーザーを変更できるのは管理者のみです。"
+                },
                 "card": {
                   "redirectUrl": {
                     "title": "リダイレクトURL",
@@ -5694,6 +5917,9 @@
                     "title": "デバイスEggの削除確認",
                     "content": "**{name}** からデバイス **{device}** を削除してもよろしいですか？"
                   }
+                },
+                "tooltip": {
+                  "noReadPermission": "Eggを追加するには、Eggを表示する権限が必要です。"
                 }
               }
             },
@@ -5713,6 +5939,9 @@
                     "title": "デバイスノードの削除確認",
                     "content": "**{name}** からデバイス **{device}** を削除してもよろしいですか？"
                   }
+                },
+                "tooltip": {
+                  "noReadPermission": "ノードを追加するには、ノードを表示する権限が必要です。"
                 }
               }
             },
@@ -5744,6 +5973,7 @@
                 "form": {
                   "requireTwoFactor": "2要素認証を必須にする",
                   "requireTwoFactorDescription": "このロールを持つユーザーに2要素認証の使用を義務付けます。",
+                  "requireTwoFactorLocked": "許可されている2要素認証方式が利用できないため、このロールを持つユーザーが条件を満たすことができません。まずアプリケーション設定で許可される方式を修正してください。",
                   "serverPermissions": "サーバー権限",
                   "adminPermissions": "管理者権限"
                 },
@@ -5779,6 +6009,8 @@
           "title": "コンソール",
           "input": {
             "placeholder": "コマンドを入力...",
+            "placeholderOffline": "コマンドを送信するにはサーバーを起動してください。",
+            "placeholderDisconnected": "コンソール接続を待機中...",
             "ariaLabel": "コンソールコマンド入力欄",
             "prefixPlaceholder": "プレフィックス（例: \"say \"）"
           },
@@ -5822,7 +6054,9 @@
             "increaseFontSize": "フォントサイズを拡大",
             "copySelection": "選択範囲をコピー",
             "popout": "別ウィンドウで開く",
-            "commandPrefix": "コマンドプレフィックス"
+            "commandPrefix": "コマンドプレフィックス",
+            "crashHistory": "クラッシュ履歴",
+            "recentCrash": "過去24時間以内にクラッシュ"
           },
           "quickAction": {
             "search": "コンソール内を検索",
@@ -5859,6 +6093,7 @@
               "title": "サポートされていないJavaバージョン",
               "content": "このサーバーは現在サポートされていないバージョンのJavaで実行されているため、起動できません。",
               "contentDetails": "サーバーの起動を続行するには、以下のリストからサポートされているDockerイメージを選択してください。",
+              "contentCustomImage": "このサーバーのDockerイメージは管理者によって設定されているため、ここでの変更はできません。サポートされているJavaバージョンに切り替えるには管理者に問い合わせてください。",
               "toast": {
                 "updated": "Dockerイメージを更新しました。"
               },
@@ -5898,7 +6133,8 @@
             "range": {
               "hours": "{hours}時間",
               "days": "{days}日",
-              "years": "{years}年"
+              "years": "{years}年",
+              "custom": "カスタム"
             },
             "tooltip": {
               "earlier": "前へ",
@@ -5921,6 +6157,45 @@
               "description": "このサーバーが稼働しているノードではリソース履歴が記録されていません。機能が無効になっているか、ノードのアップデートが必要です。"
             }
           },
+          "crashes": {
+            "title": "クラッシュ履歴",
+            "button": {
+              "backToConsole": "コンソールに戻る"
+            },
+            "sidebar": {
+              "title": "クラッシュ"
+            },
+            "exitCode": "終了コード {exitCode}",
+            "exitCodeSignal": "終了コード {exitCode} ({signal})",
+            "badge": {
+              "oomKilled": "メモリ不足",
+              "truncated": "省略"
+            },
+            "tooltip": {
+              "truncated": "サイズ制限内に収めるため、古い出力は切り捨てられました。"
+            },
+            "empty": {
+              "title": "クラッシュはありません",
+              "description": "サーバーがクラッシュすると、その終了コードと最後のコンソール出力がここに保持されます。"
+            },
+            "missing": {
+              "title": "クラッシュが見つかりません",
+              "description": "このクラッシュ記録は期限切れか、削除されました。"
+            },
+            "unavailable": {
+              "title": "クラッシュ履歴は利用できません",
+              "description": "このサーバーが稼働しているノードはクラッシュ履歴を保持していません。機能が無効になっているか、ノードのアップデートが必要です。"
+            },
+            "modal": {
+              "delete": {
+                "title": "クラッシュの削除",
+                "content": "**{timestamp}** のクラッシュ記録とそのコンソール出力を削除してもよろしいですか？"
+              }
+            },
+            "toast": {
+              "deleted": "クラッシュ記録を削除しました。"
+            }
+          },
           "socketConnected": "接続済み (Ping: {ping}ms)",
           "socketDisconnected": "切断済み"
         },
@@ -5934,6 +6209,9 @@
           "editorNotFound": {
             "title": "見つかりません",
             "content": "エディタが見つかりませんでした。"
+          },
+          "sqlite": {
+            "serverRunning": "サーバーがオフラインではないため、このデータベースが開かれたままになっている可能性があります。変更が「database is locked」エラーで失敗したり、サーバーによって上書きされる可能性があります。書き込む前にサーバーを停止してください。"
           },
           "view": {
             "list": "リスト",
@@ -6113,7 +6391,10 @@
           },
           "dropzone": {
             "title": "ファイルやフォルダーをここにドロップしてアップロード",
-            "subtitle": "離すとアップロードが開始されます"
+            "subtitle": "離すとアップロードが開始されます",
+            "readOnly": "このディレクトリは読み取り専用です",
+            "noPermission": "ファイルをアップロードする権限がありません",
+            "blockedSubtitle": "ドロップされたファイルはアップロードされません"
           },
           "settings": {
             "clickOnce": "シングルクリックでファイルやフォルダーを開く",
@@ -6170,7 +6451,7 @@
             "permissionsCouldNotBeRestored": "権限を復元できませんでした。",
             "fileSaved": "ファイルを保存しました。",
             "collabSaveTimeout": "ファイルを保存できませんでした。デーモンが時間内に応答しませんでした。",
-            "fileTooLargeToOpen": "このファイルはサイズが大きすぎるため、ファイルマネージャーで開くことができません。"
+            "fileTooLargeToOpen": "このファイルはファイルマネージャーの制限サイズ {limit} を超えています。ローカルにダウンロードして閲覧してください。"
           },
           "tooltip": {
             "settings": "設定",
@@ -6212,6 +6493,9 @@
             "title": "ゴミ箱",
             "subtitle": "削除されたファイルは {retention} 保持された後、完全に削除されます。",
             "subtitleDisabled": "このサーバーではゴミ箱が無効になっています。既存のエントリは、復元または削除されるまで残ります。",
+            "button": {
+              "trashSettings": "ゴミ箱の設定"
+            },
             "table": {
               "columns": {
                 "originalLocation": "元の場所",
@@ -6320,6 +6604,7 @@
               "addFromGroup": "グループからサーバーを追加",
               "browsingOn": "{server} を参照中。選択されたパスがすべてのコピー先サーバーで使用されます。",
               "noCreatePermission": "{servers} 上にファイルを作成する権限がありません。",
+              "unavailableServers": "{servers} は停止中、インストール中、バックアップの復元中、または転送中のため、現在ファイルを受信できません。続行するにはこれらを削除してください。",
               "createdAs": "これらのファイルは {servers} の次の場所に作成されます: "
             },
             "fileFingerprints": {
@@ -6342,7 +6627,9 @@
               "permanent": "ゴミ箱に移動せず、完全に削除する"
             },
             "createFile": {
-              "title": "ファイルを作成"
+              "title": "ファイルを作成",
+              "overwriteWarning": "{file} は既に存在します。上書きするにはもう一度送信してください。",
+              "overwrite": "上書き"
             },
             "details": {
               "title": "ファイル詳細",
@@ -6461,7 +6748,8 @@
                 "query": "クエリ"
               },
               "createdAs": "このファイルは次のように作成されます: ",
-              "pull": "取得"
+              "pull": "取得",
+              "insufficientDisk": "このファイルのサイズは {size} ですが、ディスクの空き容量は {free} のみです。取得が途中で失敗する可能性があります。"
             },
             "sftpDetails": {
               "title": "SFTP接続の詳細",
@@ -6485,7 +6773,8 @@
             "descriptionUnavailable": "このサーバーにはデータを保存するデータベースがありません。利用可能なデータベースホストがないため、まだ作成できません。"
           },
           "tooltip": {
-            "limitReached": "このサーバーは最大 {max} 個のデータベースに制限されています。"
+            "limitReached": "このサーバーは最大 {max} 個のデータベースに制限されています。",
+            "locked": "このデータベースはロックされています。最初にロックを解除してください。"
           },
           "table": {
             "columns": {
@@ -6494,7 +6783,13 @@
           },
           "button": {
             "rotatePassword": "パスワードを再生成",
-            "createFirstDatabase": "データベースを作成"
+            "createFirstDatabase": "データベースを作成",
+            "lock": "ロック",
+            "unlock": "ロック解除"
+          },
+          "toast": {
+            "locked": "データベースをロックしました。",
+            "unlocked": "データベースのロックを解除しました。"
           },
           "form": {
             "databaseName": "データベース名"
@@ -6675,7 +6970,9 @@
               "createFirstInstance": "マネージドデータベースを作成"
             },
             "tooltip": {
-              "limitReached": "このサーバーは最大 {max} 個のマネージドデータベースに制限されています。"
+              "limitReached": "このサーバーは最大 {max} 個のマネージドデータベースに制限されています。",
+              "locked": "このマネージドデータベースはロックされています。最初に編集画面でロックを解除してください。",
+              "offline": "マネージドデータベースが起動中である必要があります。"
             },
             "view": {
               "tabs": {
@@ -6855,6 +7152,10 @@
                 "offline": "バックアップを取得するにはマネージドデータベースが稼働している必要があります。",
                 "restoring": "現在このマネージドデータベースにバックアップを復元中です。"
               },
+              "notRunning": {
+                "restore": "このマネージドデータベースは {state} です。バックアップを復元するには起動中である必要があります。",
+                "backup": "このマネージドデータベースは {state} です。バックアップを作成するには起動中である必要があります。"
+              },
               "toast": {
                 "restoring": "マネージドデータベースにバックアップを復元中...",
                 "restoreCompleted": "マネージドデータベースのバックアップ復元が正常に完了しました。",
@@ -6867,7 +7168,8 @@
                 "restoreBackup": {
                   "title": "データベースバックアップの復元",
                   "content": "**{backup}** を **{name}** にインポートします。ダンプに含まれる既存のテーブルおよびコレクションは置き換えられ、復元が完了するまで電源アクションはブロックされます。",
-                  "targetInstance": "復元先のマネージドデータベース"
+                  "targetInstance": "復元先のマネージドデータベース",
+                  "noInstances": "このサーバーには復元先の {engine} マネージドデータベースがありません。"
                 }
               }
             },
@@ -7138,6 +7440,11 @@
             "triggersList": "トリガー一覧",
             "triggerNumber": "トリガー {number}",
             "actionType": "アクションタイプ",
+            "stepUnavailable": {
+              "noBackups": "利用不可: このサーバーはバックアップが許可されていません。",
+              "noInstances": "利用不可: このサーバーにはマネージドデータベースがありません。",
+              "noInstanceAccess": "利用不可: マネージドデータベースを表示できません。"
+            },
             "conditionType": "条件タイプ",
             "serverState": "サーバーの状態",
             "comparator": "比較演算子",
@@ -7763,6 +8070,9 @@
                 "userMustSignIn": "このメールアドレスを使用しているアカウントはありません。正確なメールアドレスを使用してパネルに一度サインインしてから、追加してください。",
                 "userMustBeCreatedByAdmin": "このメールアドレスを使用しているアカウントはありません。管理者にアカウントを事前に作成してもらってから、追加してください。"
               },
+              "alert": {
+                "existingAccountRequired": "このパネルでは新しいアカウントは自動生成されません。メールアドレスは既存のアカウントのものである必要があります。追加する前に、そのユーザーが一度サインインするか、管理者にアカウントを作成してもらう必要があります。"
+              },
               "form": {
                 "emailPlaceholder": "このサブユーザーとして登録するメールアドレスを入力してください。",
                 "permissions": "権限",
@@ -7799,7 +8109,9 @@
             "descriptionReadOnly": "問題が発生しても、このサーバー上のものを復元することはできません。"
           },
           "tooltip": {
-            "limitReached": "このサーバーは最大 {max} 個のバックアップに制限されています。"
+            "limitReached": "このサーバーは最大 {max} 個のバックアップに制限されています。",
+            "evicts": "このサーバーはバックアップの制限数 {max} 個に達しています。作成すると空きを作るために {name} が削除されます。",
+            "groupLimitReached": "このサーバーは最大 {max} 個のバックアップグループに制限されています。"
           },
           "table": {
             "columns": {
@@ -7849,7 +8161,8 @@
               }
             },
             "restoreBackup": {
-              "title": "バックアップを復元"
+              "title": "バックアップを復元",
+              "noStartupMetadata": "このバックアップには保存された起動設定がありません。"
             },
             "exportBackup": {
               "title": "バックアップをファイルにエクスポート"
@@ -7917,8 +8230,15 @@
           "allocations": {
             "title": "割り当て"
           },
+          "empty": {
+            "title": "割り当てがありません",
+            "description": "このサーバーにはまだ割り当てがありません。プレイヤーが接続できるアドレスとポートを取得するには割り当てを追加してください。",
+            "descriptionAdminOnly": "このサーバーには割り当てがありません。このサーバーの割り当ては管理者によって割り当てられるため、必要な場合は管理者に問い合わせてください。"
+          },
           "tooltip": {
-            "limitReached": "このサーバーは最大 {max} 個の割り当てに制限されています。"
+            "limitReached": "このサーバーは最大 {max} 個の割り当てに制限されています。",
+            "selfAssignDisabled": "このサーバーの割り当ては管理者によって割り当てられます。",
+            "primaryLocked": "このサーバーにはプライマリ割り当てが必要です。最初に別の割り当てをプライマリに設定してください。"
           },
           "table": {
             "columns": {
@@ -8171,10 +8491,15 @@
           "variables": "環境変数",
           "dockerImageDescription": "このサーバーの実行に使用されるDockerイメージです。別のイメージを使用するように変更できます。",
           "dockerImageDescriptionCustom": "このサーバーの実行に使用されるDockerイメージです。管理者によって設定されているため変更できません。",
+          "startupCommandNoPermission": "起動コマンドを変更する権限がありません。",
+          "startupCommandLocked": "このEggではカスタム起動コマンドが許可されていません。定義済みのコマンドを選択するか、管理者にお問い合わせください。",
           "toast": {
             "startupCommandUpdated": "起動コマンドを更新しました。",
             "dockerImageUpdated": "Dockerイメージを更新しました。",
             "variablesUpdated": "環境変数を更新しました。"
+          },
+          "validation": {
+            "required": "この変数は必須です。"
           },
           "modal": {
             "unsavedChanges": {
@@ -8186,6 +8511,10 @@
         },
         "mounts": {
           "title": "マウント",
+          "empty": {
+            "title": "マウントがありません",
+            "description": "このサーバーで利用可能なマウントはありません。マウントは管理者によって設定されるため、アクセスが必要な場合は管理者にお問い合わせください。"
+          },
           "table": {
             "columns": {
               "mounted": "マウント状態"
@@ -8221,6 +8550,10 @@
         },
         "devices": {
           "title": "デバイス",
+          "empty": {
+            "title": "デバイスがありません",
+            "description": "このサーバーで利用可能なデバイスはありません。デバイスは管理者によって設定されるため、アクセスが必要な場合は管理者にお問い合わせください。"
+          },
           "table": {
             "columns": {
               "attached": "アタッチ済み"
@@ -8308,6 +8641,13 @@
               "title": "サーバーを再インストール",
               "button": "再インストール",
               "startOnCompletion": "再インストール完了後にサーバーを起動",
+              "latestBackup": "最新のバックアップ:",
+              "noBackups": "このサーバーにはまだバックアップがありません。",
+              "backupFirst": "最初にバックアップを作成",
+              "backupFirstDescription": "バックアップ完了後に再インストールが開始されます。",
+              "waitingForBackup": "バックアップの完了を待機中…",
+              "backupFailed": "バックアップに失敗したため、サーバーは再インストールされませんでした。",
+              "truncateWarning": "インストールスクリプトが実行される前に、このサーバーのすべてのファイルが削除されます。この操作は元に戻せません。",
               "toast": {
                 "reinstalling": "サーバーを再インストール中..."
               }

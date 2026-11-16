@@ -1140,39 +1140,12 @@ pub async fn handle_startup() -> Result<
                     }
 
                     let is_index = asset.is_none();
-                    let mut script_nonce = None;
-                    let content_security_policy = if is_index {
-                        let settings = state.settings.get().await?;
-                        let script_csp = settings.captcha_provider.to_csp_script_src();
-                        let style_csp = settings.captcha_provider.to_csp_style_src();
-                        if matches!(
-                            settings.captcha_provider,
-                            shared::settings::CaptchaProvider::Cap { .. }
-                        ) {
-                            script_nonce = Some(uuid::Uuid::new_v4().simple().to_string());
-                        }
-                        let nonce_csp = script_nonce
-                            .as_ref()
-                            .map(|nonce| format!(" 'nonce-{nonce}'"))
-                            .unwrap_or_default();
-
-                        Some(format!(
-                            "default-src 'self'; \
-                                script-src 'self' blob: {script_csp}{nonce_csp}; \
-                                frame-src *; \
-                                style-src 'self' 'unsafe-inline' {style_csp}; \
-                                connect-src * blob:; \
-                                font-src 'self' blob: data:; \
-                                img-src * blob: data:; \
-                                media-src 'self' blob: data:; \
-                                object-src blob: data:; \
-                                base-uri 'self'; \
-                                form-action 'self'; \
-                                frame-ancestors 'self';"
-                        ))
-                    } else {
-                        None
-                    };
+                    let rendered_index = state.settings.get_rendered_index_html();
+                    let script_nonce = (is_index && rendered_index.uses_script_nonce())
+                        .then(|| uuid::Uuid::new_v4().simple().to_string());
+                    let content_security_policy = is_index.then(|| {
+                        rendered_index.content_security_policy(script_nonce.as_deref())
+                    });
 
                     let accepts_gzip = parts
                         .headers
@@ -1200,8 +1173,8 @@ pub async fn handle_startup() -> Result<
 
                     let (body, content_type, content_encoding) = match asset {
                         None => {
-                            let html = state.settings.get_rendered_index_html();
-                            let body = if let Some(nonce) = script_nonce {
+                            let html = rendered_index.html.clone();
+                            let body = if let Some(nonce) = &script_nonce {
                                 let html: &str = html.as_ref();
                                 Body::from(html.replacen(
                                     "</head>",
@@ -1346,6 +1319,28 @@ pub async fn handle_startup() -> Result<
                 [(axum::http::header::CONTENT_TYPE, "application/json")],
                 openapi,
             )
+        }),
+    );
+
+    let manifest_state = state.clone();
+    let router = router.route(
+        "/site.webmanifest",
+        axum::routing::get(|| async move {
+            let settings = manifest_state.settings.get().await?;
+            if manifest_state.env.app_disable_frontend || !settings.metadata.pwa_enabled {
+                return ApiResponse::error("route not found")
+                    .with_status(StatusCode::NOT_FOUND)
+                    .ok();
+            }
+
+            let manifest = settings.metadata.web_manifest(&settings.app);
+            drop(settings);
+
+            ApiResponse::new(Body::from(serde_json::to_vec(&manifest)?))
+                .with_header("Content-Type", "application/manifest+json")
+                .with_header("Cache-Control", "no-cache")
+                .with_header("X-Content-Type-Options", "nosniff")
+                .ok()
         }),
     );
 

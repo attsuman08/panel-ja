@@ -4,8 +4,8 @@ import { join, resolve } from 'pathe';
 import { useEffect, useState } from 'react';
 import { z } from 'zod';
 import { httpErrorToHuman } from '@/api/axios.ts';
-import getServerGroupServers from '@/api/me/servers/groups/getServerGroupServers.ts';
 import getServerGroups from '@/api/me/servers/groups/getServerGroups.ts';
+import getServerGroupServers from '@/api/me/servers/groups/getServerGroupServers.ts';
 import copyFilesRemoteMany from '@/api/server/files/copyFilesRemoteMany.ts';
 import Button from '@/elements/buttons/Button.tsx';
 import Alert from '@/elements/feedback/Alert.tsx';
@@ -96,6 +96,7 @@ export default function FileCopyRemoteModal({ files, ...props }: Props) {
     return permissions.includes('*') || checkPermissions(permissions, 'files.create')[0];
   };
   const serversWithoutCreate = destinationServers.filter((s) => !canCreateOn(s));
+  const unavailableServers = destinationServers.filter((s) => s.isSuspended || s.isTransferring || s.status !== null);
   const browseServer = destinationServers[0] ?? null;
 
   const isSingleFile = files.length === 1;
@@ -307,6 +308,14 @@ export default function FileCopyRemoteModal({ files, ...props }: Props) {
             </Alert>
           )}
 
+          {unavailableServers.length > 0 && (
+            <Alert color='red'>
+              {t('pages.server.files.modal.copyRemote.unavailableServers', {
+                servers: unavailableServers.map((s) => s.name).join(', '),
+              })}
+            </Alert>
+          )}
+
           {browseServer && (
             <div>
               <Text size='xs' c='dimmed' mb={4}>
@@ -344,7 +353,11 @@ export default function FileCopyRemoteModal({ files, ...props }: Props) {
         />
 
         <ModalFooter>
-          <Button type='submit' loading={loading} disabled={!form.isValid() || serversWithoutCreate.length > 0}>
+          <Button
+            type='submit'
+            loading={loading}
+            disabled={!form.isValid() || serversWithoutCreate.length > 0 || unavailableServers.length > 0}
+          >
             {t('pages.server.files.button.copy', {})}
           </Button>
           <Button variant='default' onClick={handleClose}>
