@@ -148,6 +148,7 @@ pub struct ServerTransferOptions {
 
     pub allocation_uuid: Option<uuid::Uuid>,
     pub allocation_uuids: Vec<uuid::Uuid>,
+    pub variables: HashMap<uuid::Uuid, compact_str::CompactString>,
 
     pub backups: Vec<uuid::Uuid>,
     pub delete_source_backups: bool,
@@ -1550,16 +1551,39 @@ impl Server {
         .await?;
 
         if !options.allocation_uuids.is_empty() {
-            sqlx::query!(
+            let inserted = sqlx::query!(
                 "INSERT INTO server_allocations (server_uuid, allocation_uuid)
                 SELECT $1, UNNEST($2::uuid[])
-                ON CONFLICT DO NOTHING",
+                ON CONFLICT DO NOTHING
+                RETURNING uuid",
                 self.uuid,
                 &options.allocation_uuids
             )
-            .execute(&mut *transaction)
+            .fetch_all(&mut *transaction)
             .await?;
+
+            if inserted.len() != options.allocation_uuids.len() {
+                return Err(DisplayError::new(
+                    "an additional allocation is already assigned to a server",
+                )
+                .with_status(axum::http::StatusCode::CONFLICT)
+                .into());
+            }
         }
+
+        sqlx::query(
+            "UPDATE servers
+            SET destination_variables = $2
+            WHERE servers.uuid = $1",
+        )
+        .bind(self.uuid)
+        .bind(
+            (!options.variables.is_empty())
+                .then(|| serde_json::to_value(&options.variables))
+                .transpose()?,
+        )
+        .execute(&mut *transaction)
+        .await?;
 
         let token = options
             .destination_node
@@ -1624,6 +1648,47 @@ impl Server {
                 destination_allocations: options.allocation_uuids,
             },
         );
+
+        Ok(())
+    }
+
+    /// Writes the variable values a transfer bound to destination allocations, once it succeeded.
+    pub async fn apply_destination_variables(
+        transaction: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+        server_uuid: uuid::Uuid,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query(
+            r#"
+            INSERT INTO server_variables (server_uuid, variable_uuid, value)
+            SELECT servers.uuid, nest_egg_variables.uuid, pending.value
+            FROM servers
+            CROSS JOIN jsonb_each_text(servers.destination_variables) AS pending
+            JOIN nest_egg_variables
+                ON nest_egg_variables.uuid = pending.key::uuid
+                AND nest_egg_variables.egg_uuid = servers.egg_uuid
+            WHERE servers.uuid = $1
+            ON CONFLICT (server_uuid, variable_uuid) DO UPDATE SET value = EXCLUDED.value
+            "#,
+        )
+        .bind(server_uuid)
+        .execute(&mut **transaction)
+        .await?;
+
+        Self::clear_destination_variables(&mut **transaction, server_uuid).await
+    }
+
+    pub async fn clear_destination_variables(
+        executor: impl sqlx::Executor<'_, Database = sqlx::Postgres>,
+        server_uuid: uuid::Uuid,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query(
+            "UPDATE servers
+            SET destination_variables = NULL
+            WHERE servers.uuid = $1",
+        )
+        .bind(server_uuid)
+        .execute(executor)
+        .await?;
 
         Ok(())
     }
@@ -1749,7 +1814,24 @@ impl Server {
         &self,
         database: &crate::database::Database,
     ) -> Option<super::backup_configuration::BackupConfiguration> {
+        self.backup_configuration_for(database, None).await
+    }
+
+    /// Resolves server -> database agent host (database instance backups only) -> node -> location.
+    pub async fn backup_configuration_for(
+        &self,
+        database: &crate::database::Database,
+        database_instance: Option<&super::server_database_instance::ServerDatabaseInstance>,
+    ) -> Option<super::backup_configuration::BackupConfiguration> {
         if let Some(backup_configuration) = &self.backup_configuration
+            && let Ok(backup_configuration) = backup_configuration.fetch_cached(database).await
+        {
+            return Some(backup_configuration);
+        }
+
+        if let Some(database_instance) = database_instance
+            && let Some(backup_configuration) =
+                &database_instance.database_agent_host.backup_configuration
             && let Ok(backup_configuration) = backup_configuration.fetch_cached(database).await
         {
             return Some(backup_configuration);
@@ -1874,7 +1956,7 @@ impl Server {
             )
             .fetch_all(state.database.read()),
             sqlx::query!(
-                "SELECT server_backups.uuid
+                "SELECT server_backups.uuid, server_backups.database_instance_uuid IS NOT NULL AS \"database!\"
                 FROM server_backups
                 WHERE server_backups.server_uuid = $1",
                 self.uuid
@@ -1956,7 +2038,16 @@ impl Server {
                         })
                         .collect(),
                     labels: self.labels,
-                    backups: backups.into_iter().map(|b| b.uuid).collect(),
+                    backups: backups
+                        .iter()
+                        .filter(|b| !b.database)
+                        .map(|b| b.uuid)
+                        .collect(),
+                    database_backups: backups
+                        .iter()
+                        .filter(|b| b.database)
+                        .map(|b| b.uuid)
+                        .collect(),
                     schedules: schedules
                         .into_iter()
                         .map(|s| {

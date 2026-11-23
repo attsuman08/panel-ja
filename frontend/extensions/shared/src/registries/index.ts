@@ -2,11 +2,13 @@ import { ComponentListRegistry } from 'shared/src/registries/slices/componentLis
 import { ElementsRegistry } from './elements/index.ts';
 import { EventRegistry } from './events/index.ts';
 import { FormRegistry } from './forms/index.ts';
+import { IconRegistry } from './icons.ts';
 import { PageRegistry } from './pages/index.ts';
 import { PermissionIconRegistry } from './permission-icons.ts';
 import { QuickActionRegistry } from './quickActions.ts';
 import { RouteRegistry } from './routes.ts';
 import { ShortcutRegistry } from './shortcuts.ts';
+import { ThemeRegistry } from './themes.ts';
 
 export interface Registry {
   mergeFrom(other: this): this;
@@ -23,6 +25,8 @@ export class ExtensionRegistry implements Registry {
     this.forms.mergeFrom(other.forms);
     this.quickActions.mergeFrom(other.quickActions);
     this.events.mergeFrom(other.events);
+    this.themes.mergeFrom(other.themes);
+    this.icons.mergeFrom(other.icons);
 
     return this;
   }
@@ -48,6 +52,10 @@ export class ExtensionRegistry implements Registry {
   public quickActions: QuickActionRegistry = new QuickActionRegistry();
   /** @since 1.2.6 */
   public events: EventRegistry = new EventRegistry();
+  /** @since 1.2.11 */
+  public themes: ThemeRegistry = new ThemeRegistry();
+  /** @since 1.2.11 */
+  public icons: IconRegistry = new IconRegistry();
 
   /** @since 1.0.0 */
   public enterPages(callback: (registry: PageRegistry) => unknown): this {
@@ -100,6 +108,18 @@ export class ExtensionRegistry implements Registry {
   /** @since 1.2.6 */
   public enterEvents(callback: (registry: EventRegistry) => unknown): this {
     callback(this.events);
+    return this;
+  }
+
+  /** @since 1.2.11 */
+  public enterThemes(callback: (registry: ThemeRegistry) => unknown): this {
+    callback(this.themes);
+    return this;
+  }
+
+  /** @since 1.2.11 */
+  public enterIcons(callback: (registry: IconRegistry) => unknown): this {
+    callback(this.icons);
     return this;
   }
 }

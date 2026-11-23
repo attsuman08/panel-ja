@@ -325,6 +325,24 @@
           "copyAll": "すべてコピー",
           "pasteReplace": "貼り付け（置換）"
         },
+        "eggVariableRulesInput": {
+          "editorMode": "エディター",
+          "textMode": "テキスト",
+          "addRule": "ルールを追加...",
+          "value": "値",
+          "minimum": "最小値",
+          "maximum": "最大値",
+          "version": "バージョン",
+          "variable": "変数",
+          "variables": "変数",
+          "values": "値",
+          "formats": "フォーマット",
+          "pattern": "パターン",
+          "flag": "{flag} のみ",
+          "commaSeparated": "複数の項目はカンマで区切ってください。",
+          "textDescription": "ルールは | または改行で区切ってください。",
+          "unknownVariable": "不明な変数 {variable} を参照しています。"
+        },
         "serverFileInput": {
           "notFound": "この名前のファイルはまだ存在しません。",
           "isDirectory": "これはディレクトリであり、ファイルではありません。"
@@ -355,6 +373,20 @@
             "weekday": "曜日"
           },
           "nextRun": "次回実行予定: {timestamp}。"
+        },
+        "passwordGenerator": {
+          "tooltip": "パスワードを生成",
+          "length": "長さ",
+          "lowercase": "英小文字 (a-z)",
+          "uppercase": "英大文字 (A-Z)",
+          "digits": "数字 (0-9)",
+          "symbols": "記号 (!#$%&*)",
+          "excludeAmbiguous": "紛らわしい文字を除外 (I, l, 1, O, 0, o)",
+          "noCharsets": "文字セットを少なくとも1つ選択してください。",
+          "button": {
+            "regenerate": "再生成",
+            "use": "パスワードを使用"
+          }
         },
         "iconInput": {
           "defaultIcon": "既定のアイコン",
@@ -575,7 +607,9 @@
           "variableName": "半角英小文字で始め、その後に半角英小文字、数字、アンダースコアを最大63文字まで使用できます。",
           "hexColor": "#1c7ed6 のような16進数のカラーコードを入力してください。",
           "devicePermissions": "r（読み取り）、w（書き込み）、m（mknod）を任意に組み合わせて指定してください。",
-          "percentage": "0から100の間のパーセンテージを指定してください。"
+          "percentage": "0から100の間のパーセンテージを指定してください。",
+          "imageSizes": "512x512 のようなサイズをスペース区切りで複数指定するか、any を指定してください。",
+          "appPath": "/admin のようにスラッシュ1つで始まるパネル内のパスを入力してください。"
         }
       },
       "table": {
@@ -867,6 +901,7 @@
       "never": "なし",
       "none": "なし",
       "unknown": "不明",
+      "moreItems": "他 {count} 件",
       "yes": "はい",
       "no": "いいえ",
       "web": "Web",
@@ -978,6 +1013,8 @@
           "themeAuto": "自動",
           "themeDark": "ダーク",
           "themeLight": "ライト",
+          "themeStandard": "標準",
+          "themePureBlack": "ピュアブラック",
           "redactAddresses": "アドレスを非表示",
           "resetDeviceOverrides": "デバイスの上書きをリセット ({count})"
         },
@@ -2555,8 +2592,26 @@
                   "pwaNameDescription": "インストールプロンプトやスプラッシュスクリーンに表示されます。",
                   "pwaShortName": "アプリ略称",
                   "pwaShortNameDescription": "正式名称が収まらない場合にホーム画面アイコンの下に表示されます。",
-                  "pwaIcon": "アプリアイコン",
-                  "pwaIconDescription": "512x512以上の正方形のPNG、またはSVG。",
+                  "pwaIcons": "アプリアイコン",
+                  "pwaIconsDescription": "192x192および512x512の正方形PNG、またはSVG。未設定の場合はデフォルトのアイコンが使用されます。マスク可能なアイコンのロゴは中央80%以内に収めてください。それ以外の部分はAndroidにより切り抜かれます。",
+                  "pwaScreenshots": "スクリーンショット",
+                  "pwaScreenshotsDescription": "インストールダイアログに表示されます。デスクトップでは横長、モバイルでは縦長のスクリーンショットが使用されます。",
+                  "pwaShortcuts": "ショートカット",
+                  "pwaShortcutsDescription": "インストールされたアプリのアイコンを長押しまたは右クリックしたときに表示されます。",
+                  "pwaCategories": "カテゴリ",
+                  "pwaCategoriesDescription": "アプリストアが分類に使用する小文字の単語（例: utilities、games など）。",
+                  "pwaCategoriesInvalid": "カテゴリには小文字の英字、数字、ダッシュ（-）のみ使用できます。",
+                  "imageUrl": "画像URL",
+                  "imageSizes": "サイズ",
+                  "imageSizesDescription": "画像が読み込まれると自動入力されます。",
+                  "imageType": "タイプ",
+                  "iconPurpose": "用途",
+                  "screenshotFormFactor": "フォームファクター",
+                  "screenshotLabel": "ラベル",
+                  "shortcutName": "名前",
+                  "shortcutShortName": "略称",
+                  "shortcutUrl": "パス",
+                  "shortcutDescription": "説明",
                   "pwaDisplay": "表示モード",
                   "pwaBackgroundColor": "スプラッシュスクリーンの色",
                   "pwaBackgroundColorDescription": "アプリの起動中に表示されるスプラッシュスクリーンの背景色です。"
@@ -2571,13 +2626,26 @@
                     "fullscreen": "全画面",
                     "minimalUi": "最小限のUI",
                     "browser": "ブラウザタブ"
+                  },
+                  "iconPurpose": {
+                    "any": "指定なし",
+                    "maskable": "マスク可能",
+                    "monochrome": "モノクロ"
+                  },
+                  "screenshotFormFactor": {
+                    "any": "指定なし",
+                    "wide": "ワイド (デスクトップ)",
+                    "narrow": "ナロー (モバイル)"
                   }
                 },
                 "placeholder": {
                   "description": "{name} でゲームサーバーやサービスを管理します。"
                 },
                 "button": {
-                  "autofill": "自動入力"
+                  "autofill": "自動入力",
+                  "addIcon": "アイコンを追加",
+                  "addScreenshot": "スクリーンショットを追加",
+                  "addShortcut": "ショートカットを追加"
                 },
                 "toast": {
                   "updated": "メタデータ設定を更新しました。"
@@ -3992,6 +4060,9 @@
           },
           "bulkActions": {
             "verb": {
+              "start": "起動",
+              "restart": "再起動",
+              "stop": "停止",
               "suspend": "一時停止",
               "unsuspend": "一時停止の解除",
               "clearState": "状態のクリア",
@@ -4005,11 +4076,13 @@
                 "deleteBackups": "これらのサーバーのバックアップも削除しますか？"
               },
               "alert": {
-                "forceWarning": "強制削除すると、ノードに接続できない場合でもパネルからサーバーが削除されます。ファイルやデータベースのクリーンアップが完了せず、孤立したデータが残る可能性があります。"
+                "forceWarning": "強制削除すると、ノードに接続できない場合でもパネルからサーバーが削除されます。ファイルやデータベースのクリーンアップが完了せず、孤立したデータが残る可能性があります。",
+                "skipped": "{servers} はすでにその状態であるためスキップされます。"
               }
             },
             "successWithSkipped": "{servers} に対して正常に「{action}」を実行しました。{skippedServers} をスキップしました。",
-            "nothingToDo": "選択されたサーバーはすべてすでにその状態です。"
+            "nothingToDo": "選択されたサーバーはすべてすでにその状態です。",
+            "transferMixedNodes": "同じノード上のサーバーのみを一括で転送できます。"
           },
           "externalIdLookup": {
             "button": "外部IDで検索",
@@ -4088,7 +4161,8 @@
                 },
                 "alert": {
                   "suspended": "このサーバーは一時停止されています。",
-                  "selectEggForVariables": "環境変数を設定する前にEggを選択してください。"
+                  "selectEggForVariables": "環境変数を設定する前にEggを選択してください。",
+                  "deploymentAllocations": "割り当てはサーバーがデプロイされるノードのEgg設定から取得されます。その設定に何も定義されていない場合、サーバーは割り当てなしで作成されます。"
                 },
                 "badge": {
                   "serverSuspended": "サーバー一時停止中"
@@ -4139,6 +4213,16 @@
                   "predefinedDockerImagesPlaceholder": "事前定義イメージが選択されていません",
                   "nodeUnreachable": "到達不能",
                   "nodeUnreachableDescription": "このノードに到達できませんでした。ノードがオンラインに戻らない限り、サーバーの作成は失敗します。",
+                  "deploymentModeNode": "特定ノード",
+                  "deploymentModeAutomatic": "自動デプロイ",
+                  "deploymentLocations": "ロケーション",
+                  "deploymentLocationsDescription": "デプロイが有効になっているこれらのロケーション内で、最も適切なノードにサーバーがデプロイされます。",
+                  "deploymentAllowOverallocation": "オーバーアロケーションを許可",
+                  "deploymentAllowOverallocationDescription": "このサーバーによってメモリまたはディスクの制限を超えるノードも考慮対象に含めます。",
+                  "deploymentSuspensionPenalty": "一時停止ペナルティ",
+                  "deploymentSuspensionPenaltyDescription": "一時停止されたサーバーのリソースをノードの使用量にどれくらいカウントするかを指定します（0から1まで）。",
+                  "deploymentRandomness": "ランダム性",
+                  "deploymentRandomnessDescription": "ノードの選択に混ぜるランダム性の度合いを指定します（0: 常に最も使用量の少ないノード ～ 1）。",
                   "startupCommandCustom": "カスタム",
                   "predefinedStartupCommands": "事前定義された起動コマンド",
                   "labels": "コンテナラベル",
@@ -4180,14 +4264,22 @@
                 "form": {
                   "notesPlaceholder": "メモ"
                 },
+                "button": {
+                  "reassign": "再割り当て"
+                },
                 "toast": {
                   "updated": "割り当てを更新しました。",
                   "setPrimary": "割り当てをプライマリに設定しました。",
                   "unsetPrimary": "割り当てのプライマリ設定を解除しました。",
                   "removed": "割り当てを削除しました。",
-                  "added": "{count} 件の割り当てを追加しました。"
+                  "added": "{count} 件の割り当てを追加しました。",
+                  "reassigned": "割り当てを再割り当てしました。"
                 },
                 "modal": {
+                  "reassign": {
+                    "title": "割り当ての再割り当ての確認",
+                    "content": "**{server}** の割り当てを再割り当てしてもよろしいですか？現在のすべての割り当てはEgg設定から取得したものに置き換えられ、割り当てポートにバインドされている変数が更新されます。新しいポートは次回の再起動時に適用されます。"
+                  },
                   "add": {
                     "title": "サーバー割り当てを追加",
                     "form": {
@@ -4832,6 +4924,8 @@
                   "password": "パスワードまたはアクセストークン",
                   "privateKey": "秘密鍵",
                   "passphrase": "パスフレーズ",
+                  "sshHostKey": "SSHホストキー",
+                  "sshHostKeyDescription": "同期はこの公開鍵を提示するSSHサーバーにのみ接続します。",
                   "defaultNest": "デフォルトの Nest",
                   "defaultNestDescription": "このリポジトリからインストールされた Egg は、別の Nest を選択しない限りこの Nest に配置されます。",
                   "autoSync": "自動同期",
@@ -4845,17 +4939,25 @@
                   }
                 },
                 "button": {
-                  "sync": "同期"
+                  "sync": "同期",
+                  "fetchSshHostKeys": "取得",
+                  "useSshHostKey": "ホストキーを使用"
                 },
                 "toast": {
                   "synced": "Eggリポジトリを同期しました。{eggs}が見つかりました。"
                 },
                 "alert": {
-                  "credentialsCleared": "リポジトリのスキーム、ホスト、またはポートを変更すると、保存された認証情報が消去されます。新しいホストで認証が必要な場合は、以下に再度入力してください。"
+                  "credentialsCleared": "リポジトリのスキーム、ホスト、またはポートを変更すると、保存された認証情報が消去されます。新しいホストで認証が必要な場合は、以下に再度入力してください。",
+                  "sshHostKeyOriginChanged": "このホストキーは以前のホストのものです。新しいホストのホストキーを取得し、そのうちの1つを確認してください。"
                 },
                 "modal": {
                   "delete": {
                     "title": "Eggリポジトリの削除確認"
+                  },
+                  "sshHostKeys": {
+                    "title": "SSHホストキー",
+                    "description": "鍵を使用する前に、フィンガープリントをGitホストが公開しているものと比較してください。",
+                    "empty": "SSHサーバーはホストキーを提示しませんでした。"
                   }
                 }
               }
@@ -5005,6 +5107,7 @@
                 "form": {
                   "typePublicHost": "公開ホスト",
                   "typePublicPort": "公開ポート",
+                  "backupConfigurationPlaceholder": "ノード/ロケーションから継承",
                   "memoryDescription": "このホストでデータベースインスタンスが使用できるメモリの合計です。",
                   "diskDescription": "このホストでデータベースインスタンスが使用できるディスク容量の合計です。",
                   "unlimitedTooltip": "0を指定すると上限は設定されません。"
@@ -5235,6 +5338,8 @@
                   "volumes": "ボリューム",
                   "socketPath": "ソケットパス",
                   "socketPathDescription": "データベースコンテナ内のUNIXソケットファイルパスです。構成されたイメージが実際にソケットを作成する場所と一致している必要があります。",
+                  "controlSocketPath": "制御ソケットパス",
+                  "controlSocketPathDescription": "エージェントがソケットパスの代わりに管理に使用するオプションの2番目のUNIXソケットです。ソケットパスと同じディレクトリにある必要があります。",
                   "imageUid": "イメージUID",
                   "imageGid": "イメージGID",
                   "memoryDescription": "データベースコンテナのメモリ制限です。",
@@ -5629,6 +5734,12 @@
               "title": "サーバー",
               "page": {
                 "title": "バックアップ設定のサーバー"
+              }
+            },
+            "databaseAgentHosts": {
+              "title": "データベースエージェントホスト",
+              "page": {
+                "title": "バックアップ設定のデータベースエージェントホスト"
               }
             }
           }
@@ -6822,7 +6933,7 @@
             "unsupported": {
               "title": "非対応",
               "content": "MongoDBデータベースはパネルから閲覧できません。",
-              "instanceContent": "MongoDBおよびRedisのデータベースインスタンスはパネルから閲覧できません。"
+              "instanceContent": "MongoDB、Redis、およびClickHouseのデータベースインスタンスはパネルから閲覧できません。"
             },
             "notFound": "このデータベースはインスタンス上に存在しません。",
             "tabs": {

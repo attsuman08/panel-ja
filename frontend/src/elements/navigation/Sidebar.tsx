@@ -7,11 +7,11 @@ import {
   faEyeSlash,
   faGraduationCap,
   faMoon,
+  faPalette,
   faRotateLeft,
   faSun,
   faUserCog,
   faWindowRestore,
-  IconDefinition,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Text, Title, useComputedColorScheme, useMantineColorScheme } from '@mantine/core';
@@ -20,19 +20,29 @@ import { createContext, ReactNode, useContext, useEffect, useMemo, useState } fr
 import { flushSync } from 'react-dom';
 import { MemoryRouter, matchPath, NavLink, useLocation, useNavigate } from 'react-router';
 import { makeComponentHookable } from 'shared';
+import type { IconLike } from '@/elements/data-display/Icon.tsx';
 import ActionIcon from '@/elements/buttons/ActionIcon.tsx';
 import Button from '@/elements/buttons/Button.tsx';
 import CloseButton from '@/elements/buttons/CloseButton.tsx';
 import Avatar from '@/elements/data-display/Avatar.tsx';
 import Card from '@/elements/data-display/Card.tsx';
+import Icon from '@/elements/data-display/Icon.tsx';
 import MantineDivider from '@/elements/layout/Divider.tsx';
 import ContextMenu, { ContextMenuItem } from '@/elements/overlays/ContextMenu.tsx';
 import Drawer from '@/elements/overlays/Drawer.tsx';
 import { useLogoutConfirmation } from '@/elements/useLogoutConfirmation.tsx';
 import { isAdmin } from '@/lib/auth/permissions.ts';
 import { useCustomIcon } from '@/lib/icons.ts';
+import { resolveString } from '@/lib/lazy.ts';
 import { openUrl } from '@/lib/network/url.ts';
 import { isNamedRoutePathAccessible } from '@/lib/routes.ts';
+import {
+  DEFAULT_THEME_VARIANT,
+  getThemeVariant,
+  getThemeVariantCategories,
+  getThemeVariants,
+  ThemeVariantDefinition,
+} from '@/lib/themeVariants.ts';
 import { resetAllDeviceOverrides, useDeviceOverrideCount } from '@/lib/userSettings.ts';
 import { useRedactAddresses } from '@/plugins/privacy/useRedactAddresses.ts';
 import { useAuth } from '@/providers/AuthProvider.tsx';
@@ -44,6 +54,7 @@ import { preloadRouterForPath } from '@/routers/routerImports.ts';
 import { useGlobalStore } from '@/stores/global.ts';
 import { useQuickActionsStore } from '@/stores/quickActions.ts';
 import { useRelativePageStore } from '@/stores/relativePage.ts';
+import { setAutoScheme, setThemeVariant, useThemeVariantStore } from '@/stores/themeVariant.ts';
 
 const CloseMobileMenuContext = createContext<(() => void) | null>(null);
 
@@ -136,7 +147,7 @@ function Sidebar({ children, header, footer }: SidebarProps) {
 type LinkProps = {
   to: string;
   end?: boolean;
-  icon?: IconDefinition;
+  icon?: IconLike;
   customIcon?: string | null;
   name?: string;
   title?: string;
@@ -224,7 +235,7 @@ function Link({ to, end, icon, customIcon, name, title = name, className, active
                 fullWidth
                 styles={{ label: { width: '100%' } }}
               >
-                {resolvedIcon && <FontAwesomeIcon icon={resolvedIcon} className='mr-2' />} {name}
+                {resolvedIcon && <Icon icon={resolvedIcon} className='mr-2' />} {name}
               </Button>
             );
           }}
@@ -246,6 +257,8 @@ function Footer() {
   const computedColorScheme = useComputedColorScheme('dark');
   const deviceOverrideCount = useDeviceOverrideCount();
   const [redactAddresses, setRedactAddresses] = useRedactAddresses();
+  const themeVariant = useThemeVariantStore((state) => state.variant);
+  const autoScheme = useThemeVariantStore((state) => state.autoScheme);
   const routeOrder = useGlobalStore((state) => state.settings.user?.routeOrder);
 
   const { confirmLogout, logoutModal } = useLogoutConfirmation();
@@ -256,16 +269,61 @@ function Footer() {
   const accountHidden = suspended || accountRouteDisabled;
   const adminHidden = suspended || !user || !isAdmin(user);
 
+  const themeVariants = getThemeVariants();
+  const themeVariantCategories = getThemeVariantCategories();
+  const allowedSchemes = getThemeVariant(DEFAULT_THEME_VARIANT)!.schemes;
+  const activeSchemes = (getThemeVariant(themeVariant) ?? getThemeVariant(DEFAULT_THEME_VARIANT)!).schemes;
+  const prefersAuto = colorScheme === 'auto' || autoScheme;
+
   const changeTheme = async (event: React.MouseEvent, nextTheme: 'auto' | 'dark' | 'light') => {
-    if (nextTheme === colorScheme) {
+    if (nextTheme === 'auto' ? prefersAuto : nextTheme === colorScheme && !autoScheme) {
       return;
     }
+
+    if (nextTheme === 'auto' && activeSchemes.length < 2) {
+      setAutoScheme(true);
+      return;
+    }
+
+    setAutoScheme(false);
 
     const nextComputed =
       nextTheme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : nextTheme;
 
-    if (nextComputed === computedColorScheme || !document.startViewTransition) {
+    if (nextComputed === computedColorScheme) {
       setColorScheme(nextTheme);
+      return;
+    }
+
+    animateThemeChange(event, () => setColorScheme(nextTheme));
+  };
+
+  const changeThemeVariant = (event: React.MouseEvent, variant: ThemeVariantDefinition) => {
+    if (variant.id === themeVariant) {
+      return;
+    }
+
+    const bothSchemes = variant.schemes.length > 1;
+    const nextScheme = prefersAuto
+      ? bothSchemes
+        ? 'auto'
+        : variant.schemes[0]
+      : variant.schemes.includes(computedColorScheme)
+        ? computedColorScheme
+        : variant.schemes[0];
+
+    animateThemeChange(event, () => {
+      setThemeVariant(variant.id);
+      setAutoScheme(prefersAuto && !bothSchemes);
+      if (nextScheme !== colorScheme) {
+        setColorScheme(nextScheme);
+      }
+    });
+  };
+
+  const animateThemeChange = (event: React.MouseEvent, apply: () => void) => {
+    if (!document.startViewTransition) {
+      apply();
       return;
     }
 
@@ -275,9 +333,7 @@ function Footer() {
     const endRadius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
 
     const transition = document.startViewTransition(() => {
-      flushSync(() => {
-        setColorScheme(nextTheme);
-      });
+      flushSync(apply);
     });
 
     transition.ready.then(() => {
@@ -292,6 +348,37 @@ function Footer() {
         },
       );
     });
+  };
+
+  const themeVariantItems = (parent?: string): ContextMenuItem[] => {
+    const isChild = (category?: string) =>
+      (category && themeVariantCategories.some((c) => c.id === category) ? category : undefined) === parent;
+
+    return [
+      ...themeVariants
+        .filter((variant) => isChild(variant.category))
+        .map((variant) => ({
+          type: 'action' as const,
+          icon: variant.icon ?? faPalette,
+          label: resolveString(variant.label),
+          rightSection: variant.id === themeVariant && <FontAwesomeIcon icon={faCheck} size='sm' />,
+          hidden: themeVariants.length < 2,
+          onClick: (e: React.MouseEvent) => changeThemeVariant(e, variant),
+        })),
+      ...themeVariantCategories
+        .filter((category) => isChild(category.category))
+        .map((category) => {
+          const items = themeVariantItems(category.id);
+
+          return {
+            type: 'action' as const,
+            icon: category.icon ?? faPalette,
+            label: resolveString(category.label),
+            hidden: themeVariants.length < 2 || !items.some((item) => item.type === 'action' && !item.hidden),
+            items,
+          };
+        }),
+    ];
   };
 
   const items: ContextMenuItem[] = useMemo(
@@ -322,26 +409,35 @@ function Footer() {
         type: 'action' as const,
         icon: faCircleHalfStroke,
         label: t('elements.sidebar.button.theme', {}),
+        hidden: themeVariants.length < 2 && activeSchemes.length < 2,
         items: [
+          ...themeVariantItems(),
+          {
+            type: 'divider' as const,
+            hidden: themeVariants.length < 2,
+          },
           {
             type: 'action' as const,
             icon: faCircleHalfStroke,
             label: t('elements.sidebar.button.themeAuto', {}),
-            rightSection: colorScheme === 'auto' && <FontAwesomeIcon icon={faCheck} size='sm' />,
+            hidden: allowedSchemes.length < 2,
+            rightSection: prefersAuto && <FontAwesomeIcon icon={faCheck} size='sm' />,
             onClick: (e: React.MouseEvent) => changeTheme(e, 'auto'),
           },
           {
             type: 'action' as const,
             icon: faMoon,
             label: t('elements.sidebar.button.themeDark', {}),
-            rightSection: colorScheme === 'dark' && <FontAwesomeIcon icon={faCheck} size='sm' />,
+            hidden: !activeSchemes.includes('dark'),
+            rightSection: colorScheme === 'dark' && !autoScheme && <FontAwesomeIcon icon={faCheck} size='sm' />,
             onClick: (e: React.MouseEvent) => changeTheme(e, 'dark'),
           },
           {
             type: 'action' as const,
             icon: faSun,
             label: t('elements.sidebar.button.themeLight', {}),
-            rightSection: colorScheme === 'light' && <FontAwesomeIcon icon={faCheck} size='sm' />,
+            hidden: !activeSchemes.includes('light'),
+            rightSection: colorScheme === 'light' && !autoScheme && <FontAwesomeIcon icon={faCheck} size='sm' />,
             onClick: (e: React.MouseEvent) => changeTheme(e, 'light'),
           },
         ],
@@ -381,6 +477,9 @@ function Footer() {
       accountHidden,
       adminHidden,
       colorScheme,
+      computedColorScheme,
+      themeVariant,
+      autoScheme,
       deviceOverrideCount,
       redactAddresses,
       setRedactAddresses,

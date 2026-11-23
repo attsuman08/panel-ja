@@ -16,7 +16,7 @@ use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use sqlx::{Row, postgres::PgRow, prelude::Type};
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::{BTreeMap, HashMap, HashSet},
     sync::{Arc, LazyLock},
 };
 use utoipa::ToSchema;
@@ -361,7 +361,7 @@ impl ServerBackup {
             Some(backup_configuration) => backup_configuration,
             None => options
                 .server
-                .backup_configuration(&state.database)
+                .backup_configuration_for(&state.database, options.database_instance)
                 .await
                 .ok_or_else(|| {
                     crate::response::DisplayError::new(
@@ -1444,7 +1444,12 @@ impl ServerBackup {
                     .iter()
                     .find(|v| v.variable.env_variable == env_var)
                 {
-                    Some(variable) if variable.variable.user_editable => variable.variable.uuid,
+                    Some(variable)
+                        if variable.variable.user_editable
+                            && !validator.is_excluded(&variable.variable.env_variable) =>
+                    {
+                        variable.variable.uuid
+                    }
                     _ => continue,
                 };
 
@@ -1802,15 +1807,27 @@ impl IntoAdminApiObject for ServerBackup {
 #[async_trait::async_trait]
 impl IntoApiObject for ServerBackup {
     type ApiObject = ApiServerBackup;
-    type ExtraArgs<'a> = Option<retention::ServerBackupRetentionStatus>;
+    type ExtraArgs<'a> = (
+        Option<retention::ServerBackupRetentionStatus>,
+        Option<&'a HashSet<compact_str::CompactString>>,
+    );
 
     async fn into_api_object<'a>(
         self,
         state: &crate::State,
-        retention_status: Self::ExtraArgs<'a>,
+        (retention_status, viewable_variables): Self::ExtraArgs<'a>,
     ) -> Result<Self::ApiObject, crate::database::DatabaseError> {
         let deletion_status = self.deletion_status();
         let api_object = ApiServerBackup::init_hooks(&self, state).await?;
+
+        let mut metadata = self.metadata;
+        if let Some(viewable_variables) = viewable_variables
+            && let Some(variables) = metadata
+                .get_mut("variables")
+                .and_then(serde_json::Value::as_object_mut)
+        {
+            variables.retain(|env_variable, _| viewable_variables.contains(env_variable.as_str()));
+        }
 
         let api_object = finish_extendible!(
             ApiServerBackup {
@@ -1830,7 +1847,7 @@ impl IntoApiObject for ServerBackup {
                 files: self.files,
                 deletion_status,
                 retention_status,
-                metadata: self.metadata,
+                metadata,
                 completed: self.completed.map(|dt| dt.and_utc()),
                 created: self.created.and_utc(),
             },
@@ -1903,7 +1920,7 @@ impl CreatableModel for ServerBackup {
             Some(backup_configuration) => backup_configuration,
             None => options
                 .server
-                .backup_configuration(&state.database)
+                .backup_configuration_for(&state.database, options.database_instance)
                 .await
                 .ok_or_else(|| {
                     anyhow::Error::new(

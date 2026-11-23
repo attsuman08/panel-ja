@@ -283,11 +283,11 @@ impl OAuthProvider {
     /// revoking on a transient error would strip access the user still has.
     pub async fn fetch_info(
         &self,
-        client: &reqwest::Client,
+        state: &crate::State,
         access_token: &str,
     ) -> Result<OAuthProviderInfo, anyhow::Error> {
         let info = async {
-            match Self::fetch_info_url(client, &self.info_url, access_token).await {
+            match Self::fetch_info_url(state, &self.info_url, access_token).await {
                 Ok(Some(info)) => Ok(info),
                 Ok(None) => Err(anyhow::anyhow!("info url responded with 404")),
                 Err(err) => Err(err),
@@ -307,7 +307,7 @@ impl OAuthProvider {
 
         let sources = futures_util::future::try_join_all(self.info_urls.iter().map(
             |(key, url)| async move {
-                match Self::fetch_info_url(client, url, access_token).await {
+                match Self::fetch_info_url(state, url, access_token).await {
                     Ok(value) => Ok(value.map(|value| (key.clone(), value))),
                     Err(err) => {
                         tracing::warn!(
@@ -334,16 +334,16 @@ impl OAuthProvider {
     }
 
     async fn fetch_info_url(
-        client: &reqwest::Client,
+        state: &crate::State,
         url: &str,
         access_token: &str,
     ) -> Result<Option<serde_json::Value>, anyhow::Error> {
-        let response = client
-            .get(url)
-            .bearer_auth(access_token)
-            .timeout(Self::INFO_TIMEOUT)
-            .send()
-            .await?;
+        let response =
+            crate::net::outbound_request(&state.env, reqwest::Method::GET, url.parse()?)?
+                .bearer_auth(access_token)
+                .timeout(Self::INFO_TIMEOUT)
+                .send()
+                .await?;
 
         let status = response.status();
         if status == reqwest::StatusCode::NOT_FOUND {
@@ -1589,14 +1589,14 @@ impl DuplicableModel for OAuthProvider {
             .await?;
         let mut oauth_provider = Self::map(None, &row)?;
 
-        sqlx::query!(
-            "INSERT INTO oauth_provider_mappings (oauth_provider_uuid, matcher, mapping)
-            SELECT $1, oauth_provider_mappings.matcher, oauth_provider_mappings.mapping
+        sqlx::query(
+            "INSERT INTO oauth_provider_mappings (oauth_provider_uuid, name, matcher, mapping)
+            SELECT $1, oauth_provider_mappings.name, oauth_provider_mappings.matcher, oauth_provider_mappings.mapping
             FROM oauth_provider_mappings
             WHERE oauth_provider_mappings.oauth_provider_uuid = $2",
-            oauth_provider.uuid,
-            self.uuid,
         )
+        .bind(oauth_provider.uuid)
+        .bind(self.uuid)
         .execute(&mut **transaction)
         .await?;
 

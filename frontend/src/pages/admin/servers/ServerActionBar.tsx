@@ -1,13 +1,17 @@
 import {
+  faPlay,
   faPlugCircleCheck,
   faPlugCircleXmark,
+  faReply,
+  faRotateRight,
   faSatellite,
+  faServer,
+  faStop,
   faTrash,
   faTriangleExclamation,
-  IconDefinition,
 } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useState } from 'react';
+import sendNodeServersPowerAction from '@/api/admin/nodes/servers/sendNodeServersPowerAction.ts';
 import clearServerState from '@/api/admin/servers/clearServerState.ts';
 import deleteServer from '@/api/admin/servers/deleteServer.ts';
 import updateServer from '@/api/admin/servers/updateServer.ts';
@@ -15,6 +19,8 @@ import { httpErrorToHuman } from '@/api/axios.ts';
 import ActionBar from '@/elements/ActionBar.tsx';
 import Button from '@/elements/buttons/Button.tsx';
 import { AdminCan } from '@/elements/Can.tsx';
+import Icon, { type IconLike } from '@/elements/data-display/Icon.tsx';
+import ItemPreviewList, { ItemPreviewRow } from '@/elements/data-display/ItemPreviewList.tsx';
 import Alert from '@/elements/feedback/Alert.tsx';
 import Switch from '@/elements/input/Switch.tsx';
 import Stack from '@/elements/layout/Stack.tsx';
@@ -22,12 +28,45 @@ import ConfirmationModal from '@/elements/modals/ConfirmationModal.tsx';
 import Tooltip from '@/elements/overlays/Tooltip.tsx';
 import { ObjectSet } from '@/lib/objectSet.ts';
 import { AdminServer } from '@/lib/schemas/admin/servers.ts';
+import ServersTransferModal from '@/pages/admin/nodes/servers/modals/ServersTransferModal.tsx';
 import { useToast } from '@/providers/ToastProvider.tsx';
 import { useTranslations } from '@/providers/TranslationProvider.tsx';
 
-type ServerAction = 'suspend' | 'unsuspend' | 'clearState' | 'delete';
+type PowerAction = 'start' | 'restart' | 'stop';
+type ServerAction = PowerAction | 'transfer' | 'suspend' | 'unsuspend' | 'clearState' | 'delete';
+type ConfirmableAction = Exclude<ServerAction, 'transfer'>;
+
+const POWER_PERMISSION = ['nodes.read', 'nodes.power'];
 
 const ACTIONS = [
+  {
+    action: 'start',
+    icon: faPlay,
+    color: 'green',
+    permission: POWER_PERMISSION,
+    label: 'common.enum.serverPowerAction.start',
+  },
+  {
+    action: 'restart',
+    icon: faRotateRight,
+    color: undefined,
+    permission: POWER_PERMISSION,
+    label: 'common.enum.serverPowerAction.restart',
+  },
+  {
+    action: 'stop',
+    icon: faStop,
+    color: 'red',
+    permission: POWER_PERMISSION,
+    label: 'common.enum.serverPowerAction.stop',
+  },
+  {
+    action: 'transfer',
+    icon: faReply,
+    color: undefined,
+    permission: ['nodes.read', 'nodes.transfers'],
+    label: 'common.button.transfer',
+  },
   {
     action: 'clearState',
     icon: faSatellite,
@@ -58,20 +97,32 @@ const ACTIONS = [
   },
 ] as const satisfies readonly {
   action: ServerAction;
-  icon: IconDefinition;
+  icon: IconLike;
   color?: string;
-  permission: string;
+  permission: string | string[];
   label: string;
 }[];
 
 const PAST_TENSE = {
+  start: 'started',
+  restart: 'restarted',
+  stop: 'stopped',
   suspend: 'suspended',
   unsuspend: 'unsuspended',
   clearState: 'clearedState',
   delete: 'deleted',
-} as const satisfies Record<ServerAction, string>;
+} as const satisfies Record<ConfirmableAction, string>;
 
-function request(action: ServerAction, uuid: string, force: boolean, deleteBackups: boolean): Promise<void> {
+function isPowerAction(action: ServerAction): action is PowerAction {
+  return action === 'start' || action === 'restart' || action === 'stop';
+}
+
+function request(
+  action: Exclude<ConfirmableAction, PowerAction>,
+  uuid: string,
+  force: boolean,
+  deleteBackups: boolean,
+): Promise<void> {
   switch (action) {
     case 'suspend':
       return updateServer(uuid, { suspended: true });
@@ -111,21 +162,30 @@ export default function ServerActionBar({
   const { t, tItem } = useTranslations();
   const { addToast } = useToast();
 
-  const [loading, setLoading] = useState<ServerAction | null>(null);
-  const [confirming, setConfirming] = useState<ServerAction | null>(null);
+  const [loading, setLoading] = useState<ConfirmableAction | null>(null);
+  const [confirming, setConfirming] = useState<ConfirmableAction | null>(null);
+  const [transferring, setTransferring] = useState(false);
   const [force, setForce] = useState(false);
   const [deleteBackups, setDeleteBackups] = useState(false);
 
   const targets = (action: ServerAction) => selectedServers.values().filter((server) => changesServer(action, server));
 
-  const report = (action: ServerAction, results: PromiseSettledResult<void>[], skipped: number) => {
-    const successful = results.filter((result) => result.status === 'fulfilled').length;
-    const failed = results.length - successful;
+  const transferNode = (() => {
+    const [first, ...rest] = selectedServers.values();
+
+    return first && rest.every((server) => server.node.uuid === first.node.uuid) ? first.node : null;
+  })();
+
+  const report = (
+    action: ConfirmableAction,
+    successful: number,
+    failed: number,
+    skipped: number,
+    firstError?: PromiseRejectedResult,
+  ) => {
     const performed = t(`common.enum.bulkActionServerAction.${PAST_TENSE[action]}`, {});
 
     if (failed > 0) {
-      const firstError = results.find((result) => result.status === 'rejected');
-
       if (successful === 0 && firstError) {
         addToast(httpErrorToHuman(firstError.reason), 'error');
         return;
@@ -160,7 +220,38 @@ export default function ServerActionBar({
     );
   };
 
-  const run = async (action: ServerAction) => {
+  const runPower = async (action: PowerAction) => {
+    const servers = targets(action);
+    const byNode = Map.groupBy(servers, (server) => server.node.uuid);
+
+    setLoading(action);
+    const results = await Promise.allSettled(
+      Array.from(byNode, ([nodeUuid, nodeServers]) =>
+        sendNodeServersPowerAction(
+          nodeUuid,
+          { type: 'uuids', uuids: nodeServers.map((server) => server.uuid) },
+          action,
+        ),
+      ),
+    );
+    setLoading(null);
+
+    const successful = results.reduce((sum, result) => sum + (result.status === 'fulfilled' ? result.value : 0), 0);
+    report(
+      action,
+      successful,
+      servers.length - successful,
+      0,
+      results.find((result) => result.status === 'rejected'),
+    );
+    clearSelectedServers();
+  };
+
+  const run = async (action: ConfirmableAction) => {
+    if (isPowerAction(action)) {
+      return runPower(action);
+    }
+
     const servers = targets(action);
     const skipped = selectedServers.size - servers.length;
 
@@ -170,12 +261,24 @@ export default function ServerActionBar({
     );
     setLoading(null);
 
-    report(action, results, skipped);
+    const successful = results.filter((result) => result.status === 'fulfilled').length;
+    report(
+      action,
+      successful,
+      results.length - successful,
+      skipped,
+      results.find((result) => result.status === 'rejected'),
+    );
     clearSelectedServers();
     invalidateServers();
   };
 
   const start = (action: ServerAction) => {
+    if (action === 'transfer') {
+      setTransferring(true);
+      return;
+    }
+
     if (targets(action).length === 0) {
       addToast(t('pages.admin.servers.bulkActions.nothingToDo', {}), 'info');
       return;
@@ -189,12 +292,39 @@ export default function ServerActionBar({
       return null;
     }
 
-    const servers = tItem('server', targets(confirming).length);
+    const confirmTargets = targets(confirming);
+    const servers = tItem('server', confirmTargets.length);
+    const skipped = selectedServers.size - confirmTargets.length;
+
+    const serverList = (
+      <>
+        {skipped > 0 && (
+          <Alert color='yellow' icon={faTriangleExclamation}>
+            {t('pages.admin.servers.bulkActions.modal.alert.skipped', { servers: tItem('server', skipped) })}
+          </Alert>
+        )}
+
+        <ItemPreviewList
+          items={confirmTargets}
+          getKey={(server) => server.uuid}
+          renderItem={(server) => (
+            <ItemPreviewRow
+              icon={<Icon icon={faServer} />}
+              name={server.name}
+              description={server.owner.username}
+              meta={server.node.name}
+            />
+          )}
+        />
+      </>
+    );
 
     if (confirming === 'delete') {
       return (
         <Stack>
           {t('pages.admin.servers.bulkActions.modal.deleteContent', { servers }).md()}
+
+          {serverList}
 
           <Switch
             label={t('common.form.force', {})}
@@ -205,7 +335,7 @@ export default function ServerActionBar({
           />
 
           {force && (
-            <Alert color='red' icon={<FontAwesomeIcon icon={faTriangleExclamation} />}>
+            <Alert color='red' icon={faTriangleExclamation}>
               {t('pages.admin.servers.bulkActions.modal.alert.forceWarning', {})}
             </Alert>
           )}
@@ -220,10 +350,16 @@ export default function ServerActionBar({
       );
     }
 
-    return t('pages.admin.servers.bulkActions.modal.content', {
-      action: t(`pages.admin.servers.bulkActions.verb.${confirming}`, {}),
-      servers,
-    }).md();
+    return (
+      <Stack>
+        {t('pages.admin.servers.bulkActions.modal.content', {
+          action: t(`pages.admin.servers.bulkActions.verb.${confirming}`, {}),
+          servers,
+        }).md()}
+
+        {serverList}
+      </Stack>
+    );
   };
 
   const closeConfirmation = () => {
@@ -243,6 +379,19 @@ export default function ServerActionBar({
 
   return (
     <>
+      {transferNode && (
+        <AdminCan action={['nodes.read', 'nodes.transfers']}>
+          <ServersTransferModal
+            contextNode={transferNode}
+            selector={{ type: 'uuids', uuids: selectedServers.keys() }}
+            count={selectedServers.size}
+            clearSelected={clearSelectedServers}
+            opened={transferring}
+            onClose={() => setTransferring(false)}
+          />
+        </AdminCan>
+      )}
+
       <ConfirmationModal
         opened={confirming !== null}
         onClose={closeConfirmation}
@@ -255,11 +404,17 @@ export default function ServerActionBar({
 
       <ActionBar opened={selectedServers.size > 0}>
         {ACTIONS.map(({ action, icon, color, permission, label }) => {
-          const applicable = targets(action).length;
+          const applicable = action === 'transfer' && !transferNode ? 0 : targets(action).length;
 
           return (
             <AdminCan key={action} action={permission}>
-              <Tooltip label={`${t(label, {})} (${tItem('server', applicable)})`}>
+              <Tooltip
+                label={
+                  action === 'transfer' && !transferNode
+                    ? t('pages.admin.servers.bulkActions.transferMixedNodes', {})
+                    : `${t(label, {})} (${tItem('server', applicable)})`
+                }
+              >
                 <Button
                   color={color}
                   onClick={() => start(action)}
@@ -268,7 +423,7 @@ export default function ServerActionBar({
                   aria-label={t(label, {})}
                   px='sm'
                 >
-                  <FontAwesomeIcon icon={icon} />
+                  <Icon icon={icon} />
                 </Button>
               </Tooltip>
             </AdminCan>

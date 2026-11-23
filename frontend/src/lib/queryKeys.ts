@@ -79,6 +79,10 @@ const admin = {
     servers: (eggUuid: string) => ['admin', 'eggs', eggUuid, 'servers'] as const,
   },
 
+  ruleValidator: {
+    module: () => ['admin', 'rule-validator'] as const,
+  },
+
   locations: {
     all: () => ['admin', 'locations'] as const,
     detail: (uuid: string) => ['admin', 'locations', { uuid }] as const,
@@ -166,6 +170,7 @@ const admin = {
     detail: (uuid: string) => ['admin', 'backup-configurations', { uuid }] as const,
     locations: (uuid: string) => ['admin', 'backup-configurations', uuid, 'locations'] as const,
     nodes: (uuid: string) => ['admin', 'backup-configurations', uuid, 'nodes'] as const,
+    databaseAgentHosts: (uuid: string) => ['admin', 'backup-configurations', uuid, 'database-agent-hosts'] as const,
     servers: (uuid: string) => ['admin', 'backup-configurations', uuid, 'servers'] as const,
     stats: (uuid: string) => ['admin', 'backup-configurations', uuid, 'stats'] as const,
   },
@@ -324,6 +329,9 @@ const server = (serverUuid: string) => ({
   },
   firewall: {
     all: () => ['server', serverUuid, 'firewall'] as const,
+  },
+  settings: {
+    timezone: () => ['server', serverUuid, 'settings', 'timezone'] as const,
   },
   mounts: {
     all: () => ['server', serverUuid, 'mounts'] as const,

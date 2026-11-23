@@ -133,6 +133,24 @@ const baseTranslations = defineTranslations({
           copyAll: 'Copy All',
           pasteReplace: 'Paste (Replace)',
         },
+        eggVariableRulesInput: {
+          editorMode: 'Editor',
+          textMode: 'Text',
+          addRule: 'Add a rule...',
+          value: 'Value',
+          minimum: 'Minimum',
+          maximum: 'Maximum',
+          version: 'Version',
+          variable: 'Variable',
+          variables: 'Variables',
+          values: 'Values',
+          formats: 'Formats',
+          pattern: 'Pattern',
+          flag: 'Only {flag}',
+          commaSeparated: 'Separate multiple entries with commas.',
+          textDescription: 'Separate rules with | or new lines.',
+          unknownVariable: 'References unknown variable {variable}.',
+        },
         serverFileInput: {
           notFound: 'No file with this name exists yet.',
           isDirectory: 'This is a directory, not a file.',
@@ -164,6 +182,20 @@ const baseTranslations = defineTranslations({
             weekday: 'Weekday',
           },
           nextRun: 'Next run is {timestamp}.',
+        },
+        passwordGenerator: {
+          tooltip: 'Generate password',
+          length: 'Length',
+          lowercase: 'Lowercase (a-z)',
+          uppercase: 'Uppercase (A-Z)',
+          digits: 'Digits (0-9)',
+          symbols: 'Symbols (!#$%&*)',
+          excludeAmbiguous: 'Exclude ambiguous characters (I, l, 1, O, 0, o)',
+          noCharsets: 'Select at least one character set.',
+          button: {
+            regenerate: 'Regenerate',
+            use: 'Use Password',
+          },
         },
         iconInput: {
           defaultIcon: 'Default icon',
@@ -396,6 +428,8 @@ const baseTranslations = defineTranslations({
           hexColor: 'A hex color such as #1c7ed6.',
           devicePermissions: 'Any combination of r (read), w (write) and m (mknod).',
           percentage: 'A percentage between 0 and 100.',
+          imageSizes: 'Sizes such as 512x512, several separated by spaces, or any.',
+          appPath: 'A path in the panel starting with a single slash, such as /admin.',
         },
       },
       table: {
@@ -689,6 +723,7 @@ const baseTranslations = defineTranslations({
       never: 'Never',
       none: 'None',
       unknown: 'Unknown',
+      moreItems: '+{count} more',
       yes: 'Yes',
       no: 'No',
       web: 'Web',
@@ -805,6 +840,8 @@ const baseTranslations = defineTranslations({
           themeAuto: 'Auto',
           themeDark: 'Dark',
           themeLight: 'Light',
+          themeStandard: 'Standard',
+          themePureBlack: 'Pure Black',
           redactAddresses: 'Hide Addresses',
           resetDeviceOverrides: 'Reset Device Overrides ({count})',
         },
@@ -2457,8 +2494,29 @@ const baseTranslations = defineTranslations({
                   pwaNameDescription: 'Shown in the install prompt and on the splash screen.',
                   pwaShortName: 'Short App Name',
                   pwaShortNameDescription: 'Shown under the home screen icon when the full name does not fit.',
-                  pwaIcon: 'App Icon',
-                  pwaIconDescription: 'A square PNG of at least 512x512, or an SVG.',
+                  pwaIcons: 'App Icons',
+                  pwaIconsDescription:
+                    'Square PNGs of 192x192 and 512x512, or an SVG. Without any, the default icons are used. Keep the logo of a maskable icon inside the middle 80%, Android crops the rest.',
+                  pwaScreenshots: 'Screenshots',
+                  pwaScreenshotsDescription:
+                    'Shown in the install dialog. Wide screenshots are used on desktop, narrow ones on mobile.',
+                  pwaShortcuts: 'Shortcuts',
+                  pwaShortcutsDescription: 'Shown when long-pressing or right-clicking the installed app icon.',
+                  pwaCategories: 'Categories',
+                  pwaCategoriesDescription:
+                    'Lowercase words that app stores use for sorting, such as utilities or games.',
+                  pwaCategoriesInvalid: 'Categories may only contain lowercase letters, digits and dashes.',
+                  imageUrl: 'Image URL',
+                  imageSizes: 'Sizes',
+                  imageSizesDescription: 'Filled in from the image once it loads.',
+                  imageType: 'Type',
+                  iconPurpose: 'Purpose',
+                  screenshotFormFactor: 'Form Factor',
+                  screenshotLabel: 'Label',
+                  shortcutName: 'Name',
+                  shortcutShortName: 'Short Name',
+                  shortcutUrl: 'Path',
+                  shortcutDescription: 'Description',
                   pwaDisplay: 'Display Mode',
                   pwaBackgroundColor: 'Splash Screen Color',
                   pwaBackgroundColorDescription: 'Background of the splash screen shown while the app opens.',
@@ -2474,12 +2532,25 @@ const baseTranslations = defineTranslations({
                     minimalUi: 'Minimal UI',
                     browser: 'Browser Tab',
                   },
+                  iconPurpose: {
+                    any: 'Any',
+                    maskable: 'Maskable',
+                    monochrome: 'Monochrome',
+                  },
+                  screenshotFormFactor: {
+                    any: 'Any',
+                    wide: 'Wide (desktop)',
+                    narrow: 'Narrow (mobile)',
+                  },
                 },
                 placeholder: {
                   description: 'Manage your game servers and services with {name}.',
                 },
                 button: {
                   autofill: 'Autofill',
+                  addIcon: 'Add Icon',
+                  addScreenshot: 'Add Screenshot',
+                  addShortcut: 'Add Shortcut',
                 },
                 toast: {
                   updated: 'Metadata settings updated.',
@@ -3967,6 +4038,9 @@ const baseTranslations = defineTranslations({
           },
           bulkActions: {
             verb: {
+              start: 'start',
+              restart: 'restart',
+              stop: 'stop',
               suspend: 'suspend',
               unsuspend: 'unsuspend',
               clearState: 'clear the state of',
@@ -3983,10 +4057,12 @@ const baseTranslations = defineTranslations({
               alert: {
                 forceWarning:
                   'Force deletion removes these servers from the panel even if their nodes cannot be reached. Their files and databases may not be fully cleaned up, leaving orphaned data behind.',
+                skipped: '{servers} will be skipped because they are already in that state.',
               },
             },
             successWithSkipped: 'Successfully {action} {servers}. {skippedServers} skipped.',
             nothingToDo: 'Every selected server is already in that state.',
+            transferMixedNodes: 'Only servers on the same node can be transferred together.',
           },
           externalIdLookup: {
             button: 'Find by External ID',
@@ -4066,6 +4142,8 @@ const baseTranslations = defineTranslations({
                 alert: {
                   suspended: 'This server is suspended.',
                   selectEggForVariables: 'Please select an egg before you can configure variables.',
+                  deploymentAllocations:
+                    "Allocations are picked from the egg configuration of the node the server is deployed to. If that configuration doesn't define any, the server is created without allocations.",
                 },
                 badge: {
                   serverSuspended: 'Server Suspended',
@@ -4119,6 +4197,20 @@ const baseTranslations = defineTranslations({
                   nodeUnreachable: 'unreachable',
                   nodeUnreachableDescription:
                     'This node could not be reached. Creating the server will fail unless the node comes back online.',
+                  deploymentModeNode: 'Specific Node',
+                  deploymentModeAutomatic: 'Automatic Deployment',
+                  deploymentLocations: 'Locations',
+                  deploymentLocationsDescription:
+                    'The server is deployed to the most suitable node in these locations that has deployment enabled.',
+                  deploymentAllowOverallocation: 'Allow Overallocation',
+                  deploymentAllowOverallocationDescription:
+                    'Also consider nodes that would exceed their memory or disk limit with this server.',
+                  deploymentSuspensionPenalty: 'Suspension Penalty',
+                  deploymentSuspensionPenaltyDescription:
+                    'How much the resources of suspended servers count towards node usage, from 0 to 1.',
+                  deploymentRandomness: 'Randomness',
+                  deploymentRandomnessDescription:
+                    'How much randomness is mixed into the node choice, from 0 (always the least used node) to 1.',
                   startupCommandCustom: 'Custom',
                   predefinedStartupCommands: 'Predefined Startup Commands',
                   labels: 'Container Labels',
@@ -4164,14 +4256,23 @@ const baseTranslations = defineTranslations({
                 form: {
                   notesPlaceholder: 'Notes',
                 },
+                button: {
+                  reassign: 'Reassign',
+                },
                 toast: {
                   updated: 'Allocation updated.',
                   setPrimary: 'Allocation set as primary.',
                   unsetPrimary: 'Allocation unset as primary.',
                   removed: 'Allocation removed.',
                   added: '{count} allocations added.',
+                  reassigned: 'Allocations reassigned.',
                 },
                 modal: {
+                  reassign: {
+                    title: 'Confirm Allocation Reassignment',
+                    content:
+                      'Are you sure you want to reassign the allocations of **{server}**? All current allocations are replaced with ones picked from the egg configuration, and variables bound to allocation ports are updated. The new ports apply on the next restart.',
+                  },
                   add: {
                     title: 'Add Server Allocations',
                     form: {
@@ -4842,6 +4943,8 @@ const baseTranslations = defineTranslations({
                   password: 'Password or Access Token',
                   privateKey: 'Private Key',
                   passphrase: 'Passphrase',
+                  sshHostKey: 'SSH Host Key',
+                  sshHostKeyDescription: 'Syncing only connects to an ssh server presenting this public key.',
                   defaultNest: 'Default Nest',
                   defaultNestDescription:
                     'Eggs installed from this repository go into this nest unless another one is chosen.',
@@ -4858,6 +4961,8 @@ const baseTranslations = defineTranslations({
                 },
                 button: {
                   sync: 'Sync',
+                  fetchSshHostKeys: 'Fetch',
+                  useSshHostKey: 'Use Host Key',
                 },
                 toast: {
                   synced: 'Egg repository synchronised, found {eggs}.',
@@ -4865,10 +4970,17 @@ const baseTranslations = defineTranslations({
                 alert: {
                   credentialsCleared:
                     'Changing the scheme, host or port of the repository clears its stored credentials. Enter them again below if the new host needs them.',
+                  sshHostKeyOriginChanged:
+                    'This host key belongs to the previous host. Fetch the host keys of the new host and confirm one of them.',
                 },
                 modal: {
                   delete: {
                     title: 'Confirm Egg Repository Deletion',
+                  },
+                  sshHostKeys: {
+                    title: 'SSH Host Keys',
+                    description: 'Compare the fingerprint with the one your git host publishes before using a key.',
+                    empty: 'The ssh server did not present any host keys.',
                   },
                 },
               },
@@ -5021,6 +5133,7 @@ const baseTranslations = defineTranslations({
                 form: {
                   typePublicHost: 'Public Host',
                   typePublicPort: 'Public Port',
+                  backupConfigurationPlaceholder: 'Inherit from Node/Location',
                   memoryDescription: 'The total memory available for database instances on this host.',
                   diskDescription: 'The total disk available for database instances on this host.',
                   unlimitedTooltip: '0 will not set a limit.',
@@ -5259,6 +5372,9 @@ const baseTranslations = defineTranslations({
                   socketPath: 'Socket Path',
                   socketPathDescription:
                     'The unix socket file path inside the database container, must match where the configured image actually creates its socket.',
+                  controlSocketPath: 'Control Socket Path',
+                  controlSocketPathDescription:
+                    'An optional second unix socket the agent uses for administration instead of the socket path, must be in the same directory as the socket path.',
                   imageUid: 'Image UID',
                   imageGid: 'Image GID',
                   memoryDescription: 'The Memory limit of the database container.',
@@ -5685,6 +5801,12 @@ const baseTranslations = defineTranslations({
               title: 'Servers',
               page: {
                 title: 'Backup Configuration Servers',
+              },
+            },
+            databaseAgentHosts: {
+              title: 'Database Agent Hosts',
+              page: {
+                title: 'Backup Configuration Database Agent Hosts',
               },
             },
           },
@@ -6910,7 +7032,7 @@ const baseTranslations = defineTranslations({
             unsupported: {
               title: 'Not Supported',
               content: 'MongoDB databases cannot be explored from the panel.',
-              instanceContent: 'MongoDB and Redis database instances cannot be explored from the panel.',
+              instanceContent: 'MongoDB, Redis and ClickHouse database instances cannot be explored from the panel.',
             },
             notFound: 'This database does not exist on the instance.',
             tabs: {

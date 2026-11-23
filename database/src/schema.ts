@@ -50,7 +50,7 @@ export const bytea = customType<{
 });
 
 export const databaseTypeEnum = pgEnum('database_type', ['MYSQL', 'POSTGRES', 'MONGODB']);
-export const databaseAgentTypeEnum = pgEnum('database_agent_type', ['POSTGRES', 'MARIADB', 'MONGODB', 'REDIS']);
+export const databaseAgentTypeEnum = pgEnum('database_agent_type', ['POSTGRES', 'MARIADB', 'MONGODB', 'REDIS', 'CLICKHOUSE']);
 export const serverStatusEnum = pgEnum('server_status', [
   'INSTALLING',
   'INSTALL_FAILED',
@@ -560,6 +560,7 @@ export const oauthProviderMappingsTable = pgTable(
     oauth_provider_uuid: uuid()
       .references(() => oauthProvidersTable.uuid, { onDelete: 'cascade' })
       .notNull(),
+    name: varchar({ length: 255 * UTF8_MAX_SCALAR_SIZE }),
     matcher: jsonb().notNull(),
     mapping: jsonb().notNull(),
     created: timestamp().defaultNow().notNull(),
@@ -981,6 +982,7 @@ export const eggRepositoriesTable = pgTable(
     description: text(),
     git_repository: text().notNull(),
     credentials: jsonb().default({ type: 'none' }).notNull(),
+    ssh_host_key: text(),
     default_nest_uuid: uuid().references(() => nestsTable.uuid, { onDelete: 'set null' }),
     auto_sync: boolean().default(true).notNull(),
     last_synced: timestamp(),
@@ -1175,6 +1177,7 @@ export const databaseAgentHostsTable = pgTable(
       .default(sql`gen_random_uuid()`)
       .primaryKey()
       .notNull(),
+    backup_configuration_uuid: uuid().references(() => backupConfigurationsTable.uuid, { onDelete: 'set null' }),
     name: varchar({ length: 255 * UTF8_MAX_SCALAR_SIZE }).notNull(),
     description: text(),
     deployment_enabled: boolean().default(false).notNull(),
@@ -1188,12 +1191,14 @@ export const databaseAgentHostsTable = pgTable(
         mariadb: { enabled: true, public_host: null, public_port: null },
         mongodb: { enabled: true, public_host: null, public_port: null },
         redis: { enabled: true, public_host: null, public_port: null },
+        clickhouse: { enabled: true, public_host: null, public_port: null },
       })
       .notNull(),
     token: bytea().notNull(),
     created: timestamp().defaultNow().notNull(),
   },
   (cols) => [
+    index('database_agent_hosts_backup_configuration_uuid_idx').on(cols.backup_configuration_uuid),
     uniqueIndex('database_agent_hosts_name_idx').on(cols.name),
     uniqueIndex('database_agent_hosts_token_idx').on(cols.token),
   ],
@@ -1259,6 +1264,7 @@ export const databaseAgentTemplatesTable = pgTable(
     cmd: text().array(),
     volumes: json().notNull(),
     socket_path: varchar({ length: 255 * UTF8_MAX_SCALAR_SIZE }).notNull(),
+    control_socket_path: varchar({ length: 255 * UTF8_MAX_SCALAR_SIZE }),
     memory: bigint({ mode: 'number' }).notNull(),
     swap: bigint({ mode: 'number' }).notNull(),
     disk: bigint({ mode: 'number' }).notNull(),
@@ -1284,6 +1290,7 @@ export const serversTable = pgTable(
       .references(() => nodesTable.uuid)
       .notNull(),
     destination_node_uuid: uuid().references(() => nodesTable.uuid),
+    destination_variables: jsonb(),
     owner_uuid: uuid()
       .references(() => usersTable.uuid)
       .notNull(),

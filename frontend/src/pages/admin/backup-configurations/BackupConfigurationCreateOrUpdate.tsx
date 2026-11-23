@@ -28,6 +28,7 @@ import BackupRestic from '@/pages/admin/backup-configurations/forms/BackupRestic
 import BackupS3 from '@/pages/admin/backup-configurations/forms/BackupS3.tsx';
 import BackupConfigurationDuplicateModal from '@/pages/admin/backup-configurations/modals/BackupConfigurationDuplicateModal.tsx';
 import BackupConfigurationTestModal from '@/pages/admin/backup-configurations/modals/BackupConfigurationTestModal.tsx';
+import { useHydrateForm } from '@/plugins/form/useHydrateForm.ts';
 import { useResourceForm } from '@/plugins/resource/useResourceForm.ts';
 import { useTranslations } from '@/providers/TranslationProvider.tsx';
 import {
@@ -183,12 +184,12 @@ export default function BackupConfigurationCreateOrUpdate({
     resourceName: t('pages.admin.backupConfigurations.resourceName', {}),
   });
 
+  useHydrateForm(form, contextBackupConfiguration, backupConfigurationToFormValues);
+
   useEffect(() => {
     if (!contextBackupConfiguration) {
       return;
     }
-
-    form.setValues(backupConfigurationToFormValues(contextBackupConfiguration));
 
     const configs = contextBackupConfiguration.backupConfigs;
     if (configs?.s3) {
@@ -203,7 +204,7 @@ export default function BackupConfigurationCreateOrUpdate({
     if (configs?.kopia) {
       kopiaForm.setValues({ ...blankNulls(configs.kopia, ['fingerprint']), tags: configs.kopia.tags ?? {} });
     }
-  }, [contextBackupConfiguration]);
+  }, [contextBackupConfiguration?.uuid]);
 
   const fields = useBackupConfigurationFormFields();
 
@@ -227,7 +228,7 @@ export default function BackupConfigurationCreateOrUpdate({
         confirm={t('common.button.delete', {})}
         onConfirmed={doDelete}
       >
-        <Alert color='yellow' icon={<FontAwesomeIcon icon={faExclamationTriangle} />} mb='md'>
+        <Alert color='yellow' icon={faExclamationTriangle} mb='md'>
           {t('pages.admin.backupConfigurations.tabs.general.page.modal.delete.alert.detachWarning', {})}
         </Alert>
         {t('common.modal.delete.content', {
@@ -269,7 +270,7 @@ export default function BackupConfigurationCreateOrUpdate({
       )}
 
       {activeAlert && (
-        <Alert color='yellow' icon={<FontAwesomeIcon icon={faExclamationTriangle} />} mb='md'>
+        <Alert color='yellow' icon={faExclamationTriangle} mb='md'>
           {t(activeAlert.key, activeAlert.params ?? {}).md()}
         </Alert>
       )}
